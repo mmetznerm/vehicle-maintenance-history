@@ -10,5 +10,17 @@ Backend for managing vehicles and their maintenance histories.
 
 ## Executing tests
 
-```powershell
+```powershell```
 .\mvnw.cmd test
+
+## Docker
+
+Start only PostgreSQL:
+
+```powershell```
+docker compose up -d postgres
+
+Start the application and PostgreSQL:
+
+```powershell```
+docker compose --profile app up --build

@@ -1,4 +1,28 @@
 services:
+  app:
+    build:
+      context: .
+    container_name: vehicle-maintenance-history-api
+    profiles:
+      - app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle-maintenance-history
+      SPRING_DATASOURCE_USERNAME: vehicle-maintenance-history
+      SPRING_DATASOURCE_PASSWORD: vehicle-maintenance-history
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://localhost:8080/actuator/health > /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   postgres:
     image: postgres:16-alpine
     container_name: vehicle-maintenance-history-postgres
