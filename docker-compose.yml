@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vehicle-maintenance-history-postgres
+    environment:
+      POSTGRES_DB: vehicle-maintenance-history
+      POSTGRES_USER: vehicle-maintenance-history
+      POSTGRES_PASSWORD: vehicle-maintenance-history
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U vehicle-maintenance-history -d vehicle-maintenance-history
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
