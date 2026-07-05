@@ -24,3 +24,14 @@ Start the application and PostgreSQL:
 
 ```powershell```
 docker compose --profile app up --build
+
+```markdown```
+## API documentation
+
+With the application running:
+
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+
+API contracts and standardized errors are documented in
+[`docs/api-contracts.md`](docs/api-contracts.md).
