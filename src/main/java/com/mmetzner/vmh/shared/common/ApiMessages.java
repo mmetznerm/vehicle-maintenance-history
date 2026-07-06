@@ -22,4 +22,28 @@ public final class ApiMessages {
         private Common() {
         }
     }
+
+    public static final class Users {
+
+        public static final String NOT_FOUND =
+                "User not found.";
+
+        public static final String ALREADY_REGISTERED =
+                "User already registered.";
+
+        private Users() {
+        }
+    }
+
+    public static final class Auth {
+
+        public static final String INVALID_CREDENTIALS =
+                "Invalid credentials.";
+
+        public static final String INVALID_REFRESH_TOKEN =
+                "Invalid refresh token.";
+
+        private Auth() {
+        }
+    }
 }
