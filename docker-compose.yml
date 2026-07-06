@@ -9,6 +9,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle-maintenance-history
       SPRING_DATASOURCE_USERNAME: vehicle-maintenance-history
       SPRING_DATASOURCE_PASSWORD: vehicle-maintenance-history
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-key-change-before-production-123456789}
     ports:
       - "8080:8080"
     depends_on:
