@@ -43,6 +43,12 @@ public final class ApiMessages {
         public static final String INVALID_REFRESH_TOKEN =
                 "Invalid refresh token.";
 
+        public static final String UNAUTHENTICATED =
+                "Authentication is required.";
+
+        public static final String ACCESS_DENIED =
+                "Access denied.";
+
         private Auth() {
         }
     }
