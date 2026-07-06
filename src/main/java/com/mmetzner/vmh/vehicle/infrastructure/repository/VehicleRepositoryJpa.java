@@ -1,4 +1,4 @@
-package com.mmetzner.vmh.vehicle.repository;
+package com.mmetzner.vmh.vehicle.infrastructure.repository;
 
 import com.mmetzner.vmh.vehicle.infrastructure.entity.VehicleEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
