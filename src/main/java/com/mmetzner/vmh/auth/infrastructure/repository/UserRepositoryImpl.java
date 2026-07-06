@@ -16,32 +16,32 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserRepositoryImpl implements UserRepository {
 
-    private final UserRepositoryJpa springDataRepository;
+    private final UserRepositoryJpa userRepositoryJpa;
     private final UserEntityMapper userEntityMapper;
 
     @Override
     public Optional<User> findById(UUID id) {
-        return springDataRepository
+        return userRepositoryJpa
                 .findById(id)
                 .map(userEntityMapper::toDomain);
     }
 
     @Override
     public Optional<User> findByEmailOrPhone(String emailOrPhone) {
-        return springDataRepository
+        return userRepositoryJpa
                 .findByEmailOrPhone(emailOrPhone)
                 .map(userEntityMapper::toDomain);
     }
 
     @Override
     public boolean existsByEmailOrPhone(String emailOrPhone) {
-        return springDataRepository
+        return userRepositoryJpa
                 .existsByEmailOrPhone(emailOrPhone);
     }
 
     @Override
     public User save(User user) {
-        UserEntity savedEntity = springDataRepository.save(
+        UserEntity savedEntity = userRepositoryJpa.save(
                 userEntityMapper.toEntity(user)
         );
 

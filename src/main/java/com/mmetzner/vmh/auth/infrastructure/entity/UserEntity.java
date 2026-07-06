@@ -69,4 +69,10 @@ public class UserEntity {
         this.emailOrPhone = emailOrPhone;
         this.passwordHash = passwordHash;
     }
+
+    public static UserEntity reference(UUID id) {
+        UserEntity user = new UserEntity();
+        user.id = id;
+        return user;
+    }
 }
