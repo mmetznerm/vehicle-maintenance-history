@@ -17,10 +17,33 @@ env:
   K8S_NAMESPACE: autolog-stage
 
 jobs:
+  stage-configuration:
+    name: Check stage deployment configuration
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+
+    steps:
+      - name: Check required GitHub variables
+        id: check
+        env:
+          AWS_GITHUB_ACTIONS_ROLE_ARN: ${{ vars.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+          STAGE_SPRING_DATASOURCE_URL: ${{ vars.STAGE_SPRING_DATASOURCE_URL }}
+        run: |
+          if [ -n "$AWS_GITHUB_ACTIONS_ROLE_ARN" ] && [ -n "$EKS_CLUSTER_NAME" ] && [ -n "$STAGE_SPRING_DATASOURCE_URL" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Stage deployment skipped because AWS/EKS/RDS GitHub variables are not configured yet."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build-push-deploy:
     name: Build, push and deploy stage
     runs-on: ubuntu-latest
     environment: stage
+    needs: stage-configuration
+    if: needs.stage-configuration.outputs.configured == 'true'
 
     steps:
       - name: Checkout
