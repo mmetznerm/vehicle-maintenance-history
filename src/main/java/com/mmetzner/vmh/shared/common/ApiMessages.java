@@ -52,4 +52,13 @@ public final class ApiMessages {
         private Auth() {
         }
     }
+
+    public static final class Vehicles {
+
+        public static final String NOT_FOUND = "Vehicle not found.";
+        public static final String ALREADY_REGISTERED_FOR_USER = "Vehicle already registered for this user.";
+
+        private Vehicles() {
+        }
+    }
 }
