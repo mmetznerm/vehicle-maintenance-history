@@ -4,7 +4,7 @@ This document describes the prepared cloud deployment path for Vehicle Maintenan
 
 `AutoLog` is used as the public layout/brand and domain naming, while the official application name remains `vehicle-maintenance-history`.
 
-No AWS resources are created by this repository automatically. The workflows assume that ECR, EKS, RDS, IAM/OIDC and Kubernetes secrets already exist.
+No AWS resources are created by this repository automatically. The workflows assume that ECR, EKS, RDS, IAM/OIDC and Kubernetes secrets already exist or are created later through reviewed infrastructure changes.
 
 ## Target architecture
 
@@ -84,7 +84,7 @@ Expected values:
 
 ## AWS resources expected
 
-Create these resources manually or with Terraform/CloudFormation later:
+Create these resources manually or with reviewed Terraform/CloudFormation later:
 
 ```text
 AWS region: us-east-1
@@ -238,3 +238,43 @@ Before public production use, add:
 - HTTPS listener annotations or TLS configuration in `values-stage.yaml` and `values-prod.yaml`.
 
 This is intentionally left as a follow-up because the repository must not create real AWS resources yet.
+
+## Terraform foundation
+
+The repository includes a first Terraform foundation in `infra/terraform`.
+
+The initial Terraform scope is intentionally small and reviewable:
+
+- AWS provider configured for `us-east-1`.
+- ECR repositories:
+  - `autolog-backend`
+  - `autolog-frontend`
+- ECR image scanning and lifecycle policies.
+- Optional GitHub Actions OIDC/IAM deploy role, disabled by default.
+- Documented placeholders for future VPC, EKS, RDS, DNS and TLS work.
+
+Initialize and validate Terraform locally:
+
+```bash
+terraform -chdir=infra/terraform fmt -recursive
+terraform -chdir=infra/terraform init -backend=false
+terraform -chdir=infra/terraform validate
+```
+
+Preview a future AWS change only after selecting the target AWS account and reviewing variables:
+
+```bash
+terraform -chdir=infra/terraform plan
+```
+
+Do not run `terraform apply` without a reviewed plan and explicit approval.
+
+No remote Terraform state backend is configured yet. Use `init -backend=false` for local validation until a backend, such as S3 with DynamoDB locking, is reviewed and added.
+
+The pull request checks run Terraform formatting and validation without AWS credentials:
+
+```bash
+terraform -chdir=infra/terraform fmt -check -recursive
+terraform -chdir=infra/terraform init -backend=false
+terraform -chdir=infra/terraform validate
+```

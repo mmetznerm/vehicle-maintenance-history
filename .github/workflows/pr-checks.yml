@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   validate:
-    name: Validate backend, frontend, Docker and Helm
+    name: Validate backend, frontend, Docker, Helm and Terraform
     runs-on: ubuntu-latest
 
     steps:
@@ -63,3 +63,14 @@ jobs:
           helm template vehicle-maintenance-history deploy/helm/autolog
           helm template vehicle-maintenance-history deploy/helm/autolog -f deploy/helm/autolog/values-stage.yaml
           helm template vehicle-maintenance-history deploy/helm/autolog -f deploy/helm/autolog/values-prod.yaml
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Validate Terraform foundation
+        run: |
+          terraform -chdir=infra/terraform fmt -check -recursive
+          terraform -chdir=infra/terraform init -backend=false
+          terraform -chdir=infra/terraform validate
