@@ -8,6 +8,7 @@ The initial stack is intentionally small:
 
 - AWS provider configuration for `us-east-1`.
 - TLS provider support for the optional GitHub Actions OIDC provider.
+- S3 backend block with example backend configuration.
 - ECR repositories:
   - `autolog-backend`
   - `autolog-frontend`
@@ -28,7 +29,9 @@ terraform -chdir=infra/terraform validate
 terraform -chdir=infra/terraform plan
 ```
 
-Use `init -backend=false` for validation because no remote state backend has been chosen yet.
+Use `init -backend=false` for validation because the remote state backend must be bootstrapped before normal initialization.
+
+The example backend config is `backend.example.hcl`. Copy it to an untracked `backend.hcl` only after the state bucket and lock table exist.
 
 ## What a future apply would create
 
@@ -62,8 +65,24 @@ Before enabling OIDC, review the generated Terraform plan and confirm the allowe
 
 ## State
 
-No remote Terraform state backend is configured yet.
+The Terraform root declares an S3 backend, but concrete backend settings are intentionally not committed.
 
-Choose and review a backend before any long-lived AWS usage. A typical follow-up is an S3 backend with DynamoDB locking, created manually once or bootstrapped in a separate reviewed step.
+Use `backend.example.hcl` as the reviewed template for remote state. The expected backend uses an S3 state bucket with DynamoDB locking in `us-east-1`.
 
 Do not commit local state files, `.tfvars` files or `.terraform/` directories.
+
+See `docs/terraform-state.md` for the full remote state bootstrap and initialization notes.
+
+## GitHub Actions plan workflow
+
+The repository includes a manual `Terraform plan` workflow.
+
+It stays skipped until these GitHub repository variables are configured:
+
+```text
+AWS_TERRAFORM_ROLE_ARN
+TF_STATE_BUCKET
+TF_STATE_DYNAMODB_TABLE
+```
+
+The workflow runs `terraform plan` only. It does not run `terraform apply`.

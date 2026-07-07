@@ -251,6 +251,7 @@ The initial Terraform scope is intentionally small and reviewable:
   - `autolog-frontend`
 - ECR image scanning and lifecycle policies.
 - Optional GitHub Actions OIDC/IAM deploy role, disabled by default.
+- S3 remote state backend scaffold, with backend settings supplied outside committed Terraform.
 - Documented placeholders for future VPC, EKS, RDS, DNS and TLS work.
 
 Initialize and validate Terraform locally:
@@ -269,7 +270,10 @@ terraform -chdir=infra/terraform plan
 
 Do not run `terraform apply` without a reviewed plan and explicit approval.
 
-No remote Terraform state backend is configured yet. Use `init -backend=false` for local validation until a backend, such as S3 with DynamoDB locking, is reviewed and added.
+Remote Terraform state is scaffolded but not bootstrapped. Use `init -backend=false` for local validation until the S3 state bucket and DynamoDB lock table are reviewed and created.
+
+See `docs/terraform-state.md` for the planned backend resources and initialization commands.
+See `docs/aws-bootstrap-checklist.md` for the manual AWS and GitHub setup checklist.
 
 The pull request checks run Terraform formatting and validation without AWS credentials:
 
@@ -278,3 +282,5 @@ terraform -chdir=infra/terraform fmt -check -recursive
 terraform -chdir=infra/terraform init -backend=false
 terraform -chdir=infra/terraform validate
 ```
+
+The manual `Terraform plan` workflow stays skipped until remote state and `AWS_TERRAFORM_ROLE_ARN` are configured. It runs `plan` only; it does not run `apply`.

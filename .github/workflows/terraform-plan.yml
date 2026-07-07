@@ -1,0 +1,82 @@
+name: Terraform plan
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: us-east-1
+  TF_WORKING_DIR: infra/terraform
+  TF_STATE_KEY: vehicle-maintenance-history/aws-foundation/terraform.tfstate
+
+jobs:
+  terraform-configuration:
+    name: Check Terraform plan configuration
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+
+    steps:
+      - name: Check required GitHub variables
+        id: check
+        env:
+          AWS_TERRAFORM_ROLE_ARN: ${{ vars.AWS_TERRAFORM_ROLE_ARN }}
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          TF_STATE_DYNAMODB_TABLE: ${{ vars.TF_STATE_DYNAMODB_TABLE }}
+        run: |
+          if [ -n "$AWS_TERRAFORM_ROLE_ARN" ] && [ -n "$TF_STATE_BUCKET" ] && [ -n "$TF_STATE_DYNAMODB_TABLE" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Terraform plan skipped because AWS_TERRAFORM_ROLE_ARN, TF_STATE_BUCKET or TF_STATE_DYNAMODB_TABLE is not configured yet."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  plan:
+    name: Terraform plan
+    runs-on: ubuntu-latest
+    needs: terraform-configuration
+    if: needs.terraform-configuration.outputs.configured == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Write backend config
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          TF_STATE_DYNAMODB_TABLE: ${{ vars.TF_STATE_DYNAMODB_TABLE }}
+        run: |
+          printf '%s\n' \
+            "bucket         = \"$TF_STATE_BUCKET\"" \
+            "key            = \"$TF_STATE_KEY\"" \
+            "region         = \"$AWS_REGION\"" \
+            "dynamodb_table = \"$TF_STATE_DYNAMODB_TABLE\"" \
+            "encrypt        = true" \
+            > backend.ci.hcl
+
+      - name: Terraform fmt
+        run: terraform -chdir="${{ env.TF_WORKING_DIR }}" fmt -check -recursive
+
+      - name: Terraform init
+        run: terraform -chdir="${{ env.TF_WORKING_DIR }}" init -backend-config=backend.ci.hcl
+
+      - name: Terraform validate
+        run: terraform -chdir="${{ env.TF_WORKING_DIR }}" validate
+
+      - name: Terraform plan
+        run: terraform -chdir="${{ env.TF_WORKING_DIR }}" plan -out=tfplan

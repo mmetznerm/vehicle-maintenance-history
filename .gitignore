@@ -42,6 +42,9 @@ frontend/dist/
 *.tfstate.*
 *.tfvars
 *.tfvars.json
+*.tfplan
+infra/terraform/backend.hcl
+infra/terraform/backend.ci.hcl
 crash.log
 crash.*.log
 override.tf
