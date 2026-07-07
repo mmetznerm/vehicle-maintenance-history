@@ -2,7 +2,18 @@ import type { AuthTokensResponse, LoginRequest, RegisterRequest } from "../types
 import { clearAuthTokens, getAccessToken } from "./authStorage";
 
 const DEFAULT_API_BASE_URL = "/api";
-const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL;
+type AutologRuntimeConfig = {
+  VITE_API_BASE_URL?: string;
+};
+
+const runtimeWindow = window as Window & {
+  __AUTOLOG_CONFIG__?: AutologRuntimeConfig;
+};
+
+const configuredBaseUrl =
+  runtimeWindow.__AUTOLOG_CONFIG__?.VITE_API_BASE_URL ??
+  import.meta.env.VITE_API_BASE_URL ??
+  DEFAULT_API_BASE_URL;
 const API_BASE_URL = configuredBaseUrl.replace(/\/$/, "");
 
 type FieldErrorResponse = {

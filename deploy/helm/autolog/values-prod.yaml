@@ -1,0 +1,42 @@
+backend:
+  replicaCount: 2
+  image:
+    repository: autolog-backend
+    tag: latest
+    pullPolicy: Always
+  env:
+    springProfilesActive: prod
+    datasourceUrl: jdbc:postgresql://REPLACE_WITH_PROD_RDS_ENDPOINT:5432/autolog
+    corsAllowedOrigins: https://www.autolog.com.br
+  secrets:
+    create: false
+    existingSecret: autolog-prod-backend-secrets
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1024Mi
+
+frontend:
+  replicaCount: 2
+  image:
+    repository: autolog-frontend
+    tag: latest
+    pullPolicy: Always
+  env:
+    apiBaseUrl: https://api.autolog.com.br
+
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+  frontend:
+    host: www.autolog.com.br
+  backend:
+    host: api.autolog.com.br

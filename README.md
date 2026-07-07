@@ -12,6 +12,8 @@ REST API to manage vehicles and their maintenance history.
 - Flyway
 - JWT
 - Docker
+- Kubernetes/Helm ready deployment manifests
+- GitHub Actions CI/CD templates for AWS EKS/ECR
 - Testcontainers
 - Swagger/OpenAPI
 - Spring Actuator
@@ -136,6 +138,25 @@ Basic flow:
 | PUT | `/v1/vehicles/{vehicleId}/maintenances/{maintenanceId}` | Update maintenance |
 | DELETE | `/v1/vehicles/{vehicleId}/maintenances/{maintenanceId}` | Delete maintenance |
 
+## Cloud deployment preparation
+
+This project now includes a Kubernetes/EKS deployment foundation without changing the local Docker Compose flow.
+
+Key files:
+
+```text
+frontend/Dockerfile
+deploy/helm/autolog
+.github/workflows
+docs/deployment-aws-kubernetes.md
+```
+
+Read the deployment guide:
+
+```text
+docs/deployment-aws-kubernetes.md
+```
+
 ## Configuration
 
 Main configuration file:
@@ -151,6 +172,7 @@ JWT_SECRET
 SPRING_DATASOURCE_URL
 SPRING_DATASOURCE_USERNAME
 SPRING_DATASOURCE_PASSWORD
+APP_SECURITY_CORS_ALLOWED_ORIGINS
 ```
 
 Default local database:
@@ -204,5 +226,5 @@ The following topics were intentionally left out for now:
 
 - Outbox
 - Kafka
-- Kubernetes
-- Advanced CI/CD
+- Creating real AWS resources from the repository
+- HTTPS/ACM automation
