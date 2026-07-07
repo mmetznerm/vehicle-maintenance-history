@@ -1,81 +1,188 @@
 # Vehicle Maintenance History
 
-API REST para gerenciamento de veículos e seus históricos de manutenção.
+REST API to manage vehicles and their maintenance history.
 
-O projeto está sendo construído por features, começando pela infraestrutura e autenticação.
-
-## Tecnologias
+## Stack
 
 - Java 21
-- Spring Boot 3.5
-- Maven Wrapper
-- PostgreSQL 16
-- Flyway
-- Spring Data JPA
+- Spring Boot
 - Spring Security
+- Spring Data JPA
+- PostgreSQL
+- Flyway
 - JWT
-- Docker e Docker Compose
-- OpenAPI e Swagger UI
-- JUnit, Mockito e AssertJ
+- Docker
 - Testcontainers
+- Swagger/OpenAPI
+- Spring Actuator
 
-## Requisitos
+## Features
 
-Para executar localmente com Java:
+- User registration and login
+- JWT authentication
+- Refresh token and logout
+- Vehicle CRUD
+- Maintenance CRUD by vehicle
+- Standard error responses
+- Database migrations with Flyway
+- Unit and integration tests
+- Basic observability with `X-Request-Id`
 
-- Java 21
-- Docker Desktop
+## Running locally with Docker
 
-Não é necessário instalar Maven ou PostgreSQL.
-
-O Maven Wrapper está incluído no projeto:
-
-```powershell
-.\mvnw.cmd
+```bash
+docker compose up --build
 ```
 
-## Estrutura
-
-O código é organizado por contexto de negócio e por camadas:
+Application:
 
 ```text
-src/main/java/com/mmetzner/vmh/
-├── auth/
-│   ├── application/
-│   ├── domain/
-│   ├── infrastructure/
-│   └── presentation/
-└── shared/
-    ├── common/
-    ├── config/
-    ├── exception/
-    └── presentation/
+http://localhost:8080
 ```
 
-Responsabilidades:
-
-- `domain`: modelos e contratos independentes de infraestrutura.
-- `application`: casos de uso e DTOs.
-- `infrastructure`: banco, JPA, JWT e configurações técnicas.
-- `presentation`: controllers e contratos HTTP.
-- `shared`: componentes utilizados por mais de uma feature.
-
-## Banco de dados
-
-O PostgreSQL local utiliza:
+Swagger:
 
 ```text
-Database: vehicle-maintenance-history
-Username: vehicle-maintenance-history
-Password: vehicle-maintenance-history
-Port: 5432
+http://localhost:8080/swagger-ui.html
 ```
 
-Essas credenciais são exclusivas para desenvolvimento local.
-
-As alterações no banco são controladas pelo Flyway:
+Health:
 
 ```text
-src/main/resources/db/migration/
-├── V1__bootstrap.sql
-├── V2__create_users
+http://localhost:8080/actuator/health
+```
+
+## Running tests
+
+Unit and controller tests:
+
+```bash
+.\mvnw.cmd test
+```
+
+Integration tests:
+
+```bash
+.\mvnw.cmd verify -Pintegration-tests
+```
+
+Integration tests use Testcontainers, so Docker must be running.
+
+## Authentication
+
+Protected endpoints require:
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Basic flow:
+
+```text
+1. Register user
+2. Receive accessToken and refreshToken
+3. Use accessToken on protected endpoints
+4. Use refreshToken to renew tokens
+```
+
+## Main endpoints
+
+### Auth
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/v1/auth/register` | Register user |
+| POST | `/v1/auth/login` | Login |
+| POST | `/v1/auth/refresh` | Refresh tokens |
+| POST | `/v1/auth/logout` | Logout |
+
+### Vehicles
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/v1/vehicles` | Create vehicle |
+| GET | `/v1/vehicles` | List user vehicles |
+| GET | `/v1/vehicles/{vehicleId}` | Find vehicle |
+| PUT | `/v1/vehicles/{vehicleId}` | Update vehicle |
+| DELETE | `/v1/vehicles/{vehicleId}` | Delete vehicle |
+
+### Maintenances
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/v1/vehicles/{vehicleId}/maintenances` | Create maintenance |
+| GET | `/v1/vehicles/{vehicleId}/maintenances` | List maintenances |
+| GET | `/v1/vehicles/{vehicleId}/maintenances/{maintenanceId}` | Find maintenance |
+| PUT | `/v1/vehicles/{vehicleId}/maintenances/{maintenanceId}` | Update maintenance |
+| DELETE | `/v1/vehicles/{vehicleId}/maintenances/{maintenanceId}` | Delete maintenance |
+
+## Configuration
+
+Main configuration file:
+
+```text
+src/main/resources/application.yml
+```
+
+Important environment variables:
+
+```text
+JWT_SECRET
+SPRING_DATASOURCE_URL
+SPRING_DATASOURCE_USERNAME
+SPRING_DATASOURCE_PASSWORD
+```
+
+Default local database:
+
+```text
+database: vehicle-maintenance-history
+username: vehicle-maintenance-history
+password: vehicle-maintenance-history
+```
+
+## Database migrations
+
+Flyway migrations are located at:
+
+```text
+src/main/resources/db/migration
+```
+
+## Observability
+
+Every HTTP response includes:
+
+```http
+X-Request-Id
+```
+
+If the client sends this header, the API reuses it. Otherwise, the API generates a new one.
+
+## Project structure
+
+```text
+com.mmetzner.vmh
+├── auth
+├── vehicle
+├── maintenance
+└── shared
+```
+
+Each feature is organized by:
+
+```text
+domain
+application
+infrastructure
+presentation
+```
+
+## Out of scope
+
+The following topics were intentionally left out for now:
+
+- Outbox
+- Kafka
+- Kubernetes
+- Advanced CI/CD
