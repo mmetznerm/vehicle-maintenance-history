@@ -19,6 +19,8 @@ locals {
 
   create_vpc = var.enable_vpc
   create_rds = var.enable_vpc && var.enable_rds
+  create_eks = var.enable_vpc && var.enable_eks
+  create_eks_oidc_provider = local.create_eks && var.enable_eks_oidc_provider
 
   common_tags = {
     Application             = var.app_name

@@ -1,8 +1,8 @@
 # Future Terraform modules/resources intentionally left out of the first foundation PR:
 #
 # - NAT gateways, private egress routing and VPC endpoints for production-grade private subnet egress.
-# - EKS cluster, managed node groups/Fargate profiles, access entries and add-ons.
-# - AWS Load Balancer Controller IAM role and Helm installation path.
+# - EKS logging, private endpoint hardening, managed add-on versions and Fargate profiles.
+# - AWS Load Balancer Controller IAM role and Helm installation path using the optional EKS OIDC provider.
 # - RDS parameter groups, enhanced monitoring, production sizing and separate stage/prod database strategy.
 # - Route 53 records and ACM certificates for stage/prod hosts.
 #

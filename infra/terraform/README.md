@@ -11,12 +11,13 @@ The initial stack is intentionally small:
 - S3 backend block with example backend configuration.
 - Optional VPC foundation, disabled by default.
 - Optional RDS PostgreSQL foundation, disabled by default.
+- Optional EKS foundation, disabled by default.
 - ECR repositories:
   - `autolog-backend`
   - `autolog-frontend`
 - ECR image scanning and lifecycle policies.
 - Optional GitHub Actions OIDC/IAM deploy role, disabled by default.
-- Documented placeholders for future EKS, DNS, TLS, private subnet egress and production database hardening.
+- Documented placeholders for future EKS access hardening, add-ons, DNS, TLS, private subnet egress and production database hardening.
 
 Do not run `terraform apply` without a reviewed plan and explicit approval.
 
@@ -64,7 +65,16 @@ If `enable_vpc = true` and `enable_rds = true`, it would also create:
 - RDS security group scoped to the VPC CIDR.
 - Private RDS PostgreSQL instance with encrypted storage, deletion protection and AWS-managed master password.
 
-NAT gateways, VPC endpoints, the EKS cluster, Route 53 records, ACM certificates, production RDS sizing and separate stage/prod database topology are not created by this Terraform foundation.
+If `enable_vpc = true` and `enable_eks = true`, it would also create:
+
+- EKS cluster using public and private subnets.
+- Default managed node group using private subnets.
+- IAM roles and managed policy attachments for the cluster and node group.
+- Optional managed add-ons from `eks_addons`.
+- Optional EKS access entries for admin and deploy principals.
+- Optional EKS IAM OIDC provider for future IRSA integrations.
+
+NAT gateways, VPC endpoints, fixed add-on versions, AWS Load Balancer Controller, Route 53 records, ACM certificates, production RDS sizing and separate stage/prod database topology are not created by this Terraform foundation.
 
 ## Variables
 
@@ -86,6 +96,14 @@ rds_database_name = "autolog"
 rds_master_username = "autolog_admin"
 rds_engine_version = null
 rds_instance_class = "db.t4g.micro"
+enable_eks = false
+eks_cluster_name = "autolog"
+eks_cluster_version = null
+eks_node_instance_types = ["t3.small"]
+eks_addons = []
+eks_admin_principal_arns = []
+eks_deploy_principal_arns = []
+enable_eks_oidc_provider = false
 ```
 
 Before enabling OIDC, review the generated Terraform plan and confirm the allowed subjects match the workflow environments and branches.
@@ -93,6 +111,8 @@ Before enabling OIDC, review the generated Terraform plan and confirm the allowe
 Before enabling VPC creation, confirm the target AWS account, final CIDR ranges and availability zones. The number of public/private subnet CIDRs must not exceed the number of availability zones.
 
 Before enabling RDS creation, confirm `enable_vpc = true`, database size, backup retention, instance class, and whether stage and production should be separate stacks or separate databases.
+
+Before enabling EKS creation, confirm `enable_vpc = true`, Kubernetes version, endpoint access model, node instance type, desired node count and monthly cost. Also plan how GitHub Actions and operators will receive EKS access after cluster creation. Enable the EKS OIDC provider only when IRSA-managed add-ons or workloads are ready to use it.
 
 ## State
 

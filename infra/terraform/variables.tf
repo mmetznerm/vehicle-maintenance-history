@@ -132,3 +132,87 @@ variable "rds_backup_retention_period" {
   type        = number
   default     = 7
 }
+
+variable "enable_eks" {
+  description = "Set to true only after VPC networking, Kubernetes access, node sizing and cost boundaries are reviewed. Requires enable_vpc=true."
+  type        = bool
+  default     = false
+}
+
+variable "eks_cluster_name" {
+  description = "EKS cluster name."
+  type        = string
+  default     = "autolog"
+}
+
+variable "eks_cluster_version" {
+  description = "EKS Kubernetes version. Leave null to let AWS choose the current default version at creation time."
+  type        = string
+  default     = null
+}
+
+variable "eks_endpoint_private_access" {
+  description = "Whether the EKS API server endpoint is reachable from inside the VPC."
+  type        = bool
+  default     = true
+}
+
+variable "eks_endpoint_public_access" {
+  description = "Whether the EKS API server endpoint is reachable from the public internet. Review access controls before disabling private-only access."
+  type        = bool
+  default     = true
+}
+
+variable "eks_node_instance_types" {
+  description = "EC2 instance types for the default EKS managed node group."
+  type        = list(string)
+  default     = ["t3.small"]
+}
+
+variable "eks_node_desired_size" {
+  description = "Desired node count for the default EKS managed node group."
+  type        = number
+  default     = 2
+}
+
+variable "eks_node_min_size" {
+  description = "Minimum node count for the default EKS managed node group."
+  type        = number
+  default     = 1
+}
+
+variable "eks_node_max_size" {
+  description = "Maximum node count for the default EKS managed node group."
+  type        = number
+  default     = 3
+}
+
+variable "eks_node_disk_size" {
+  description = "Disk size in GiB for nodes in the default EKS managed node group."
+  type        = number
+  default     = 20
+}
+
+variable "eks_addons" {
+  description = "EKS managed add-ons to install after the cluster exists. Keep empty until add-on ownership and versions are reviewed."
+  type        = list(string)
+  default     = []
+}
+
+variable "eks_admin_principal_arns" {
+  description = "IAM principal ARNs that should receive EKS cluster admin access entries."
+  type        = list(string)
+  default     = []
+}
+
+variable "eks_deploy_principal_arns" {
+  description = "IAM principal ARNs that should receive EKS edit access for application deployments."
+  type        = list(string)
+  default     = []
+}
+
+variable "enable_eks_oidc_provider" {
+  description = "Set to true to create an IAM OIDC provider for the EKS cluster, used later by IRSA-enabled add-ons such as AWS Load Balancer Controller."
+  type        = bool
+  default     = false
+}

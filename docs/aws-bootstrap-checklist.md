@@ -14,6 +14,7 @@ Do not create these resources until the target AWS account and cost boundaries a
 - Whether Terraform will be run only from GitHub Actions or also from local machines.
 - VPC CIDR ranges and availability zones if `enable_vpc` will be turned on.
 - RDS PostgreSQL size, backup retention and environment strategy if `enable_rds` will be turned on.
+- EKS Kubernetes version, endpoint access model, node sizing and cluster access model if `enable_eks` will be turned on.
 
 ## Remote state resources
 
@@ -133,3 +134,31 @@ Before changing it to `true`, confirm:
 - How application credentials will be passed from AWS Secrets Manager or RDS output into Kubernetes secrets.
 
 The current RDS foundation uses AWS-managed master password storage and does not commit database passwords.
+
+## EKS activation notes
+
+Terraform includes an optional EKS foundation behind:
+
+```text
+enable_eks=false
+```
+
+EKS creation also requires:
+
+```text
+enable_vpc=true
+```
+
+Before changing it to `true`, confirm:
+
+- Kubernetes version, or whether to leave the Terraform variable null and use the AWS default at creation time.
+- Whether the cluster API endpoint should remain publicly reachable during bootstrap.
+- Default node group instance type, currently defaulted to `t3.small`.
+- Desired/min/max node counts, currently defaulted to 2/1/3.
+- IAM principal ARNs for `eks_admin_principal_arns` and `eks_deploy_principal_arns`, if access entries should be managed by Terraform.
+- Managed add-on names for `eks_addons`, if add-ons should be managed by Terraform.
+- Whether to create the EKS IAM OIDC provider now for future IRSA integrations.
+- Whether AWS Load Balancer Controller should be added in the same PR or a follow-up PR.
+- How the application deploy role will get Kubernetes access.
+
+The current EKS foundation does not install Helm charts, DNS records or TLS certificates. Kubernetes add-ons are installed only if `eks_addons` is populated.

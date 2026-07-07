@@ -65,3 +65,16 @@ output "rds" {
     db_name    = aws_db_instance.postgres[0].db_name
   } : null
 }
+
+output "eks" {
+  description = "EKS cluster details when enable_eks and enable_vpc are true."
+  value = local.create_eks ? {
+    cluster_name    = aws_eks_cluster.main[0].name
+    cluster_arn     = aws_eks_cluster.main[0].arn
+    endpoint          = aws_eks_cluster.main[0].endpoint
+    version           = aws_eks_cluster.main[0].version
+    node_group_name   = aws_eks_node_group.default[0].node_group_name
+    addons            = var.eks_addons
+    oidc_provider_arn = try(aws_iam_openid_connect_provider.eks[0].arn, null)
+  } : null
+}

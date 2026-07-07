@@ -254,7 +254,8 @@ The initial Terraform scope is intentionally small and reviewable:
 - S3 remote state backend scaffold, with backend settings supplied outside committed Terraform.
 - Optional VPC foundation, disabled by default.
 - Optional RDS PostgreSQL foundation, disabled by default.
-- Documented placeholders for future EKS, DNS, TLS, private subnet egress and production database hardening.
+- Optional EKS foundation, disabled by default.
+- Documented placeholders for future EKS access hardening, add-ons, DNS, TLS, private subnet egress and production database hardening.
 
 Initialize and validate Terraform locally:
 
@@ -276,6 +277,7 @@ Remote Terraform state is scaffolded but not bootstrapped. Use `init -backend=fa
 
 See `docs/terraform-state.md` for the planned backend resources and initialization commands.
 See `docs/aws-bootstrap-checklist.md` for the manual AWS and GitHub setup checklist.
+See `docs/aws-activation-runbook.md` for the staged activation sequence.
 
 The pull request checks run Terraform formatting and validation without AWS credentials:
 
@@ -290,3 +292,5 @@ The manual `Terraform plan` workflow stays skipped until remote state and `AWS_T
 VPC creation is controlled by `enable_vpc` and remains disabled by default. Confirm the AWS account, CIDR ranges, availability zones and networking cost boundaries before enabling it.
 
 RDS creation is controlled by `enable_rds` and remains disabled by default. It requires `enable_vpc = true` and should only be enabled after reviewing database cost, backup retention, deletion protection and stage/production topology.
+
+EKS creation is controlled by `enable_eks` and remains disabled by default. It requires `enable_vpc = true` and can create the base cluster, IAM roles, a default managed node group, optional managed add-ons, optional access entries and an optional cluster OIDC provider for IRSA. AWS Load Balancer Controller, DNS and TLS remain follow-up work.
