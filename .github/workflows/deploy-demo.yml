@@ -1,4 +1,4 @@
-name: Deploy stage
+name: Deploy demo
 
 on:
   push:
@@ -14,11 +14,11 @@ env:
   BACKEND_ECR_REPOSITORY: autolog-backend
   FRONTEND_ECR_REPOSITORY: autolog-frontend
   HELM_RELEASE: vehicle-maintenance-history
-  K8S_NAMESPACE: autolog-stage
+  K8S_NAMESPACE: autolog-demo
 
 jobs:
-  stage-configuration:
-    name: Check stage deployment configuration
+  demo-configuration:
+    name: Check demo deployment configuration
     runs-on: ubuntu-latest
     outputs:
       configured: ${{ steps.check.outputs.configured }}
@@ -29,25 +29,50 @@ jobs:
         env:
           AWS_GITHUB_ACTIONS_ROLE_ARN: ${{ vars.AWS_GITHUB_ACTIONS_ROLE_ARN }}
           EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
-          STAGE_SPRING_DATASOURCE_URL: ${{ vars.STAGE_SPRING_DATASOURCE_URL }}
+          DEMO_SPRING_DATASOURCE_URL: ${{ vars.DEMO_SPRING_DATASOURCE_URL }}
         run: |
-          if [ -n "$AWS_GITHUB_ACTIONS_ROLE_ARN" ] && [ -n "$EKS_CLUSTER_NAME" ] && [ -n "$STAGE_SPRING_DATASOURCE_URL" ]; then
+          if [ -n "$AWS_GITHUB_ACTIONS_ROLE_ARN" ] && [ -n "$EKS_CLUSTER_NAME" ] && [ -n "$DEMO_SPRING_DATASOURCE_URL" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::Stage deployment skipped because AWS/EKS/RDS GitHub variables are not configured yet."
+            echo "::notice::Demo deployment skipped because AWS/EKS/RDS GitHub variables are not configured yet."
             echo "configured=false" >> "$GITHUB_OUTPUT"
           fi
 
   build-push-deploy:
-    name: Build, push and deploy stage
+    name: Build, push and deploy demo
     runs-on: ubuntu-latest
-    environment: stage
-    needs: stage-configuration
-    if: needs.stage-configuration.outputs.configured == 'true'
+    environment: demo
+    needs: demo-configuration
+    if: needs.demo-configuration.outputs.configured == 'true'
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Run backend unit and integration tests
+        run: |
+          chmod +x ./mvnw
+          ./mvnw verify -Pintegration-tests
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -69,7 +94,7 @@ jobs:
           push: true
           tags: |
             ${{ steps.ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPOSITORY }}:${{ github.sha }}
-            ${{ steps.ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPOSITORY }}:latest
+            ${{ steps.ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPOSITORY }}:demo
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v6
@@ -78,7 +103,7 @@ jobs:
           push: true
           tags: |
             ${{ steps.ecr.outputs.registry }}/${{ env.FRONTEND_ECR_REPOSITORY }}:${{ github.sha }}
-            ${{ steps.ecr.outputs.registry }}/${{ env.FRONTEND_ECR_REPOSITORY }}:latest
+            ${{ steps.ecr.outputs.registry }}/${{ env.FRONTEND_ECR_REPOSITORY }}:demo
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
@@ -89,14 +114,14 @@ jobs:
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --region "$AWS_REGION" --name "${{ vars.EKS_CLUSTER_NAME }}"
 
-      - name: Deploy stage with Helm
+      - name: Deploy demo with Helm
         run: |
           helm upgrade --install "$HELM_RELEASE" deploy/helm/autolog \
             --namespace "$K8S_NAMESPACE" \
             --create-namespace \
-            -f deploy/helm/autolog/values-stage.yaml \
+            -f deploy/helm/autolog/values-demo.yaml \
             --set-string backend.image.repository="${{ steps.ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPOSITORY }}" \
             --set-string backend.image.tag="${{ github.sha }}" \
             --set-string frontend.image.repository="${{ steps.ecr.outputs.registry }}/${{ env.FRONTEND_ECR_REPOSITORY }}" \
             --set-string frontend.image.tag="${{ github.sha }}" \
-            --set-string backend.env.datasourceUrl="${{ vars.STAGE_SPRING_DATASOURCE_URL }}"
+            --set-string backend.env.datasourceUrl="${{ vars.DEMO_SPRING_DATASOURCE_URL }}"

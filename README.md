@@ -12,8 +12,8 @@ REST API to manage vehicles and their maintenance history.
 - Flyway
 - JWT
 - Docker
-- Kubernetes/Helm ready deployment manifests
-- GitHub Actions CI/CD templates for AWS EKS/ECR
+- Kubernetes/Helm deployment manifests for a public AWS demo environment
+- GitHub Actions CI/CD for PR validation and AWS demo deployment
 - Testcontainers
 - Swagger/OpenAPI
 - Spring Actuator
@@ -82,7 +82,7 @@ Unit and controller tests:
 .\mvnw.cmd test
 ```
 
-Integration tests:
+Full backend validation, including integration tests:
 
 ```bash
 .\mvnw.cmd verify -Pintegration-tests
@@ -138,9 +138,9 @@ Basic flow:
 | PUT | `/v1/vehicles/{vehicleId}/maintenances/{maintenanceId}` | Update maintenance |
 | DELETE | `/v1/vehicles/{vehicleId}/maintenances/{maintenanceId}` | Delete maintenance |
 
-## Cloud deployment preparation
+## Cloud demo deployment preparation
 
-This project now includes a Kubernetes/EKS deployment foundation without changing the local Docker Compose flow.
+This project includes a Kubernetes/EKS deployment foundation for a public AWS demo environment without changing the local Docker Compose flow.
 
 Key files:
 
@@ -156,6 +156,8 @@ Read the deployment guide:
 ```text
 docs/deployment-aws-kubernetes.md
 ```
+
+The public demo environment is the target for portfolio usage. Production deployment is intentionally out of scope for now.
 
 ## Configuration
 
@@ -205,10 +207,10 @@ If the client sends this header, the API reuses it. Otherwise, the API generates
 
 ```text
 com.mmetzner.vmh
-├── auth
-├── vehicle
-├── maintenance
-└── shared
+|-- auth
+|-- vehicle
+|-- maintenance
+`-- shared
 ```
 
 Each feature is organized by:
@@ -226,5 +228,6 @@ The following topics were intentionally left out for now:
 
 - Outbox
 - Kafka
-- Creating real AWS resources from the repository
-- HTTPS/ACM automation
+- Production deployment
+- Multi-environment promotion
+- High availability beyond a small public demo environment

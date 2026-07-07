@@ -26,18 +26,12 @@ output "github_actions_oidc_provider_arn" {
   value       = try(aws_iam_openid_connect_provider.github_actions[0].arn, null)
 }
 
-output "kubernetes_namespaces" {
-  description = "Expected Kubernetes namespaces used by Helm values."
-  value = {
-    stage = local.stage_namespace
-    prod  = local.prod_namespace
-  }
+output "kubernetes_namespace" {
+  description = "Expected Kubernetes namespace used by the demo Helm values."
+  value       = local.demo_namespace
 }
 
 output "public_hosts" {
-  description = "Expected public hosts used by Helm values and future DNS/TLS work."
-  value = {
-    stage = local.stage_hosts
-    prod  = local.prod_hosts
-  }
+  description = "Expected public hosts used by demo Helm values and future DNS/TLS work."
+  value       = local.demo_hosts
 }
