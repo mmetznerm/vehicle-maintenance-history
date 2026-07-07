@@ -1,6 +1,6 @@
-package com.mmetzner.vmh.vehicle.infrastructure.entity;
+package com.mmetzner.vmh.maintenance.infrastructure.entity;
 
-import com.mmetzner.vmh.auth.infrastructure.entity.UserEntity;
+import com.mmetzner.vmh.vehicle.infrastructure.entity.VehicleEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -14,36 +14,35 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
 @Entity
-@Table(name = "vehicles")
+@Table(name = "maintenances")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class VehicleEntity {
+public class MaintenanceEntity {
 
     @Id
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "owner_id", nullable = false)
-    private UserEntity owner;
+    @JoinColumn(name = "vehicle_id", nullable = false)
+    private VehicleEntity vehicle;
 
-    @Column(nullable = false, length = 10)
-    private String plate;
+    @Column(name = "maintenance_date", nullable = false)
+    private LocalDate maintenanceDate;
 
-    @Column(nullable = false, length = 80)
-    private String brand;
+    @Column(nullable = false)
+    private Integer odometer;
 
-    @Column(nullable = false, length = 80)
-    private String model;
+    @Column(nullable = false, length = 500)
+    private String description;
 
-    @Column(name = "manufacture_year", nullable = false)
-    private Integer manufactureYear;
-
-    @Column(length = 40)
-    private String color;
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal cost;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -51,32 +50,24 @@ public class VehicleEntity {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    public VehicleEntity(
+    public MaintenanceEntity(
             UUID id,
-            UserEntity owner,
-            String plate,
-            String brand,
-            String model,
-            Integer manufactureYear,
-            String color,
+            VehicleEntity vehicle,
+            LocalDate maintenanceDate,
+            Integer odometer,
+            String description,
+            BigDecimal cost,
             OffsetDateTime createdAt,
             OffsetDateTime updatedAt
     ) {
         this.id = id;
-        this.owner = owner;
-        this.plate = plate;
-        this.brand = brand;
-        this.model = model;
-        this.manufactureYear = manufactureYear;
-        this.color = color;
+        this.vehicle = vehicle;
+        this.maintenanceDate = maintenanceDate;
+        this.odometer = odometer;
+        this.description = description;
+        this.cost = cost;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
-    }
-
-    public static VehicleEntity reference(UUID id) {
-        VehicleEntity vehicle = new VehicleEntity();
-        vehicle.id = id;
-        return vehicle;
     }
 
     @PrePersist

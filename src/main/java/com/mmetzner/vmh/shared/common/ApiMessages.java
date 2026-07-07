@@ -61,4 +61,12 @@ public final class ApiMessages {
         private Vehicles() {
         }
     }
+
+    public static final class Maintenances {
+
+        public static final String NOT_FOUND = "Maintenance not found.";
+
+        private Maintenances() {
+        }
+    }
 }
