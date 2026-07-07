@@ -66,6 +66,11 @@ a {
   box-shadow: var(--shadow);
 }
 
+.register-card {
+  padding: 24px 24px 0;
+  overflow: hidden;
+}
+
 .auth-card-header {
   display: grid;
   justify-items: center;
@@ -78,6 +83,24 @@ a {
   width: 30px;
   height: 30px;
   color: var(--brand-strong);
+}
+
+.brand-icon-badge {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #ffffff;
+  background: linear-gradient(180deg, #3474f4 0%, #2563eb 100%);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+}
+
+.brand-icon-badge .brand-icon {
+  width: 25px;
+  height: 25px;
+  color: currentColor;
 }
 
 .auth-card-header h1 {
@@ -95,9 +118,26 @@ a {
   font-size: 13px;
 }
 
+.register-card-header {
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.register-card-header h1 {
+  font-size: 20px;
+}
+
+.register-card-header p {
+  font-size: 14px;
+}
+
 .login-form {
   display: grid;
   gap: 14px;
+}
+
+.register-form {
+  gap: 12px;
 }
 
 .field-group {
@@ -159,6 +199,13 @@ a {
 .field-input::placeholder {
   color: #7b8495;
   opacity: 1;
+}
+
+.field-help {
+  margin: 5px 0 0;
+  color: #475569;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .password-row {
@@ -282,6 +329,13 @@ a:focus-visible {
   text-decoration: none;
 }
 
+.register-card-footer {
+  margin: 22px -24px 0;
+  padding: 18px 16px;
+  border-top: 1px solid #e6ecfb;
+  background: #f0f5ff;
+}
+
 .vehicles-placeholder-page {
   min-height: 100vh;
   display: grid;
@@ -335,8 +389,21 @@ a:focus-visible {
     border-radius: 10px;
   }
 
+  .register-card {
+    padding: 24px 18px 0;
+  }
+
   .auth-card-header h1 {
     font-size: 24px;
+  }
+
+  .register-card-header h1 {
+    font-size: 20px;
+  }
+
+  .register-card-footer {
+    margin-right: -18px;
+    margin-left: -18px;
   }
 
   .password-row .field-label {

@@ -119,7 +119,7 @@ export function LoginPage() {
 
         <footer className="auth-card-footer">
           <span>Não tem uma conta?</span>
-          <a href="#register" onClick={(event) => event.preventDefault()}>
+          <a href="/register">
             Cadastre-se aqui
           </a>
         </footer>

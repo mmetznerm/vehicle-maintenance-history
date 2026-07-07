@@ -30,11 +30,19 @@ REST API to manage vehicles and their maintenance history.
 
 ## Running locally with Docker
 
+Start the full stack:
+
 ```bash
 docker compose up --build
 ```
 
-Application:
+Frontend:
+
+```text
+http://localhost:5173
+```
+
+API:
 
 ```text
 http://localhost:8080
@@ -50,6 +58,18 @@ Health:
 
 ```text
 http://localhost:8080/actuator/health
+```
+
+Stop the stack:
+
+```bash
+docker compose down
+```
+
+Start only the database:
+
+```bash
+docker compose up postgres
 ```
 
 ## Running tests

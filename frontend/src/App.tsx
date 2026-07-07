@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
 import { VehiclesPagePlaceholder } from "./pages/VehiclesPagePlaceholder";
 import { hasAuthTokens } from "./services/authStorage";
 
@@ -16,6 +17,14 @@ export function App() {
 
   if (path === "/vehicles") {
     return hasAuthTokens() ? <VehiclesPagePlaceholder /> : <Redirect to="/login" />;
+  }
+
+  if ((path === "/login" || path === "/register") && hasAuthTokens()) {
+    return <Redirect to="/vehicles" />;
+  }
+
+  if (path === "/register") {
+    return <RegisterPage />;
   }
 
   if (path === "/" && hasAuthTokens()) {
