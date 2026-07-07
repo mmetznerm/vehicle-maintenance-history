@@ -1,0 +1,16 @@
+spring:
+  config:
+    activate:
+      on-profile: stage
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+  security:
+    cors:
+      allowed-origins: ${APP_SECURITY_CORS_ALLOWED_ORIGINS:https://stage.autolog.com.br}

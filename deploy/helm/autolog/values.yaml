@@ -1,0 +1,74 @@
+appName: vehicle-maintenance-history
+
+backend:
+  replicaCount: 1
+  image:
+    repository: autolog-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+  env:
+    springProfilesActive: local
+    datasourceUrl: jdbc:postgresql://postgres:5432/vehicle-maintenance-history
+    corsAllowedOrigins: http://localhost:5173
+  secrets:
+    create: false
+    existingSecret: autolog-backend-secrets
+    datasourceUsernameKey: SPRING_DATASOURCE_USERNAME
+    datasourcePasswordKey: SPRING_DATASOURCE_PASSWORD
+    jwtSecretKey: JWT_SECRET
+    datasourceUsername: vehicle-maintenance-history
+    datasourcePassword: vehicle-maintenance-history
+    jwtSecret: dev-only-secret-key-change-before-production-123456789
+  probes:
+    livenessPath: /actuator/health/liveness
+    readinessPath: /actuator/health/readiness
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 6
+  resources:
+    requests:
+      cpu: 100m
+      memory: 384Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+
+frontend:
+  replicaCount: 1
+  image:
+    repository: autolog-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  env:
+    apiBaseUrl: /api
+  probes:
+    livenessPath: /health
+    readinessPath: /health
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  tls: []
+  frontend:
+    host: autolog.local
+  backend:
+    host: api.autolog.local

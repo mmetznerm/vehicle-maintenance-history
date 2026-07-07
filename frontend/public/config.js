@@ -1,0 +1,3 @@
+window.__AUTOLOG_CONFIG__ = {
+  VITE_API_BASE_URL: "/api"
+};

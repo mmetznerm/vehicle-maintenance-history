@@ -1,0 +1,63 @@
+name: PR checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate backend, frontend, Docker and Helm
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Run backend tests
+        run: ./mvnw test
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Validate Docker Compose
+        run: docker compose config
+
+      - name: Build backend Docker image
+        run: docker build -t autolog-backend:pr .
+
+      - name: Build frontend Docker image
+        run: docker build -t autolog-frontend:pr ./frontend
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint Helm chart
+        run: |
+          helm lint deploy/helm/autolog
+          helm lint deploy/helm/autolog -f deploy/helm/autolog/values-stage.yaml
+          helm lint deploy/helm/autolog -f deploy/helm/autolog/values-prod.yaml
+
+      - name: Render Helm chart
+        run: |
+          helm template vehicle-maintenance-history deploy/helm/autolog
+          helm template vehicle-maintenance-history deploy/helm/autolog -f deploy/helm/autolog/values-stage.yaml
+          helm template vehicle-maintenance-history deploy/helm/autolog -f deploy/helm/autolog/values-prod.yaml
