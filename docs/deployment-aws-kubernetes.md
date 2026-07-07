@@ -252,7 +252,9 @@ The initial Terraform scope is intentionally small and reviewable:
 - ECR image scanning and lifecycle policies.
 - Optional GitHub Actions OIDC/IAM deploy role, disabled by default.
 - S3 remote state backend scaffold, with backend settings supplied outside committed Terraform.
-- Documented placeholders for future VPC, EKS, RDS, DNS and TLS work.
+- Optional VPC foundation, disabled by default.
+- Optional RDS PostgreSQL foundation, disabled by default.
+- Documented placeholders for future EKS, DNS, TLS, private subnet egress and production database hardening.
 
 Initialize and validate Terraform locally:
 
@@ -284,3 +286,7 @@ terraform -chdir=infra/terraform validate
 ```
 
 The manual `Terraform plan` workflow stays skipped until remote state and `AWS_TERRAFORM_ROLE_ARN` are configured. It runs `plan` only; it does not run `apply`.
+
+VPC creation is controlled by `enable_vpc` and remains disabled by default. Confirm the AWS account, CIDR ranges, availability zones and networking cost boundaries before enabling it.
+
+RDS creation is controlled by `enable_rds` and remains disabled by default. It requires `enable_vpc = true` and should only be enabled after reviewing database cost, backup retention, deletion protection and stage/production topology.

@@ -41,3 +41,27 @@ output "public_hosts" {
     prod  = local.prod_hosts
   }
 }
+
+output "vpc" {
+  description = "VPC details when enable_vpc is true."
+  value = local.create_vpc ? {
+    id                   = aws_vpc.main[0].id
+    cidr_block           = aws_vpc.main[0].cidr_block
+    public_subnet_ids    = aws_subnet.public[*].id
+    private_subnet_ids   = aws_subnet.private[*].id
+    availability_zones   = var.availability_zones
+    public_subnet_cidrs  = var.public_subnet_cidrs
+    private_subnet_cidrs = var.private_subnet_cidrs
+  } : null
+}
+
+output "rds" {
+  description = "RDS PostgreSQL details when enable_rds and enable_vpc are true."
+  value = local.create_rds ? {
+    identifier = aws_db_instance.postgres[0].identifier
+    address    = aws_db_instance.postgres[0].address
+    endpoint   = aws_db_instance.postgres[0].endpoint
+    port       = aws_db_instance.postgres[0].port
+    db_name    = aws_db_instance.postgres[0].db_name
+  } : null
+}

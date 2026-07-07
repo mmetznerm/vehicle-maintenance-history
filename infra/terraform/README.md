@@ -9,12 +9,14 @@ The initial stack is intentionally small:
 - AWS provider configuration for `us-east-1`.
 - TLS provider support for the optional GitHub Actions OIDC provider.
 - S3 backend block with example backend configuration.
+- Optional VPC foundation, disabled by default.
+- Optional RDS PostgreSQL foundation, disabled by default.
 - ECR repositories:
   - `autolog-backend`
   - `autolog-frontend`
 - ECR image scanning and lifecycle policies.
 - Optional GitHub Actions OIDC/IAM deploy role, disabled by default.
-- Documented placeholders for future VPC, EKS, RDS, DNS and TLS work.
+- Documented placeholders for future EKS, DNS, TLS, private subnet egress and production database hardening.
 
 Do not run `terraform apply` without a reviewed plan and explicit approval.
 
@@ -33,6 +35,8 @@ Use `init -backend=false` for validation because the remote state backend must b
 
 The example backend config is `backend.example.hcl`. Copy it to an untracked `backend.hcl` only after the state bucket and lock table exist.
 
+Use `terraform.tfvars.example` as a starting point for reviewed local variables. Do not commit real `.tfvars` files.
+
 ## What a future apply would create
 
 With the default variables, a future reviewed `terraform apply` would create:
@@ -47,7 +51,20 @@ If `enable_github_actions_oidc = true`, it would also create:
 - IAM role `autolog-github-actions-deploy`.
 - Inline IAM policy allowing image push/read to the two ECR repositories and `eks:DescribeCluster`.
 
-The EKS cluster, RDS PostgreSQL databases, VPC, Route 53 records and ACM certificates are not created by this first Terraform foundation.
+If `enable_vpc = true`, it would also create:
+
+- One VPC using `vpc_cidr`.
+- Public subnets tagged for Kubernetes external load balancers.
+- Private subnets tagged for Kubernetes internal load balancers.
+- Internet Gateway and public route table.
+
+If `enable_vpc = true` and `enable_rds = true`, it would also create:
+
+- RDS PostgreSQL subnet group using private subnets.
+- RDS security group scoped to the VPC CIDR.
+- Private RDS PostgreSQL instance with encrypted storage, deletion protection and AWS-managed master password.
+
+NAT gateways, VPC endpoints, the EKS cluster, Route 53 records, ACM certificates, production RDS sizing and separate stage/prod database topology are not created by this Terraform foundation.
 
 ## Variables
 
@@ -59,9 +76,23 @@ app_name = "vehicle-maintenance-history"
 deployment_name = "autolog"
 github_repository = "mmetznerm/vehicle-maintenance-history"
 enable_github_actions_oidc = false
+enable_vpc = false
+vpc_cidr = "10.40.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs = ["10.40.0.0/24", "10.40.1.0/24"]
+private_subnet_cidrs = ["10.40.10.0/24", "10.40.11.0/24"]
+enable_rds = false
+rds_database_name = "autolog"
+rds_master_username = "autolog_admin"
+rds_engine_version = null
+rds_instance_class = "db.t4g.micro"
 ```
 
 Before enabling OIDC, review the generated Terraform plan and confirm the allowed subjects match the workflow environments and branches.
+
+Before enabling VPC creation, confirm the target AWS account, final CIDR ranges and availability zones. The number of public/private subnet CIDRs must not exceed the number of availability zones.
+
+Before enabling RDS creation, confirm `enable_vpc = true`, database size, backup retention, instance class, and whether stage and production should be separate stacks or separate databases.
 
 ## State
 

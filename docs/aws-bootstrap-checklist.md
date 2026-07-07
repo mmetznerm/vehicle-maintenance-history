@@ -12,6 +12,8 @@ Do not create these resources until the target AWS account and cost boundaries a
 - AWS region: `us-east-1`.
 - Operators who should have Terraform access.
 - Whether Terraform will be run only from GitHub Actions or also from local machines.
+- VPC CIDR ranges and availability zones if `enable_vpc` will be turned on.
+- RDS PostgreSQL size, backup retention and environment strategy if `enable_rds` will be turned on.
 
 ## Remote state resources
 
@@ -87,3 +89,47 @@ PROD_SPRING_DATASOURCE_URL
 ```
 
 Do not configure fake values. The stage deployment workflow intentionally skips itself until real values exist.
+
+## VPC activation notes
+
+Terraform includes an optional VPC foundation behind:
+
+```text
+enable_vpc=false
+```
+
+Before changing it to `true`, confirm:
+
+- VPC CIDR block, currently defaulted to `10.40.0.0/16`.
+- Public subnet CIDRs, currently defaulted to `10.40.0.0/24` and `10.40.1.0/24`.
+- Private subnet CIDRs, currently defaulted to `10.40.10.0/24` and `10.40.11.0/24`.
+- Availability zones for the AWS account.
+- Whether private subnet egress will use NAT gateways, VPC endpoints, or a different pattern.
+
+NAT gateways are intentionally not part of the current Terraform files because they have recurring cost and should be approved separately.
+
+## RDS activation notes
+
+Terraform includes an optional RDS PostgreSQL foundation behind:
+
+```text
+enable_rds=false
+```
+
+RDS creation also requires:
+
+```text
+enable_vpc=true
+```
+
+Before changing it to `true`, confirm:
+
+- Whether stage and production use separate Terraform stacks, separate RDS instances, or separate databases.
+- PostgreSQL engine version, or whether to leave the Terraform variable null and use the AWS default at creation time.
+- Instance class, currently defaulted to `db.t4g.micro`.
+- Storage, currently defaulted to 20 GiB with autoscaling up to 100 GiB.
+- Backup retention, currently defaulted to 7 days.
+- Whether deletion protection should remain enabled.
+- How application credentials will be passed from AWS Secrets Manager or RDS output into Kubernetes secrets.
+
+The current RDS foundation uses AWS-managed master password storage and does not commit database passwords.

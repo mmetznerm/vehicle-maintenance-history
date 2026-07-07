@@ -1,0 +1,25 @@
+aws_region      = "us-east-1"
+app_name        = "vehicle-maintenance-history"
+deployment_name = "autolog"
+environment     = "shared"
+
+github_repository          = "mmetznerm/vehicle-maintenance-history"
+enable_github_actions_oidc = false
+
+enable_vpc           = false
+vpc_cidr             = "10.40.0.0/16"
+availability_zones   = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs  = ["10.40.0.0/24", "10.40.1.0/24"]
+private_subnet_cidrs = [
+  "10.40.10.0/24",
+  "10.40.11.0/24"
+]
+
+enable_rds                  = false
+rds_database_name           = "autolog"
+rds_master_username         = "autolog_admin"
+rds_engine_version          = null
+rds_instance_class          = "db.t4g.micro"
+rds_allocated_storage       = 20
+rds_max_allocated_storage   = 100
+rds_backup_retention_period = 7

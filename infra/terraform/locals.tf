@@ -17,6 +17,9 @@ locals {
     api      = "api.autolog.com.br"
   }
 
+  create_vpc = var.enable_vpc
+  create_rds = var.enable_vpc && var.enable_rds
+
   common_tags = {
     Application             = var.app_name
     Brand                   = var.deployment_name
