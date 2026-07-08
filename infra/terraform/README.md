@@ -4,7 +4,7 @@ This directory contains the first Terraform foundation for Vehicle Maintenance H
 
 `AutoLog` is used for public deployment naming, while the official application name remains `vehicle-maintenance-history`.
 
-The initial stack is intentionally small:
+The initial stack is intentionally small and focused on a public AWS demo environment:
 
 - AWS provider configuration for `us-east-1`.
 - TLS provider support for the optional GitHub Actions OIDC provider.
@@ -44,7 +44,7 @@ If `enable_github_actions_oidc = true`, it would also create:
 - IAM role `autolog-github-actions-deploy`.
 - Inline IAM policy allowing image push/read to the two ECR repositories and `eks:DescribeCluster`.
 
-The EKS cluster, RDS PostgreSQL databases, VPC, Route 53 records and ACM certificates are not created by this first Terraform foundation.
+The EKS cluster, RDS PostgreSQL database, VPC, Route 53 records and ACM certificates are not created by this first Terraform foundation.
 
 ## Variables
 
@@ -58,7 +58,7 @@ github_repository = "mmetznerm/vehicle-maintenance-history"
 enable_github_actions_oidc = false
 ```
 
-Before enabling OIDC, review the generated Terraform plan and confirm the allowed subjects match the workflow environments and branches.
+Before enabling OIDC, review the generated Terraform plan and confirm the allowed subjects match the `main` branch and the `demo` GitHub Environment.
 
 ## State
 

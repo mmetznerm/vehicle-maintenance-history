@@ -17,13 +17,13 @@ variable "deployment_name" {
 }
 
 variable "environment" {
-  description = "Logical Terraform environment label for tags. This foundation stack is shared by stage and production."
+  description = "Logical Terraform environment label for tags. This foundation stack supports the public demo environment."
   type        = string
   default     = "shared"
 
   validation {
-    condition     = contains(["shared", "stage", "prod"], var.environment)
-    error_message = "environment must be one of: shared, stage, prod."
+    condition     = contains(["shared", "demo"], var.environment)
+    error_message = "environment must be one of: shared, demo."
   }
 }
 
@@ -50,7 +50,6 @@ variable "github_actions_allowed_subjects" {
   type        = list(string)
   default = [
     "repo:mmetznerm/vehicle-maintenance-history:ref:refs/heads/main",
-    "repo:mmetznerm/vehicle-maintenance-history:environment:stage",
-    "repo:mmetznerm/vehicle-maintenance-history:environment:production"
+    "repo:mmetznerm/vehicle-maintenance-history:environment:demo"
   ]
 }

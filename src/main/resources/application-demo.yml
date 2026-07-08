@@ -1,7 +1,7 @@
 spring:
   config:
     activate:
-      on-profile: stage
+      on-profile: demo
 
   datasource:
     url: ${SPRING_DATASOURCE_URL}
@@ -13,4 +13,4 @@ app:
     secret: ${JWT_SECRET}
   security:
     cors:
-      allowed-origins: ${APP_SECURITY_CORS_ALLOWED_ORIGINS:https://stage.autolog.com.br}
+      allowed-origins: ${APP_SECURITY_CORS_ALLOWED_ORIGINS:https://demo.autolog.com.br}

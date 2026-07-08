@@ -4,17 +4,11 @@ locals {
     frontend = "autolog-frontend"
   }
 
-  stage_namespace = "autolog-stage"
-  prod_namespace  = "autolog-prod"
+  demo_namespace = "autolog-demo"
 
-  stage_hosts = {
-    frontend = "stage.autolog.com.br"
-    api      = "api-stage.autolog.com.br"
-  }
-
-  prod_hosts = {
-    frontend = "www.autolog.com.br"
-    api      = "api.autolog.com.br"
+  demo_hosts = {
+    frontend = "demo.autolog.com.br"
+    api      = "api-demo.autolog.com.br"
   }
 
   common_tags = {
