@@ -100,7 +100,100 @@ variable "enable_nat_gateway" {
 }
 
 variable "eks_cluster_name" {
-  description = "Expected future EKS cluster name, used only for subnet discovery tags in this networking PR."
+  description = "EKS cluster name used by Terraform resources and Kubernetes subnet discovery tags."
   type        = string
   default     = "autolog-demo"
+}
+
+variable "enable_eks_cluster" {
+  description = "Create the demo EKS cluster and managed node group."
+  type        = bool
+  default     = false
+}
+
+variable "eks_kubernetes_version" {
+  description = "Kubernetes version for the demo EKS cluster."
+  type        = string
+  default     = "1.36"
+}
+
+variable "eks_endpoint_public_access" {
+  description = "Enable public API endpoint access for the demo EKS cluster."
+  type        = bool
+  default     = true
+}
+
+variable "eks_endpoint_private_access" {
+  description = "Enable private API endpoint access inside the VPC."
+  type        = bool
+  default     = true
+}
+
+variable "eks_public_access_cidrs" {
+  description = "CIDR blocks allowed to reach the public EKS API endpoint."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+variable "eks_node_subnet_tier" {
+  description = "Subnet tier used by the managed node group. Use private_app for the production-like demo path or public to avoid NAT cost in experiments."
+  type        = string
+  default     = "private_app"
+
+  validation {
+    condition     = contains(["private_app", "public"], var.eks_node_subnet_tier)
+    error_message = "eks_node_subnet_tier must be one of: private_app, public."
+  }
+}
+
+variable "eks_node_instance_types" {
+  description = "Instance types used by the demo EKS managed node group."
+  type        = list(string)
+  default     = ["t3.small"]
+}
+
+variable "eks_node_capacity_type" {
+  description = "Capacity type for the demo EKS managed node group."
+  type        = string
+  default     = "ON_DEMAND"
+
+  validation {
+    condition     = contains(["ON_DEMAND", "SPOT"], var.eks_node_capacity_type)
+    error_message = "eks_node_capacity_type must be ON_DEMAND or SPOT."
+  }
+}
+
+variable "eks_node_desired_size" {
+  description = "Desired number of nodes in the demo EKS managed node group."
+  type        = number
+  default     = 1
+}
+
+variable "eks_node_min_size" {
+  description = "Minimum number of nodes in the demo EKS managed node group."
+  type        = number
+  default     = 1
+}
+
+variable "eks_node_max_size" {
+  description = "Maximum number of nodes in the demo EKS managed node group."
+  type        = number
+  default     = 2
+}
+
+variable "eks_node_disk_size" {
+  description = "Disk size in GiB for demo EKS managed node group instances."
+  type        = number
+  default     = 30
+}
+
+variable "eks_addon_names" {
+  description = "EKS add-ons installed after the cluster is created."
+  type        = list(string)
+  default = [
+    "vpc-cni",
+    "kube-proxy",
+    "coredns",
+    "eks-pod-identity-agent"
+  ]
 }

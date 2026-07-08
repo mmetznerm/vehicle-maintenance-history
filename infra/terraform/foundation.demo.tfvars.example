@@ -1,5 +1,7 @@
 environment                = "demo"
 enable_github_actions_oidc = true
 github_repository          = "mmetznerm/vehicle-maintenance-history"
-enable_nat_gateway         = false
+enable_nat_gateway         = true
+enable_eks_cluster         = true
 eks_cluster_name           = "autolog-demo"
+eks_node_subnet_tier       = "private_app"

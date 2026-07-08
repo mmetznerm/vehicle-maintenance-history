@@ -144,8 +144,16 @@ resource "aws_route_table_association" "private_database" {
 
 resource "aws_security_group" "eks_control_plane" {
   name        = "${var.deployment_name}-${var.environment}-eks-control-plane"
-  description = "Reserved for the future EKS control plane."
+  description = "Security group for the EKS control plane."
   vpc_id      = aws_vpc.demo.id
+
+  egress {
+    description = "Allow outbound traffic from the EKS control plane."
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   tags = {
     Name = "${var.deployment_name}-${var.environment}-eks-control-plane"
@@ -154,8 +162,32 @@ resource "aws_security_group" "eks_control_plane" {
 
 resource "aws_security_group" "eks_nodes" {
   name        = "${var.deployment_name}-${var.environment}-eks-nodes"
-  description = "Reserved for future EKS worker nodes."
+  description = "Security group for EKS worker nodes."
   vpc_id      = aws_vpc.demo.id
+
+  ingress {
+    description = "Allow node-to-node traffic."
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
+
+  ingress {
+    description     = "Allow kubelet traffic from the EKS control plane."
+    from_port       = 10250
+    to_port         = 10250
+    protocol        = "tcp"
+    security_groups = [aws_security_group.eks_control_plane.id]
+  }
+
+  ingress {
+    description     = "Allow webhook traffic from the EKS control plane."
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.eks_control_plane.id]
+  }
 
   egress {
     description = "Allow outbound traffic from worker nodes."
@@ -172,7 +204,7 @@ resource "aws_security_group" "eks_nodes" {
 
 resource "aws_security_group" "rds" {
   name        = "${var.deployment_name}-${var.environment}-rds"
-  description = "Reserved for the future RDS PostgreSQL instance."
+  description = "Security group for the future RDS PostgreSQL instance."
   vpc_id      = aws_vpc.demo.id
 
   ingress {

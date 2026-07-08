@@ -232,13 +232,16 @@ The main Terraform scope is intentionally small and reviewable:
 - AWS provider configured for `us-east-1`.
 - Demo VPC with public, private application and private database subnets across two availability zones.
 - Optional single NAT Gateway for private application subnet egress.
-- Reserved security groups for future EKS and RDS resources.
+- EKS demo cluster, managed node group and basic managed add-ons.
+- EKS OIDC provider for future Kubernetes service account IAM roles.
+- GitHub Actions cluster access entry when GitHub OIDC is enabled.
+- Reserved security group for future RDS resources.
 - ECR repositories:
   - `autolog-backend`
   - `autolog-frontend`
 - ECR image scanning and lifecycle policies.
 - Optional GitHub Actions OIDC/IAM deploy role.
-- Documented placeholders for future EKS, RDS, DNS and TLS work.
+- Documented placeholders for future AWS Load Balancer Controller, RDS, DNS and TLS work.
 
 Validate Terraform locally:
 
