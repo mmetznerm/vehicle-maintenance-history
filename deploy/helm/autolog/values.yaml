@@ -67,8 +67,15 @@ ingress:
   enabled: true
   className: ""
   annotations: {}
+  listenPorts: '[{"HTTP":80}]'
+  certificateArn: ""
+  https:
+    enabled: false
+    sslRedirect: "443"
   tls: []
   frontend:
     host: autolog.local
+    healthcheckPath: /health
   backend:
     host: api.autolog.local
+    healthcheckPath: /actuator/health

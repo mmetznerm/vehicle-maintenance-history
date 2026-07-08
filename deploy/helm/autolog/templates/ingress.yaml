@@ -2,13 +2,26 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "autolog.name" . }}
+  name: {{ include "autolog.frontendName" . }}
   labels:
     {{- include "autolog.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
+    app.kubernetes.io/component: frontend
   annotations:
+  {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
+  {{- if .Values.ingress.https.enabled }}
+    alb.ingress.kubernetes.io/listen-ports: "[{\"HTTP\":80},{\"HTTPS\":443}]"
+  {{- else }}
+    alb.ingress.kubernetes.io/listen-ports: {{ .Values.ingress.listenPorts | quote }}
+  {{- end }}
+  {{- if .Values.ingress.certificateArn }}
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.ingress.certificateArn | quote }}
+  {{- end }}
+  {{- if .Values.ingress.https.enabled }}
+    alb.ingress.kubernetes.io/ssl-redirect: {{ .Values.ingress.https.sslRedirect | quote }}
+  {{- end }}
+    alb.ingress.kubernetes.io/healthcheck-path: {{ .Values.ingress.frontend.healthcheckPath | quote }}
 spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
@@ -28,6 +41,39 @@ spec:
                 name: {{ include "autolog.frontendName" . }}
                 port:
                   name: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "autolog.backendName" . }}
+  labels:
+    {{- include "autolog.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+  annotations:
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.ingress.https.enabled }}
+    alb.ingress.kubernetes.io/listen-ports: "[{\"HTTP\":80},{\"HTTPS\":443}]"
+  {{- else }}
+    alb.ingress.kubernetes.io/listen-ports: {{ .Values.ingress.listenPorts | quote }}
+  {{- end }}
+  {{- if .Values.ingress.certificateArn }}
+    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.ingress.certificateArn | quote }}
+  {{- end }}
+  {{- if .Values.ingress.https.enabled }}
+    alb.ingress.kubernetes.io/ssl-redirect: {{ .Values.ingress.https.sslRedirect | quote }}
+  {{- end }}
+    alb.ingress.kubernetes.io/healthcheck-path: {{ .Values.ingress.backend.healthcheckPath | quote }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- with .Values.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
     - host: {{ .Values.ingress.backend.host | quote }}
       http:
         paths:

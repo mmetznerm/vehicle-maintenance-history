@@ -12,7 +12,7 @@ The target is a public AWS demo environment for portfolio usage. Production depl
 - Frontend: React/Vite static build served by Nginx on Amazon EKS.
 - Images: Amazon ECR repositories.
 - Database: Amazon RDS PostgreSQL outside Kubernetes.
-- Ingress: Kubernetes Ingress prepared for AWS Load Balancer Controller.
+- Ingress: Kubernetes Ingress reconciled by AWS Load Balancer Controller.
 - CI/CD: GitHub Actions using OIDC to assume an AWS IAM role.
 
 ## Environments
@@ -81,9 +81,9 @@ Expected demo value:
 https://api-demo.autolog.com.br
 ```
 
-## AWS resources expected
+## AWS resources
 
-Create these resources manually or with reviewed Terraform changes:
+The repository Terraform creates the demo AWS resources after review and explicit apply:
 
 ```text
 AWS region: us-east-1
@@ -91,11 +91,13 @@ ECR repositories:
   autolog-backend
   autolog-frontend
 EKS cluster:
-  any chosen cluster name, referenced by GitHub variable EKS_CLUSTER_NAME
+  autolog-demo by default
 RDS PostgreSQL:
   demo database reachable from EKS
 AWS Load Balancer Controller:
-  installed in the EKS cluster if using ingressClassName: alb
+  IAM role created by Terraform, Helm installation handled by GitHub Actions
+Optional DNS/TLS:
+  Route 53 hosted zone and ACM certificate after the domain is purchased
 ```
 
 RDS connection strings should use JDBC format:
@@ -106,13 +108,13 @@ jdbc:postgresql://<rds-endpoint>:5432/autolog
 
 ## GitHub OIDC and IAM
 
-Create an IAM role trusted by GitHub Actions OIDC for this repository.
+Terraform creates an IAM role trusted by GitHub Actions OIDC for this repository when `enable_github_actions_oidc = true`.
 
 The role needs permissions for:
 
 - ECR login and image push/pull for `autolog-backend` and `autolog-frontend`.
 - EKS cluster access through `aws eks update-kubeconfig`.
-- Kubernetes deployment permissions through the EKS access model or `aws-auth`, depending on how the cluster is managed.
+- Kubernetes deployment permissions through the EKS access model.
 
 Store the role ARN as a GitHub repository or environment variable:
 
@@ -128,8 +130,23 @@ Repository or `demo` environment variables:
 
 ```text
 AWS_GITHUB_ACTIONS_ROLE_ARN
+AWS_LOAD_BALANCER_CONTROLLER_ROLE_ARN
+AWS_VPC_ID
 EKS_CLUSTER_NAME
+DEMO_BACKEND_HOST
+DEMO_FRONTEND_HOST
 DEMO_SPRING_DATASOURCE_URL
+DEMO_ACM_CERTIFICATE_ARN
+```
+
+`DEMO_ACM_CERTIFICATE_ARN` is optional until HTTPS is enabled.
+
+Recommended `demo` environment secrets:
+
+```text
+DEMO_SPRING_DATASOURCE_USERNAME
+DEMO_SPRING_DATASOURCE_PASSWORD
+DEMO_JWT_SECRET
 ```
 
 Recommended GitHub Environment:
@@ -138,7 +155,7 @@ Recommended GitHub Environment:
 
 ## Kubernetes secrets
 
-The Helm chart expects an existing backend secret by default.
+The Helm chart expects an existing backend secret by default. The `Deploy demo` workflow creates or updates it from GitHub environment secrets before running Helm:
 
 Demo:
 
@@ -172,7 +189,9 @@ helm upgrade --install vehicle-maintenance-history deploy/helm/autolog \
   --set-string backend.image.tag='<image-tag>' \
   --set-string frontend.image.repository='<account-id>.dkr.ecr.us-east-1.amazonaws.com/autolog-frontend' \
   --set-string frontend.image.tag='<image-tag>' \
-  --set-string backend.env.datasourceUrl='<demo-jdbc-url>'
+  --set-string backend.env.datasourceUrl='<demo-jdbc-url>' \
+  --set-string backend.env.corsAllowedOrigins='https://demo.autolog.com.br' \
+  --set-string frontend.env.apiBaseUrl='https://api-demo.autolog.com.br'
 ```
 
 ## CI/CD flow
@@ -192,17 +211,21 @@ Merges to `main`:
 - validate backend and frontend again
 - build backend and frontend images
 - push both images to Amazon ECR
+- install or upgrade the AWS Load Balancer Controller
+- create or update the backend Kubernetes secret
 - deploy automatically to `autolog-demo`
 
-## DNS and TLS notes
+## DNS and TLS
 
-The chart currently prepares HTTP ingress hosts.
+DNS and TLS are ready to be enabled when `autolog.com.br` is purchased.
 
-Before making the demo public, add:
+Terraform can create:
 
-- Route 53 records pointing `demo.autolog.com.br` and `api-demo.autolog.com.br` to the load balancer.
-- ACM certificates for `demo.autolog.com.br` and `api-demo.autolog.com.br`.
-- HTTPS listener annotations or TLS configuration in `values-demo.yaml`.
+- Route 53 hosted zone for `autolog.com.br`.
+- ACM certificate for `demo.autolog.com.br` and `api-demo.autolog.com.br`.
+- DNS validation records when a hosted zone ID is available.
+
+The GitHub Actions deploy workflow enables HTTPS on the ALB Ingress when `DEMO_ACM_CERTIFICATE_ARN` is configured. Route 53 records for the ALB can be added after the first successful Ingress reconciliation exposes the ALB DNS name.
 
 ## Terraform foundation
 
@@ -233,15 +256,29 @@ The main Terraform scope is intentionally small and reviewable:
 - Demo VPC with public, private application and private database subnets across two availability zones.
 - Optional single NAT Gateway for private application subnet egress.
 - EKS demo cluster, managed node group and basic managed add-ons.
-- EKS OIDC provider for future Kubernetes service account IAM roles.
+- EKS OIDC provider for Kubernetes service account IAM roles.
+- AWS Load Balancer Controller IAM role and policy for IRSA.
 - GitHub Actions cluster access entry when GitHub OIDC is enabled.
-- Reserved security group for future RDS resources.
+- RDS PostgreSQL demo database in isolated private database subnets.
+- Optional Route 53 hosted zone and ACM certificate for the demo hosts.
 - ECR repositories:
   - `autolog-backend`
   - `autolog-frontend`
 - ECR image scanning and lifecycle policies.
 - Optional GitHub Actions OIDC/IAM deploy role.
-- Documented placeholders for future AWS Load Balancer Controller, RDS, DNS and TLS work.
+
+After `terraform apply`, use these outputs to configure GitHub:
+
+```bash
+terraform -chdir=infra/terraform output -raw github_actions_role_arn
+terraform -chdir=infra/terraform output -raw aws_load_balancer_controller_role_arn
+terraform -chdir=infra/terraform output -raw vpc_id
+terraform -chdir=infra/terraform output -raw eks_cluster_name
+terraform -chdir=infra/terraform output -raw rds_datasource_url
+terraform -chdir=infra/terraform output -raw rds_master_username
+terraform -chdir=infra/terraform output -raw rds_master_password
+terraform -chdir=infra/terraform output -raw acm_certificate_arn
+```
 
 Validate Terraform locally:
 

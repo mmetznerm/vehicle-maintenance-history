@@ -33,7 +33,10 @@ output "kubernetes_namespace" {
 
 output "public_hosts" {
   description = "Expected public hosts used by demo Helm values and future DNS/TLS work."
-  value       = local.demo_hosts
+  value = {
+    frontend = var.demo_frontend_host
+    backend  = var.demo_backend_host
+  }
 }
 
 output "vpc_id" {
@@ -57,7 +60,7 @@ output "private_database_subnet_ids" {
 }
 
 output "eks_security_group_ids" {
-  description = "Reserved security group IDs for the future EKS PR."
+  description = "Security group IDs used by the demo EKS cluster."
   value = {
     control_plane = aws_security_group.eks_control_plane.id
     nodes         = aws_security_group.eks_nodes.id
@@ -65,7 +68,7 @@ output "eks_security_group_ids" {
 }
 
 output "rds_security_group_id" {
-  description = "Reserved security group ID for the future RDS PR."
+  description = "Security group ID used by the demo RDS PostgreSQL database."
   value       = aws_security_group.rds.id
 }
 
@@ -87,4 +90,45 @@ output "eks_cluster_oidc_provider_arn" {
 output "eks_node_group_name" {
   description = "Demo EKS managed node group name when enabled."
   value       = try(aws_eks_node_group.demo[0].node_group_name, null)
+}
+
+output "aws_load_balancer_controller_role_arn" {
+  description = "IAM role ARN used by the AWS Load Balancer Controller service account when enabled."
+  value       = try(aws_iam_role.aws_load_balancer_controller[0].arn, null)
+}
+
+output "rds_endpoint" {
+  description = "Demo RDS PostgreSQL endpoint when enabled."
+  value       = try(aws_db_instance.demo[0].address, null)
+}
+
+output "rds_datasource_url" {
+  description = "JDBC URL for the demo backend when RDS is enabled."
+  value       = try("jdbc:postgresql://${aws_db_instance.demo[0].address}:${aws_db_instance.demo[0].port}/${var.rds_database_name}", null)
+}
+
+output "rds_master_username" {
+  description = "Demo RDS PostgreSQL master username when enabled."
+  value       = var.enable_rds_database ? var.rds_master_username : null
+}
+
+output "rds_master_password" {
+  description = "Generated demo RDS PostgreSQL master password when enabled."
+  value       = try(random_password.rds_master[0].result, null)
+  sensitive   = true
+}
+
+output "route53_zone_id" {
+  description = "Route 53 hosted zone ID when the zone is managed by this stack or provided as input."
+  value       = local.selected_route53_zone_id
+}
+
+output "route53_name_servers" {
+  description = "Route 53 name servers to configure at the domain registrar when the hosted zone is managed by this stack."
+  value       = try(aws_route53_zone.demo[0].name_servers, null)
+}
+
+output "acm_certificate_arn" {
+  description = "ACM certificate ARN for the demo hosts when enabled."
+  value       = try(aws_acm_certificate.demo[0].arn, null)
 }

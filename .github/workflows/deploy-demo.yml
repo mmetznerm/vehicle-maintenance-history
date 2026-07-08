@@ -11,6 +11,7 @@ permissions:
 
 env:
   AWS_REGION: us-east-1
+  AWS_LOAD_BALANCER_CONTROLLER_CHART_VERSION: "1.14.0"
   BACKEND_ECR_REPOSITORY: autolog-backend
   FRONTEND_ECR_REPOSITORY: autolog-frontend
   HELM_RELEASE: vehicle-maintenance-history
@@ -20,6 +21,7 @@ jobs:
   demo-configuration:
     name: Check demo deployment configuration
     runs-on: ubuntu-latest
+    environment: demo
     outputs:
       configured: ${{ steps.check.outputs.configured }}
 
@@ -28,13 +30,29 @@ jobs:
         id: check
         env:
           AWS_GITHUB_ACTIONS_ROLE_ARN: ${{ vars.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          AWS_LOAD_BALANCER_CONTROLLER_ROLE_ARN: ${{ vars.AWS_LOAD_BALANCER_CONTROLLER_ROLE_ARN }}
+          AWS_VPC_ID: ${{ vars.AWS_VPC_ID }}
           EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+          DEMO_BACKEND_HOST: ${{ vars.DEMO_BACKEND_HOST }}
+          DEMO_FRONTEND_HOST: ${{ vars.DEMO_FRONTEND_HOST }}
           DEMO_SPRING_DATASOURCE_URL: ${{ vars.DEMO_SPRING_DATASOURCE_URL }}
+          DEMO_SPRING_DATASOURCE_USERNAME: ${{ secrets.DEMO_SPRING_DATASOURCE_USERNAME }}
+          DEMO_SPRING_DATASOURCE_PASSWORD: ${{ secrets.DEMO_SPRING_DATASOURCE_PASSWORD }}
+          DEMO_JWT_SECRET: ${{ secrets.DEMO_JWT_SECRET }}
         run: |
-          if [ -n "$AWS_GITHUB_ACTIONS_ROLE_ARN" ] && [ -n "$EKS_CLUSTER_NAME" ] && [ -n "$DEMO_SPRING_DATASOURCE_URL" ]; then
+          if [ -n "$AWS_GITHUB_ACTIONS_ROLE_ARN" ] \
+            && [ -n "$AWS_LOAD_BALANCER_CONTROLLER_ROLE_ARN" ] \
+            && [ -n "$AWS_VPC_ID" ] \
+            && [ -n "$EKS_CLUSTER_NAME" ] \
+            && [ -n "$DEMO_BACKEND_HOST" ] \
+            && [ -n "$DEMO_FRONTEND_HOST" ] \
+            && [ -n "$DEMO_SPRING_DATASOURCE_URL" ] \
+            && [ -n "$DEMO_SPRING_DATASOURCE_USERNAME" ] \
+            && [ -n "$DEMO_SPRING_DATASOURCE_PASSWORD" ] \
+            && [ -n "$DEMO_JWT_SECRET" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::Demo deployment skipped because AWS/EKS/RDS GitHub variables are not configured yet."
+            echo "::notice::Demo deployment skipped because AWS/EKS/RDS/ALB GitHub variables or secrets are not configured yet."
             echo "configured=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -114,14 +132,59 @@ jobs:
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --region "$AWS_REGION" --name "${{ vars.EKS_CLUSTER_NAME }}"
 
-      - name: Deploy demo with Helm
+      - name: Install AWS Load Balancer Controller
         run: |
-          helm upgrade --install "$HELM_RELEASE" deploy/helm/autolog \
-            --namespace "$K8S_NAMESPACE" \
-            --create-namespace \
-            -f deploy/helm/autolog/values-demo.yaml \
-            --set-string backend.image.repository="${{ steps.ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPOSITORY }}" \
-            --set-string backend.image.tag="${{ github.sha }}" \
-            --set-string frontend.image.repository="${{ steps.ecr.outputs.registry }}/${{ env.FRONTEND_ECR_REPOSITORY }}" \
-            --set-string frontend.image.tag="${{ github.sha }}" \
+          helm repo add eks https://aws.github.io/eks-charts
+          helm repo update eks
+          helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
+            --namespace kube-system \
+            --set clusterName="${{ vars.EKS_CLUSTER_NAME }}" \
+            --set region="$AWS_REGION" \
+            --set vpcId="${{ vars.AWS_VPC_ID }}" \
+            --set serviceAccount.create=true \
+            --set serviceAccount.name=aws-load-balancer-controller \
+            --set-string "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn=${{ vars.AWS_LOAD_BALANCER_CONTROLLER_ROLE_ARN }}" \
+            --version "$AWS_LOAD_BALANCER_CONTROLLER_CHART_VERSION"
+          kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=180s
+
+      - name: Apply backend demo secret
+        env:
+          DEMO_SPRING_DATASOURCE_USERNAME: ${{ secrets.DEMO_SPRING_DATASOURCE_USERNAME }}
+          DEMO_SPRING_DATASOURCE_PASSWORD: ${{ secrets.DEMO_SPRING_DATASOURCE_PASSWORD }}
+          DEMO_JWT_SECRET: ${{ secrets.DEMO_JWT_SECRET }}
+        run: |
+          kubectl create namespace "$K8S_NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n "$K8S_NAMESPACE" create secret generic autolog-demo-backend-secrets \
+            --from-literal=SPRING_DATASOURCE_USERNAME="$DEMO_SPRING_DATASOURCE_USERNAME" \
+            --from-literal=SPRING_DATASOURCE_PASSWORD="$DEMO_SPRING_DATASOURCE_PASSWORD" \
+            --from-literal=JWT_SECRET="$DEMO_JWT_SECRET" \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
+
+      - name: Deploy demo with Helm
+        env:
+          DEMO_ACM_CERTIFICATE_ARN: ${{ vars.DEMO_ACM_CERTIFICATE_ARN }}
+        run: |
+          helm_args=(
+            --namespace "$K8S_NAMESPACE"
+            --create-namespace
+            -f deploy/helm/autolog/values-demo.yaml
+            --set-string backend.image.repository="${{ steps.ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPOSITORY }}"
+            --set-string backend.image.tag="${{ github.sha }}"
+            --set-string frontend.image.repository="${{ steps.ecr.outputs.registry }}/${{ env.FRONTEND_ECR_REPOSITORY }}"
+            --set-string frontend.image.tag="${{ github.sha }}"
             --set-string backend.env.datasourceUrl="${{ vars.DEMO_SPRING_DATASOURCE_URL }}"
+            --set-string backend.env.corsAllowedOrigins="https://${{ vars.DEMO_FRONTEND_HOST }}"
+            --set-string frontend.env.apiBaseUrl="https://${{ vars.DEMO_BACKEND_HOST }}"
+            --set-string ingress.frontend.host="${{ vars.DEMO_FRONTEND_HOST }}"
+            --set-string ingress.backend.host="${{ vars.DEMO_BACKEND_HOST }}"
+          )
+
+          if [ -n "$DEMO_ACM_CERTIFICATE_ARN" ]; then
+            helm_args+=(
+              --set-string ingress.certificateArn="$DEMO_ACM_CERTIFICATE_ARN"
+              --set ingress.https.enabled=true
+            )
+          fi
+
+          helm upgrade --install "$HELM_RELEASE" deploy/helm/autolog "${helm_args[@]}"

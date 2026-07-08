@@ -3,5 +3,14 @@ enable_github_actions_oidc = true
 github_repository          = "mmetznerm/vehicle-maintenance-history"
 enable_nat_gateway         = true
 enable_eks_cluster         = true
+enable_rds_database        = true
+enable_aws_load_balancer_controller_irsa = true
 eks_cluster_name           = "autolog-demo"
 eks_node_subnet_tier       = "private_app"
+
+# Enable these after the domain is purchased and delegated to Route 53.
+enable_route53_zone    = false
+enable_acm_certificate = false
+demo_root_domain       = "autolog.com.br"
+demo_frontend_host     = "demo.autolog.com.br"
+demo_backend_host      = "api-demo.autolog.com.br"

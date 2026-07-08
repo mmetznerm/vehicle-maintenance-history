@@ -197,3 +197,99 @@ variable "eks_addon_names" {
     "eks-pod-identity-agent"
   ]
 }
+
+variable "enable_rds_database" {
+  description = "Create the demo RDS PostgreSQL database."
+  type        = bool
+  default     = false
+}
+
+variable "rds_database_name" {
+  description = "Initial PostgreSQL database name for the demo backend."
+  type        = string
+  default     = "autolog"
+}
+
+variable "rds_master_username" {
+  description = "Master username for the demo RDS PostgreSQL database."
+  type        = string
+  default     = "autolog_admin"
+}
+
+variable "rds_instance_class" {
+  description = "Instance class for the demo RDS PostgreSQL database."
+  type        = string
+  default     = "db.t4g.micro"
+}
+
+variable "rds_allocated_storage" {
+  description = "Initial allocated storage in GiB for the demo RDS PostgreSQL database."
+  type        = number
+  default     = 20
+}
+
+variable "rds_max_allocated_storage" {
+  description = "Maximum autoscaled storage in GiB for the demo RDS PostgreSQL database."
+  type        = number
+  default     = 100
+}
+
+variable "rds_engine_version" {
+  description = "Optional PostgreSQL engine version. Leave null to let AWS select the default supported version."
+  type        = string
+  default     = null
+}
+
+variable "rds_backup_retention_period" {
+  description = "Backup retention in days for the demo RDS PostgreSQL database."
+  type        = number
+  default     = 1
+}
+
+variable "enable_aws_load_balancer_controller_irsa" {
+  description = "Create the IAM role and policy used by the AWS Load Balancer Controller service account."
+  type        = bool
+  default     = false
+}
+
+variable "aws_load_balancer_controller_role_name" {
+  description = "IAM role name for the AWS Load Balancer Controller IRSA service account."
+  type        = string
+  default     = "autolog-aws-load-balancer-controller"
+}
+
+variable "demo_root_domain" {
+  description = "Root domain reserved for the public demo."
+  type        = string
+  default     = "autolog.com.br"
+}
+
+variable "demo_frontend_host" {
+  description = "Frontend host for the public demo."
+  type        = string
+  default     = "demo.autolog.com.br"
+}
+
+variable "demo_backend_host" {
+  description = "Backend API host for the public demo."
+  type        = string
+  default     = "api-demo.autolog.com.br"
+}
+
+variable "enable_route53_zone" {
+  description = "Create a Route 53 hosted zone for the demo root domain after the domain is purchased."
+  type        = bool
+  default     = false
+}
+
+variable "route53_zone_id" {
+  description = "Existing Route 53 hosted zone ID for ACM DNS validation. Leave null when enable_route53_zone creates the zone."
+  type        = string
+  default     = null
+}
+
+variable "enable_acm_certificate" {
+  description = "Create an ACM certificate for the demo frontend and backend hosts."
+  type        = bool
+  default     = false
+}

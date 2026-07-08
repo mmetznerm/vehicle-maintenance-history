@@ -27,9 +27,15 @@ ingress:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+    alb.ingress.kubernetes.io/group.name: autolog-demo
+  listenPorts: '[{"HTTP":80}]'
+  certificateArn: ""
+  https:
+    enabled: false
+    sslRedirect: "443"
   frontend:
     host: demo.autolog.com.br
+    healthcheckPath: /health
   backend:
     host: api-demo.autolog.com.br
+    healthcheckPath: /actuator/health

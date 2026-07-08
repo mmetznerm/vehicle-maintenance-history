@@ -161,6 +161,8 @@ docs/deployment-aws-kubernetes.md
 
 The public demo environment is the target for portfolio usage. Production deployment is intentionally out of scope for now.
 
+The demo path covers CI checks, ECR image publishing, Terraform-managed VPC/EKS/RDS/IAM, Helm deployment to EKS, AWS Load Balancer Controller integration and optional Route 53/ACM configuration for the final public domain.
+
 ## Configuration
 
 Main configuration file:
