@@ -1,3 +1,5 @@
 environment                = "demo"
 enable_github_actions_oidc = true
 github_repository          = "mmetznerm/vehicle-maintenance-history"
+enable_nat_gateway         = false
+eks_cluster_name           = "autolog-demo"

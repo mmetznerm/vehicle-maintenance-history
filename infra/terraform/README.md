@@ -39,13 +39,41 @@ Do not commit real backend config files, `.tfvars`, local state files or `.terra
 The current stack creates:
 
 - AWS provider configuration for `us-east-1`.
+- Demo VPC with DNS support.
+- Public subnets across two availability zones for internet-facing load balancers.
+- Private application subnets across two availability zones for future EKS workloads.
+- Isolated private database subnets across two availability zones for future RDS.
+- Route tables for public, private application and private database tiers.
+- Optional single NAT Gateway for private application egress.
+- Reserved security groups for future EKS and RDS resources.
 - ECR repositories:
   - `autolog-backend`
   - `autolog-frontend`
 - ECR image scanning and lifecycle policies.
 - Optional GitHub Actions OIDC/IAM deploy role.
 
-The EKS cluster, RDS PostgreSQL database, VPC, Route 53 records and ACM certificates are intentionally left for later reviewed PRs.
+The EKS cluster, RDS PostgreSQL database, Route 53 records and ACM certificates are intentionally left for later reviewed PRs.
+
+## Networking
+
+Default CIDR layout:
+
+| Tier | Purpose | CIDRs |
+|---|---|---|
+| VPC | Demo network | `10.40.0.0/16` |
+| Public | AWS Load Balancer Controller / internet-facing ALB | `10.40.0.0/24`, `10.40.1.0/24` |
+| Private app | Future EKS workloads | `10.40.10.0/24`, `10.40.11.0/24` |
+| Private database | Future RDS subnet group | `10.40.20.0/24`, `10.40.21.0/24` |
+
+Subnets include Kubernetes discovery tags for the future `autolog-demo` EKS cluster.
+
+NAT Gateway is disabled by default:
+
+```text
+enable_nat_gateway = false
+```
+
+Enable it only when private EKS nodes need outbound internet access. Keeping it disabled reduces demo cost while the cluster is not deployed.
 
 ## Local validation
 

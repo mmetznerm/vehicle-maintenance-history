@@ -4,6 +4,8 @@ locals {
     frontend = "autolog-frontend"
   }
 
+  availability_zone_count = 2
+
   demo_namespace = "autolog-demo"
 
   demo_hosts = {
@@ -19,5 +21,17 @@ locals {
     Repository              = var.github_repository
     TerraformStack          = "vehicle-maintenance-history-aws-foundation"
     OfficialApplicationName = "vehicle-maintenance-history"
+  }
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb"                         = "1"
+    "kubernetes.io/cluster/${var.eks_cluster_name}"  = "shared"
+    "elbv2.k8s.aws/cluster"                         = var.eks_cluster_name
+  }
+
+  private_app_subnet_tags = {
+    "kubernetes.io/role/internal-elb"                = "1"
+    "kubernetes.io/cluster/${var.eks_cluster_name}"  = "shared"
+    "elbv2.k8s.aws/cluster"                         = var.eks_cluster_name
   }
 }

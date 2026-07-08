@@ -35,3 +35,36 @@ output "public_hosts" {
   description = "Expected public hosts used by demo Helm values and future DNS/TLS work."
   value       = local.demo_hosts
 }
+
+output "vpc_id" {
+  description = "Demo VPC ID."
+  value       = aws_vpc.demo.id
+}
+
+output "public_subnet_ids" {
+  description = "Public subnet IDs for internet-facing load balancers."
+  value       = aws_subnet.public[*].id
+}
+
+output "private_app_subnet_ids" {
+  description = "Private application subnet IDs for EKS workloads."
+  value       = aws_subnet.private_app[*].id
+}
+
+output "private_database_subnet_ids" {
+  description = "Private database subnet IDs for RDS."
+  value       = aws_subnet.private_database[*].id
+}
+
+output "eks_security_group_ids" {
+  description = "Reserved security group IDs for the future EKS PR."
+  value = {
+    control_plane = aws_security_group.eks_control_plane.id
+    nodes         = aws_security_group.eks_nodes.id
+  }
+}
+
+output "rds_security_group_id" {
+  description = "Reserved security group ID for the future RDS PR."
+  value       = aws_security_group.rds.id
+}
