@@ -45,14 +45,17 @@ The current stack creates:
 - Isolated private database subnets across two availability zones for future RDS.
 - Route tables for public, private application and private database tiers.
 - Optional single NAT Gateway for private application egress.
-- Reserved security groups for future EKS and RDS resources.
+- EKS demo cluster, managed node group and basic managed add-ons.
+- EKS OIDC provider for future Kubernetes service account IAM roles.
+- GitHub Actions EKS access entry when GitHub OIDC is enabled.
+- Reserved security group for future RDS resources.
 - ECR repositories:
   - `autolog-backend`
   - `autolog-frontend`
 - ECR image scanning and lifecycle policies.
 - Optional GitHub Actions OIDC/IAM deploy role.
 
-The EKS cluster, RDS PostgreSQL database, Route 53 records and ACM certificates are intentionally left for later reviewed PRs.
+The AWS Load Balancer Controller, RDS PostgreSQL database, Route 53 records and ACM certificates are intentionally left for later reviewed PRs.
 
 ## Networking
 
@@ -74,6 +77,34 @@ enable_nat_gateway = false
 ```
 
 Enable it only when private EKS nodes need outbound internet access. Keeping it disabled reduces demo cost while the cluster is not deployed.
+
+## EKS
+
+The demo cluster is controlled by:
+
+```text
+enable_eks_cluster = true
+```
+
+The example variables file enables EKS with a small managed node group:
+
+```text
+eks_node_instance_types = ["t3.small"]
+eks_node_desired_size   = 1
+eks_node_min_size       = 1
+eks_node_max_size       = 2
+eks_node_subnet_tier    = "private_app"
+```
+
+Because the example uses private nodes, it also enables:
+
+```text
+enable_nat_gateway = true
+```
+
+This lets nodes pull container images from ECR and reach AWS APIs. To experiment with lower networking cost, set `eks_node_subnet_tier = "public"` and review the security trade-off before applying.
+
+GitHub Actions receives cluster admin access through the EKS access API when `enable_github_actions_oidc = true`. This is intentionally broad for the initial demo deployment path and should be narrowed in a later hardening PR.
 
 ## Local validation
 
@@ -127,4 +158,4 @@ Before applying, confirm:
 - The allowed OIDC subjects match the `main` branch and `demo` GitHub Environment.
 - The target AWS account does not already manage the GitHub OIDC provider in another Terraform stack.
 
-The deploy role currently allows ECR image push/read and `eks:DescribeCluster`. Kubernetes access is completed in the future EKS PR through EKS access entries or the cluster auth model chosen there.
+The deploy role currently allows ECR image push/read and `eks:DescribeCluster`. Kubernetes authorization is granted by the EKS access entry created for the GitHub Actions deploy role.
