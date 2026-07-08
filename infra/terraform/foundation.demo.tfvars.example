@@ -1,0 +1,3 @@
+environment                = "demo"
+enable_github_actions_oidc = true
+github_repository          = "mmetznerm/vehicle-maintenance-history"

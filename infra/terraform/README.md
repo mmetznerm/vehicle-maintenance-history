@@ -1,23 +1,53 @@
 # Terraform AWS foundation
 
-This directory contains the first Terraform foundation for Vehicle Maintenance History.
+This directory contains the main Terraform foundation for the Vehicle Maintenance History public AWS demo environment.
 
 `AutoLog` is used for public deployment naming, while the official application name remains `vehicle-maintenance-history`.
 
-The initial stack is intentionally small and focused on a public AWS demo environment:
+## Remote state
+
+This stack is configured to use an S3 backend:
+
+```hcl
+terraform {
+  backend "s3" {}
+}
+```
+
+Create the remote state resources first with:
+
+```text
+infra/terraform-bootstrap
+```
+
+Then create a local backend config file from:
+
+```text
+infra/terraform/backend.demo.hcl.example
+```
+
+Example initialization:
+
+```bash
+terraform -chdir=infra/terraform init -backend-config=backend.demo.hcl
+```
+
+Do not commit real backend config files, `.tfvars`, local state files or `.terraform/` directories.
+
+## Scope
+
+The current stack creates:
 
 - AWS provider configuration for `us-east-1`.
-- TLS provider support for the optional GitHub Actions OIDC provider.
 - ECR repositories:
   - `autolog-backend`
   - `autolog-frontend`
 - ECR image scanning and lifecycle policies.
-- Optional GitHub Actions OIDC/IAM deploy role, disabled by default.
-- Documented placeholders for future VPC, EKS, RDS, DNS and TLS work.
+- Optional GitHub Actions OIDC/IAM deploy role.
 
-Do not run `terraform apply` without a reviewed plan and explicit approval.
+The EKS cluster, RDS PostgreSQL database, VPC, Route 53 records and ACM certificates are intentionally left for later reviewed PRs.
 
-## Local commands
+## Local validation
 
 From the repository root:
 
@@ -25,45 +55,48 @@ From the repository root:
 terraform -chdir=infra/terraform fmt -recursive
 terraform -chdir=infra/terraform init -backend=false
 terraform -chdir=infra/terraform validate
-terraform -chdir=infra/terraform plan
 ```
 
-Use `init -backend=false` for validation because no remote state backend has been chosen yet.
+Use `init -backend=false` for local validation when the remote backend has not been initialized on the machine.
 
-## What a future apply would create
+## Planning and apply
 
-With the default variables, a future reviewed `terraform apply` would create:
+Copy the example variables file and review values:
 
-- ECR repository `autolog-backend`.
-- ECR repository `autolog-frontend`.
-- Lifecycle policies for both repositories.
+```bash
+cp infra/terraform/foundation.demo.tfvars.example infra/terraform/foundation.demo.tfvars
+```
 
-If `enable_github_actions_oidc = true`, it would also create:
+Initialize with the backend config:
 
-- GitHub Actions OIDC provider for `token.actions.githubusercontent.com`.
-- IAM role `autolog-github-actions-deploy`.
-- Inline IAM policy allowing image push/read to the two ECR repositories and `eks:DescribeCluster`.
+```bash
+terraform -chdir=infra/terraform init -backend-config=backend.demo.hcl
+```
 
-The EKS cluster, RDS PostgreSQL database, VPC, Route 53 records and ACM certificates are not created by this first Terraform foundation.
+Preview the AWS changes:
 
-## Variables
+```bash
+terraform -chdir=infra/terraform plan -var-file=foundation.demo.tfvars
+```
 
-Important defaults:
+Apply only after reviewing the plan:
+
+```bash
+terraform -chdir=infra/terraform apply -var-file=foundation.demo.tfvars
+```
+
+## GitHub OIDC
+
+The example demo variables enable GitHub Actions OIDC:
 
 ```text
-aws_region = "us-east-1"
-app_name = "vehicle-maintenance-history"
-deployment_name = "autolog"
-github_repository = "mmetznerm/vehicle-maintenance-history"
-enable_github_actions_oidc = false
+enable_github_actions_oidc = true
 ```
 
-Before enabling OIDC, review the generated Terraform plan and confirm the allowed subjects match the `main` branch and the `demo` GitHub Environment.
+Before applying, confirm:
 
-## State
+- `github_repository` matches the real GitHub repository.
+- The allowed OIDC subjects match the `main` branch and `demo` GitHub Environment.
+- The target AWS account does not already manage the GitHub OIDC provider in another Terraform stack.
 
-No remote Terraform state backend is configured yet.
-
-Choose and review a backend before any long-lived AWS usage. A typical follow-up is an S3 backend with DynamoDB locking, created manually once or bootstrapped in a separate reviewed step.
-
-Do not commit local state files, `.tfvars` files or `.terraform/` directories.
+The deploy role currently allows ECR image push/read and `eks:DescribeCluster`. Kubernetes access is completed in the future EKS PR through EKS access entries or the cluster auth model chosen there.
