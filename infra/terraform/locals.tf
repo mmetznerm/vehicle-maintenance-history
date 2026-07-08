@@ -24,14 +24,14 @@ locals {
   }
 
   public_subnet_tags = {
-    "kubernetes.io/role/elb"                         = "1"
-    "kubernetes.io/cluster/${var.eks_cluster_name}"  = "shared"
-    "elbv2.k8s.aws/cluster"                         = var.eks_cluster_name
+    "kubernetes.io/role/elb"                        = "1"
+    "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
+    "elbv2.k8s.aws/cluster"                        = var.eks_cluster_name
   }
 
   private_app_subnet_tags = {
-    "kubernetes.io/role/internal-elb"                = "1"
-    "kubernetes.io/cluster/${var.eks_cluster_name}"  = "shared"
-    "elbv2.k8s.aws/cluster"                         = var.eks_cluster_name
+    "kubernetes.io/role/internal-elb"               = "1"
+    "kubernetes.io/cluster/${var.eks_cluster_name}" = "shared"
+    "elbv2.k8s.aws/cluster"                        = var.eks_cluster_name
   }
 }
