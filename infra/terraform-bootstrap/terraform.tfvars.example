@@ -1,0 +1,2 @@
+state_bucket_name = "REPLACE_WITH_UNIQUE_STATE_BUCKET_NAME"
+lock_table_name   = "autolog-terraform-locks"

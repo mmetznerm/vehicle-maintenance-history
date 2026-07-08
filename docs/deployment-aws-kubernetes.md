@@ -208,19 +208,41 @@ Before making the demo public, add:
 
 The repository includes a first Terraform foundation in `infra/terraform`.
 
-The initial Terraform scope is intentionally small and reviewable:
+Remote Terraform state is bootstrapped separately in:
+
+```text
+infra/terraform-bootstrap
+```
+
+Bootstrap scope:
+
+- S3 bucket for Terraform state.
+- S3 versioning, encryption and public access block.
+- Bucket policy denying insecure transport.
+- DynamoDB table for state locking.
+
+After bootstrap, initialize the main stack with an S3 backend config based on:
+
+```text
+infra/terraform/backend.demo.hcl.example
+```
+
+The main Terraform scope is intentionally small and reviewable:
 
 - AWS provider configured for `us-east-1`.
 - ECR repositories:
   - `autolog-backend`
   - `autolog-frontend`
 - ECR image scanning and lifecycle policies.
-- Optional GitHub Actions OIDC/IAM deploy role, disabled by default.
+- Optional GitHub Actions OIDC/IAM deploy role.
 - Documented placeholders for future VPC, EKS, RDS, DNS and TLS work.
 
-Initialize and validate Terraform locally:
+Validate Terraform locally:
 
 ```bash
+terraform -chdir=infra/terraform-bootstrap fmt -recursive
+terraform -chdir=infra/terraform-bootstrap init -backend=false
+terraform -chdir=infra/terraform-bootstrap validate
 terraform -chdir=infra/terraform fmt -recursive
 terraform -chdir=infra/terraform init -backend=false
 terraform -chdir=infra/terraform validate
@@ -229,9 +251,8 @@ terraform -chdir=infra/terraform validate
 Preview a future AWS change only after selecting the target AWS account and reviewing variables:
 
 ```bash
-terraform -chdir=infra/terraform plan
+terraform -chdir=infra/terraform init -backend-config=backend.demo.hcl
+terraform -chdir=infra/terraform plan -var-file=foundation.demo.tfvars
 ```
 
 Do not run `terraform apply` without a reviewed plan and explicit approval.
-
-No remote Terraform state backend is configured yet. Use `init -backend=false` for local validation until a backend, such as S3 with DynamoDB locking, is reviewed and added.

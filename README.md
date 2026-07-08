@@ -148,6 +148,8 @@ Key files:
 frontend/Dockerfile
 deploy/helm/autolog
 .github/workflows
+infra/terraform-bootstrap
+infra/terraform
 docs/deployment-aws-kubernetes.md
 ```
 

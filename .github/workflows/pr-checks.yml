@@ -67,6 +67,12 @@ jobs:
         with:
           terraform_version: "1.9.8"
 
+      - name: Validate Terraform bootstrap
+        run: |
+          terraform -chdir=infra/terraform-bootstrap fmt -check -recursive
+          terraform -chdir=infra/terraform-bootstrap init -backend=false
+          terraform -chdir=infra/terraform-bootstrap validate
+
       - name: Validate Terraform foundation
         run: |
           terraform -chdir=infra/terraform fmt -check -recursive
