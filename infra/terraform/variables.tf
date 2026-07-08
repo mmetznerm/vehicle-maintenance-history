@@ -53,3 +53,54 @@ variable "github_actions_allowed_subjects" {
     "repo:mmetznerm/vehicle-maintenance-history:environment:demo"
   ]
 }
+
+variable "vpc_cidr" {
+  description = "CIDR block for the demo VPC."
+  type        = string
+  default     = "10.40.0.0/16"
+}
+
+variable "public_subnet_cidrs" {
+  description = "CIDR blocks for public subnets used by internet-facing load balancers."
+  type        = list(string)
+  default     = ["10.40.0.0/24", "10.40.1.0/24"]
+
+  validation {
+    condition     = length(var.public_subnet_cidrs) >= 2
+    error_message = "public_subnet_cidrs must contain at least two CIDR blocks."
+  }
+}
+
+variable "private_app_subnet_cidrs" {
+  description = "CIDR blocks for private application subnets used by EKS workloads."
+  type        = list(string)
+  default     = ["10.40.10.0/24", "10.40.11.0/24"]
+
+  validation {
+    condition     = length(var.private_app_subnet_cidrs) >= 2
+    error_message = "private_app_subnet_cidrs must contain at least two CIDR blocks."
+  }
+}
+
+variable "private_database_subnet_cidrs" {
+  description = "CIDR blocks for isolated private database subnets used by RDS."
+  type        = list(string)
+  default     = ["10.40.20.0/24", "10.40.21.0/24"]
+
+  validation {
+    condition     = length(var.private_database_subnet_cidrs) >= 2
+    error_message = "private_database_subnet_cidrs must contain at least two CIDR blocks."
+  }
+}
+
+variable "enable_nat_gateway" {
+  description = "Create a single NAT Gateway for private app subnet outbound internet access. Enable for private EKS nodes that need internet egress."
+  type        = bool
+  default     = false
+}
+
+variable "eks_cluster_name" {
+  description = "Expected future EKS cluster name, used only for subnet discovery tags in this networking PR."
+  type        = string
+  default     = "autolog-demo"
+}
