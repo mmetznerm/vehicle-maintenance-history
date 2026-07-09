@@ -12,7 +12,7 @@ RUN mkdir -p backend/src/main/resources/static \
     && cd frontend \
     && npm run build
 
-FROM eclipse-temurin:21-jdk-alpine AS backend-build
+FROM eclipse-temurin:25-jdk-alpine AS backend-build
 
 WORKDIR /workspace
 
@@ -26,7 +26,7 @@ COPY --from=frontend-build /workspace/backend/src/main/resources/static src/main
 
 RUN ./mvnw package -DskipTests
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 
