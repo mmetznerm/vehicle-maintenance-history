@@ -36,9 +36,17 @@ jobs:
         working-directory: backend
         run: chmod +x mvnw
 
-      - name: Run unit and controller tests
+      - name: Run unit tests and coverage check
         working-directory: backend
-        run: ./mvnw -B test
+        run: ./mvnw -B verify
+
+      - name: Upload backend coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-jacoco-report
+          path: backend/target/site/jacoco
+          if-no-files-found: warn
 
   backend-integration-tests:
     name: Backend Integration Tests
@@ -87,6 +95,18 @@ jobs:
         working-directory: frontend
         run: npm run lint
 
+      - name: Run frontend tests and coverage check
+        working-directory: frontend
+        run: npm run test:coverage
+
       - name: Build frontend
         working-directory: frontend
         run: npm run build
+
+      - name: Upload frontend coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage-report
+          path: frontend/coverage
+          if-no-files-found: warn

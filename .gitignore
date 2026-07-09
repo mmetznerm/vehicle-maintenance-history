@@ -33,7 +33,11 @@ build/
 ### Frontend ###
 frontend/node_modules/
 frontend/dist/
+frontend/coverage/
 backend/src/main/resources/static/
+
+### Coverage ###
+coverage/
 
 ### VS Code ###
 .vscode/
