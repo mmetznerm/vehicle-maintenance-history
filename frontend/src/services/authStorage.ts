@@ -16,6 +16,41 @@ export function getRefreshToken() {
   return localStorage.getItem(REFRESH_TOKEN_KEY);
 }
 
+type AccessTokenPayload = {
+  fullName?: string;
+  emailOrPhone?: string;
+};
+
+function decodeBase64Url(value: string) {
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+  const paddedBase64 = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+  const binary = atob(paddedBase64);
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+
+  return new TextDecoder().decode(bytes);
+}
+
+function readAccessTokenPayload(): AccessTokenPayload | null {
+  const accessToken = getAccessToken();
+  const payload = accessToken?.split(".")[1];
+
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(decodeBase64Url(payload)) as AccessTokenPayload;
+  } catch {
+    return null;
+  }
+}
+
+export function getCurrentUserDisplayName() {
+  const payload = readAccessTokenPayload();
+
+  return payload?.fullName?.trim() || payload?.emailOrPhone?.trim() || "Usuário";
+}
+
 export function hasAuthTokens() {
   return Boolean(getAccessToken() && getRefreshToken());
 }

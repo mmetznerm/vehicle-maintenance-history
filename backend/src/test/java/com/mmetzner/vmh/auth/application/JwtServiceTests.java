@@ -2,13 +2,19 @@ package com.mmetzner.vmh.auth.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.UUID;
+
+import javax.crypto.SecretKey;
 
 import org.junit.jupiter.api.Test;
 
 import com.mmetzner.vmh.auth.domain.model.User;
 import com.mmetzner.vmh.auth.infrastructure.security.JwtProperties;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
 class JwtServiceTests {
 
@@ -35,8 +41,18 @@ class JwtServiceTests {
         );
 
         String token = jwtService.createAccessToken(user);
+        SecretKey signingKey = Keys.hmacShaKeyFor(
+                TEST_SECRET.getBytes(StandardCharsets.UTF_8)
+        );
+        String fullName = Jwts.parser()
+                .verifyWith(signingKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("fullName", String.class);
 
         assertThat(token).isNotBlank();
         assertThat(jwtService.extractUserId(token)).isEqualTo(userId);
+        assertThat(fullName).isEqualTo("Maycon Metzner");
     }
 }

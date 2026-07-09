@@ -2,6 +2,7 @@ import {
   clearAuthTokens,
   clearTokens,
   getAccessToken,
+  getCurrentUserDisplayName,
   getRefreshToken,
   getStoredTokens,
   hasAuthTokens,
@@ -54,5 +55,44 @@ describe("authStorage", () => {
     clearAuthTokens();
 
     expect(hasAuthTokens()).toBe(false);
+  });
+
+  it("reads the current user display name from the access token", () => {
+    const payload = {
+      fullName: "Maycon Metzner",
+      emailOrPhone: "maycon@example.com",
+    };
+    const encodedPayload = btoa(JSON.stringify(payload))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+    saveAuthTokens({
+      accessToken: `header.${encodedPayload}.signature`,
+      refreshToken: "refresh-token",
+    });
+
+    expect(getCurrentUserDisplayName()).toBe("Maycon Metzner");
+  });
+
+  it("falls back to email or a generic label when the token has no full name", () => {
+    const payload = {
+      emailOrPhone: "maycon@example.com",
+    };
+    const encodedPayload = btoa(JSON.stringify(payload))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+    saveAuthTokens({
+      accessToken: `header.${encodedPayload}.signature`,
+      refreshToken: "refresh-token",
+    });
+
+    expect(getCurrentUserDisplayName()).toBe("maycon@example.com");
+
+    clearAuthTokens();
+
+    expect(getCurrentUserDisplayName()).toBe("Usuário");
   });
 });
