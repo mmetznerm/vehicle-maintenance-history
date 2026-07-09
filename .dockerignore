@@ -1,7 +1,10 @@
-target/
 .git/
 .idea/
 .vscode/
+backend/target/
+frontend/dist/
+frontend/node_modules/
+target/
 *.iml
 *.log
 .DS_Store

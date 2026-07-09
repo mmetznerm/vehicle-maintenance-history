@@ -1,6 +1,7 @@
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -28,6 +29,11 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
+
+### Frontend ###
+frontend/node_modules/
+frontend/dist/
+backend/src/main/resources/static/
 
 ### VS Code ###
 .vscode/
