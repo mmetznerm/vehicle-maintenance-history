@@ -40,6 +40,16 @@ Backend Integration Tests
 Frontend Quality
 ```
 
+After the security workflows have run at least once, also require these checks
+for a stricter gate:
+
+```text
+CodeQL (java-kotlin)
+CodeQL (javascript-typescript)
+Dependency Review
+Trivy Repository Scan
+```
+
 ## Notes
 
 - Keep job names unique across workflows so GitHub can resolve required checks
