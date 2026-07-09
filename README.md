@@ -1,5 +1,13 @@
 # Vehicle Maintenance History
 
+[![PR Checks](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/pr-checks.yml)
+[![CodeQL](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/codeql.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/codeql.yml)
+[![Security](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/security.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/security.yml)
+![Java](https://img.shields.io/badge/Java-21-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)
+![React](https://img.shields.io/badge/React-19-61DAFB)
+![Coverage Gate](https://img.shields.io/badge/Coverage%20Gate-60%25-success)
+
 REST API and frontend to manage vehicles and their maintenance history.
 
 ## Stack
@@ -159,6 +167,19 @@ cd backend
 ```
 
 Integration tests use Testcontainers, so Docker must be running.
+
+## CI Quality Gates
+
+Pull requests are checked with:
+
+- Backend unit, controller and coverage checks with Maven and JaCoCo.
+- Backend integration tests with Testcontainers and PostgreSQL.
+- Frontend lint, Vitest coverage and production build.
+- OpenAPI contract export as a workflow artifact.
+- CodeQL, Dependency Review and Trivy security scans.
+
+Coverage reports and the generated OpenAPI document are uploaded as GitHub
+Actions artifacts.
 
 ## Authentication
 
