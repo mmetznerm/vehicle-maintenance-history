@@ -1,6 +1,6 @@
 # Vehicle Maintenance History
 
-REST API to manage vehicles and their maintenance history.
+REST API and frontend to manage vehicles and their maintenance history.
 
 ## Stack
 
@@ -15,6 +15,37 @@ REST API to manage vehicles and their maintenance history.
 - Testcontainers
 - Swagger/OpenAPI
 - Spring Actuator
+- React
+- TypeScript
+- Vite
+
+## Project Structure
+
+```text
+vehicle-maintenance-history/
+  backend/     Spring Boot API and static frontend output.
+  frontend/    React + TypeScript + Vite source code.
+  docs/        Project documentation.
+```
+
+Backend package structure:
+
+```text
+com.mmetzner.vmh
+  auth
+  vehicle
+  maintenance
+  shared
+```
+
+Each backend feature is organized by:
+
+```text
+domain
+application
+infrastructure
+presentation
+```
 
 ## Features
 
@@ -28,10 +59,10 @@ REST API to manage vehicles and their maintenance history.
 - Unit and integration tests
 - Basic observability with `X-Request-Id`
 
-## Running locally with Docker
+## Running Locally With Docker
 
 ```bash
-docker compose up --build
+docker compose --profile app up --build
 ```
 
 Application:
@@ -52,17 +83,78 @@ Health:
 http://localhost:8080/actuator/health
 ```
 
-## Running tests
+## Recommended Local Development Workflow
+
+For day-to-day development, prefer running only PostgreSQL in Docker and running
+the Spring Boot application locally from the IDE. This keeps Java debugging,
+breakpoints, hot reload and logs easier to use.
+
+Start only the database:
+
+```bash
+docker compose up -d postgres
+```
+
+Build the frontend into Spring Boot static resources:
+
+```bash
+cd frontend
+npm.cmd run build
+```
+
+Then start `VmhApplication` from the IDE. The full application is available from
+a single origin:
+
+```text
+http://localhost:8080
+```
+
+Useful frontend routes:
+
+```text
+http://localhost:8080/login
+http://localhost:8080/register
+```
+
+In IntelliJ IDEA, make the green Start button build the frontend before starting
+the backend:
+
+```text
+Run/Debug Configurations > VmhApplication > Modify options > Add before launch task
+```
+
+Add an npm task pointing to:
+
+```text
+package.json: frontend/package.json
+script: build
+```
+
+After that, pressing Start on `VmhApplication` refreshes the frontend build and
+starts the backend.
+
+For fast frontend-only iteration, run:
+
+```bash
+cd frontend
+npm.cmd run dev
+```
+
+The Vite dev server proxies `/v1` requests to `http://localhost:8080`.
+
+## Running Tests
 
 Unit and controller tests:
 
 ```bash
+cd backend
 .\mvnw.cmd test
 ```
 
 Integration tests:
 
 ```bash
+cd backend
 .\mvnw.cmd verify -Pintegration-tests
 ```
 
@@ -85,7 +177,7 @@ Basic flow:
 4. Use refreshToken to renew tokens
 ```
 
-## Main endpoints
+## Main Endpoints
 
 ### Auth
 
@@ -118,10 +210,10 @@ Basic flow:
 
 ## Configuration
 
-Main configuration file:
+Main backend configuration file:
 
 ```text
-src/main/resources/application.yml
+backend/src/main/resources/application.yml
 ```
 
 Important environment variables:
@@ -141,12 +233,12 @@ username: vehicle-maintenance-history
 password: vehicle-maintenance-history
 ```
 
-## Database migrations
+## Database Migrations
 
 Flyway migrations are located at:
 
 ```text
-src/main/resources/db/migration
+backend/src/main/resources/db/migration
 ```
 
 ## Observability
@@ -157,28 +249,10 @@ Every HTTP response includes:
 X-Request-Id
 ```
 
-If the client sends this header, the API reuses it. Otherwise, the API generates a new one.
+If the client sends this header, the API reuses it. Otherwise, the API generates
+a new one.
 
-## Project structure
-
-```text
-com.mmetzner.vmh
-├── auth
-├── vehicle
-├── maintenance
-└── shared
-```
-
-Each feature is organized by:
-
-```text
-domain
-application
-infrastructure
-presentation
-```
-
-## Out of scope
+## Out Of Scope
 
 The following topics were intentionally left out for now:
 
