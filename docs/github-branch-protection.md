@@ -50,6 +50,9 @@ Dependency Review
 Trivy Repository Scan
 ```
 
+Only require `Dependency Review` after `Settings > Code security and analysis >
+Dependency graph` is enabled and the job has passed at least once.
+
 ## Notes
 
 - Keep job names unique across workflows so GitHub can resolve required checks

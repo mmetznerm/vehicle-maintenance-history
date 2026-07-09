@@ -35,6 +35,16 @@ Settings > Code security and analysis
 - Secret scanning.
 - Push protection.
 
+`Security / Dependency Review` depends on `Dependency graph`. If the workflow
+fails with:
+
+```text
+Dependency review is not supported on this repository.
+```
+
+enable `Dependency graph` first, then rerun the failed workflow job. This is a
+repository setting, not a workflow syntax issue.
+
 After the new workflows run once, add these checks to the `main` branch
 protection rule if you want security gates to be required before merge:
 
