@@ -110,3 +110,80 @@ jobs:
           name: frontend-coverage-report
           path: frontend/coverage
           if-no-files-found: warn
+
+  openapi-artifact:
+    name: OpenAPI Artifact
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: vehicle-maintenance-history
+          POSTGRES_USER: vehicle-maintenance-history
+          POSTGRES_PASSWORD: vehicle-maintenance-history
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vehicle-maintenance-history -d vehicle-maintenance-history"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/vehicle-maintenance-history
+      SPRING_DATASOURCE_USERNAME: vehicle-maintenance-history
+      SPRING_DATASOURCE_PASSWORD: vehicle-maintenance-history
+      JWT_SECRET: ci-only-secret-key-for-openapi-generation-123456789
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Make Maven wrapper executable
+        working-directory: backend
+        run: chmod +x mvnw
+
+      - name: Build backend jar
+        working-directory: backend
+        run: ./mvnw -B -DskipTests package
+
+      - name: Start application
+        working-directory: backend
+        run: |
+          java -jar target/vehicle-maintenance-history-0.0.1-SNAPSHOT.jar > application.log 2>&1 &
+          echo $! > application.pid
+
+      - name: Wait for application health
+        working-directory: backend
+        run: |
+          for attempt in {1..30}; do
+            if curl -fsS http://localhost:8080/actuator/health > /dev/null; then
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          cat application.log
+          exit 1
+
+      - name: Export OpenAPI document
+        run: |
+          mkdir -p build/openapi
+          curl -fsS http://localhost:8080/v3/api-docs -o build/openapi/openapi.json
+
+      - name: Upload OpenAPI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-contract
+          path: build/openapi/openapi.json
+          if-no-files-found: error

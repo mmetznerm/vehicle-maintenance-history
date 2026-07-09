@@ -38,6 +38,7 @@ Select these checks from the `PR Checks` workflow:
 Backend Unit Tests
 Backend Integration Tests
 Frontend Quality
+OpenAPI Artifact
 ```
 
 After the security workflows have run at least once, also require these checks
