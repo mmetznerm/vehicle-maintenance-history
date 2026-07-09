@@ -9,6 +9,7 @@ function setPath(path: string) {
 describe("App", () => {
   beforeEach(() => {
     localStorage.clear();
+    vi.restoreAllMocks();
     setPath("/");
   });
 
@@ -27,16 +28,23 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /criar conta/i })).toBeInTheDocument();
   });
 
-  it("shows the vehicles placeholder when the user is authenticated", () => {
+  it("shows the vehicles page when the user is authenticated", async () => {
     setPath("/vehicles");
     saveAuthTokens({
       accessToken: "access-token",
       refreshToken: "refresh-token",
     });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify([]), { status: 200 })),
+    );
 
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: /ve.culos/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: /nenhum ve.culo cadastrado/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /adicionar ve.culo/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sair/i })).toBeInTheDocument();
   });
 });
