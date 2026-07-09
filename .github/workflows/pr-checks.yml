@@ -41,7 +41,7 @@ jobs:
         run: ./mvnw -B verify
 
       - name: Upload backend coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: backend-jacoco-report
@@ -104,7 +104,7 @@ jobs:
         run: npm run build
 
       - name: Upload frontend coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: frontend-coverage-report
@@ -182,7 +182,7 @@ jobs:
           curl -fsS http://localhost:8080/v3/api-docs -o build/openapi/openapi.json
 
       - name: Upload OpenAPI artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openapi-contract
           path: build/openapi/openapi.json
