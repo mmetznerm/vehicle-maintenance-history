@@ -134,4 +134,33 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: /cadastrar manuten..o/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /salvar/i })).toBeInTheDocument();
   });
+
+  it("shows the maintenance edit page when the user is authenticated", async () => {
+    setPath("/vehicles/vehicle-id/maintenances/maintenance-id/edit");
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            id: "maintenance-id",
+            vehicleId: "vehicle-id",
+            maintenanceDate: "2026-07-07",
+            odometer: 35000,
+            description: "Troca de óleo",
+            cost: 250,
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: /editar manuten..o/i })).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("Troca de óleo")).toBeInTheDocument();
+  });
 });

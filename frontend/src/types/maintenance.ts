@@ -15,3 +15,5 @@ export type CreateMaintenanceRequest = {
   description: string;
   cost: number;
 };
+
+export type UpdateMaintenanceRequest = CreateMaintenanceRequest;

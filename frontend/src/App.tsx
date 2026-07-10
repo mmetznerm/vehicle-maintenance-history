@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { LoginPage } from "./pages/LoginPage";
 import { MaintenanceCreatePage } from "./pages/MaintenanceCreatePage";
+import { MaintenanceEditPage } from "./pages/MaintenanceEditPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { VehicleCreatePage } from "./pages/VehicleCreatePage";
 import { VehicleDetailsPage } from "./pages/VehicleDetailsPage";
@@ -33,6 +34,10 @@ export function App() {
 
   if (/^\/vehicles\/[^/]+\/maintenances\/new$/.test(path)) {
     return hasAuthTokens() ? <MaintenanceCreatePage /> : <Redirect to="/login" />;
+  }
+
+  if (/^\/vehicles\/[^/]+\/maintenances\/[^/]+\/edit$/.test(path)) {
+    return hasAuthTokens() ? <MaintenanceEditPage /> : <Redirect to="/login" />;
   }
 
   if (/^\/vehicles\/[^/]+$/.test(path)) {

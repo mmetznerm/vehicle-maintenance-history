@@ -4,11 +4,13 @@ import {
   createVehicle,
   deleteVehicle,
   deleteMaintenance,
+  getMaintenance,
   getVehicle,
   listMaintenances,
   listVehicles,
   login,
   register,
+  updateMaintenance,
   updateVehicle,
 } from "./api";
 import { saveAuthTokens } from "./authStorage";
@@ -327,6 +329,80 @@ describe("api service", () => {
       odometer: 35000,
       description: "Troca de óleo",
       cost: 250,
+    });
+  });
+
+  it("gets a maintenance by id", async () => {
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+
+    const maintenance = {
+      id: "maintenance-id",
+      vehicleId: "vehicle-id",
+      maintenanceDate: "2026-07-07",
+      odometer: 35000,
+      description: "Troca de óleo",
+      cost: 250,
+    };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(maintenance), { status: 200 }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getMaintenance("vehicle-id", "maintenance-id")).resolves.toEqual(maintenance);
+
+    const [, options] = fetchMock.mock.calls[0];
+    const headers = options.headers as Headers;
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/v1/vehicles/vehicle-id/maintenances/maintenance-id",
+      expect.any(Object),
+    );
+    expect(headers.get("Authorization")).toBe("Bearer access-token");
+  });
+
+  it("updates a maintenance", async () => {
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+
+    const maintenance = {
+      id: "maintenance-id",
+      vehicleId: "vehicle-id",
+      maintenanceDate: "2026-07-08",
+      odometer: 36000,
+      description: "Troca de óleo e filtro",
+      cost: 320,
+    };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(maintenance), { status: 200 }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      updateMaintenance("vehicle-id", "maintenance-id", {
+        maintenanceDate: "2026-07-08",
+        odometer: 36000,
+        description: "Troca de óleo e filtro",
+        cost: 320,
+      }),
+    ).resolves.toEqual(maintenance);
+
+    const [, options] = fetchMock.mock.calls[0];
+    const headers = options.headers as Headers;
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/v1/vehicles/vehicle-id/maintenances/maintenance-id",
+      expect.any(Object),
+    );
+    expect(options.method).toBe("PUT");
+    expect(headers.get("Authorization")).toBe("Bearer access-token");
+    expect(JSON.parse(options.body as string)).toEqual({
+      maintenanceDate: "2026-07-08",
+      odometer: 36000,
+      description: "Troca de óleo e filtro",
+      cost: 320,
     });
   });
 
