@@ -172,6 +172,11 @@ a {
   box-shadow: 0 0 0 4px rgb(37 99 235 / 12%);
 }
 
+.field-control.has-error {
+  border-color: #f04438;
+  background: #fffafa;
+}
+
 .field-icon,
 .field-action {
   display: inline-flex;
@@ -205,6 +210,14 @@ a {
   margin: 5px 0 0;
   color: #475569;
   font-size: 11px;
+  line-height: 1.35;
+}
+
+.field-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 700;
   line-height: 1.35;
 }
 
@@ -724,6 +737,188 @@ a:focus-visible {
   opacity: 0.65;
 }
 
+.vehicle-form-page {
+  min-height: 100vh;
+  padding: 152px 20px 48px;
+  background: #f7f8fc;
+}
+
+.vehicle-form-shell {
+  width: min(100%, 704px);
+  margin: 0 auto;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 27px 2px;
+  color: #0b1f3c;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+.back-link:hover,
+.back-link:focus-visible,
+.text-button:hover,
+.text-button:focus-visible {
+  color: var(--brand-strong);
+  text-decoration: underline;
+}
+
+.vehicle-form-card {
+  padding: 33px 36px 33px;
+  border: 1px solid #dce3ef;
+  border-radius: 9px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 8%);
+}
+
+.vehicle-form-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #dbe5f3;
+}
+
+.vehicle-form-icon {
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #eaf1ff;
+  color: var(--brand);
+}
+
+.vehicle-form-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.vehicle-form-header h1 {
+  margin: 0 0 5px;
+  color: #020817;
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.vehicle-form-header p {
+  margin: 0;
+  color: #213047;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.vehicle-form {
+  display: grid;
+  gap: 17px;
+  padding-top: 25px;
+}
+
+.vehicle-required-row {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 0;
+  margin-bottom: -12px;
+}
+
+.vehicle-required-row span {
+  color: #c51616;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.vehicle-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px 18px;
+}
+
+.vehicle-form .field-control {
+  min-height: 39px;
+  padding: 0 11px;
+  border-color: #c6cfdf;
+  border-radius: 6px;
+  background: #f8f9fe;
+}
+
+.vehicle-form .field-input {
+  height: 37px;
+  font-size: 13px;
+}
+
+.vehicle-form .field-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.vehicle-form-error {
+  margin-top: 0;
+}
+
+.vehicle-form-status {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  gap: 12px;
+  padding: 34px 18px 10px;
+  color: #334155;
+  text-align: center;
+}
+
+.vehicle-form-status p {
+  margin: 0;
+}
+
+.vehicle-status-action {
+  min-height: 38px;
+  padding: 0 16px;
+  text-decoration: none;
+}
+
+.vehicle-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 25px;
+  margin-top: 4px;
+  padding-top: 29px;
+  border-top: 1px solid #dbe5f3;
+}
+
+.text-button {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  color: #0759e6;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.vehicle-save-button {
+  min-height: 38px;
+  min-width: 118px;
+  padding: 0 18px;
+  border-radius: 7px;
+}
+
+.vehicle-save-button svg {
+  width: 15px;
+  height: 15px;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -904,6 +1099,45 @@ a:focus-visible {
   }
 
   .vehicle-action-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .vehicle-form-page {
+    padding: 34px 14px;
+  }
+
+  .back-link {
+    margin-bottom: 18px;
+  }
+
+  .vehicle-form-card {
+    padding: 24px 18px;
+  }
+
+  .vehicle-form-header {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .vehicle-form-header h1 {
+    font-size: 22px;
+  }
+
+  .vehicle-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vehicle-form-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+    gap: 10px;
+    padding-top: 22px;
+  }
+
+  .text-button,
+  .vehicle-save-button {
     width: 100%;
   }
 }

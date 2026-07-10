@@ -1,4 +1,13 @@
-import { ApiError, deleteVehicle, listVehicles, login, register } from "./api";
+import {
+  ApiError,
+  createVehicle,
+  deleteVehicle,
+  getVehicle,
+  listVehicles,
+  login,
+  register,
+  updateVehicle,
+} from "./api";
 import { saveAuthTokens } from "./authStorage";
 
 describe("api service", () => {
@@ -127,5 +136,118 @@ describe("api service", () => {
 
     expect(fetchMock).toHaveBeenCalledWith("/v1/vehicles/vehicle-id", expect.any(Object));
     expect(options.method).toBe("DELETE");
+  });
+
+  it("creates a vehicle with the authorization header", async () => {
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+
+    const vehicle = {
+      id: "vehicle-id",
+      plate: "ABC1234",
+      brand: "Honda",
+      model: "Civic",
+      manufactureYear: 2020,
+      color: "Prata",
+    };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(vehicle), { status: 201 }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      createVehicle({
+        plate: "ABC1234",
+        brand: "Honda",
+        model: "Civic",
+        manufactureYear: 2020,
+        color: "Prata",
+      }),
+    ).resolves.toEqual(vehicle);
+
+    const [, options] = fetchMock.mock.calls[0];
+    const headers = options.headers as Headers;
+
+    expect(fetchMock).toHaveBeenCalledWith("/v1/vehicles", expect.any(Object));
+    expect(options.method).toBe("POST");
+    expect(headers.get("Authorization")).toBe("Bearer access-token");
+    expect(JSON.parse(options.body as string)).toEqual({
+      plate: "ABC1234",
+      brand: "Honda",
+      model: "Civic",
+      manufactureYear: 2020,
+      color: "Prata",
+    });
+  });
+
+  it("gets a vehicle by id", async () => {
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+
+    const vehicle = {
+      id: "vehicle-id",
+      plate: "ABC1234",
+      brand: "Honda",
+      model: "Civic",
+      manufactureYear: 2020,
+      color: "Prata",
+    };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(vehicle), { status: 200 }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getVehicle("vehicle-id")).resolves.toEqual(vehicle);
+
+    const [, options] = fetchMock.mock.calls[0];
+    const headers = options.headers as Headers;
+
+    expect(fetchMock).toHaveBeenCalledWith("/v1/vehicles/vehicle-id", expect.any(Object));
+    expect(headers.get("Authorization")).toBe("Bearer access-token");
+  });
+
+  it("updates a vehicle", async () => {
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+
+    const vehicle = {
+      id: "vehicle-id",
+      plate: "ABC1234",
+      brand: "Honda",
+      model: "Civic",
+      manufactureYear: 2021,
+      color: "Preto",
+    };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(vehicle), { status: 200 }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      updateVehicle("vehicle-id", {
+        plate: "ABC1234",
+        brand: "Honda",
+        model: "Civic",
+        manufactureYear: 2021,
+        color: "Preto",
+      }),
+    ).resolves.toEqual(vehicle);
+
+    const [, options] = fetchMock.mock.calls[0];
+    const headers = options.headers as Headers;
+
+    expect(fetchMock).toHaveBeenCalledWith("/v1/vehicles/vehicle-id", expect.any(Object));
+    expect(options.method).toBe("PUT");
+    expect(headers.get("Authorization")).toBe("Bearer access-token");
+    expect(JSON.parse(options.body as string)).toEqual({
+      plate: "ABC1234",
+      brand: "Honda",
+      model: "Civic",
+      manufactureYear: 2021,
+      color: "Preto",
+    });
   });
 });

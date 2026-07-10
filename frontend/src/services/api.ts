@@ -1,5 +1,10 @@
 import type { AuthTokensResponse, LoginRequest, RegisterRequest } from "../types/auth";
-import type { VehicleSummary } from "../types/vehicle";
+import type {
+  CreateVehicleRequest,
+  UpdateVehicleRequest,
+  Vehicle,
+  VehicleSummary,
+} from "../types/vehicle";
 import { clearAuthTokens, getAccessToken } from "./authStorage";
 
 const DEFAULT_API_BASE_URL = "";
@@ -101,6 +106,24 @@ export function register(requestBody: RegisterRequest) {
 
 export function listVehicles() {
   return request<VehicleSummary[]>("/v1/vehicles");
+}
+
+export function getVehicle(vehicleId: string) {
+  return request<Vehicle>(`/v1/vehicles/${vehicleId}`);
+}
+
+export function createVehicle(requestBody: CreateVehicleRequest) {
+  return request<Vehicle>("/v1/vehicles", {
+    method: "POST",
+    body: JSON.stringify(requestBody),
+  });
+}
+
+export function updateVehicle(vehicleId: string, requestBody: UpdateVehicleRequest) {
+  return request<Vehicle>(`/v1/vehicles/${vehicleId}`, {
+    method: "PUT",
+    body: JSON.stringify(requestBody),
+  });
 }
 
 export function deleteVehicle(vehicleId: string) {

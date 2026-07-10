@@ -47,4 +47,46 @@ describe("App", () => {
     expect(screen.getByRole("link", { name: /adicionar ve.culo/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sair/i })).toBeInTheDocument();
   });
+
+  it("shows the vehicle creation page when the user is authenticated", () => {
+    setPath("/vehicles/new");
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: /detalhes do ve.culo/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /salvar/i })).toBeInTheDocument();
+  });
+
+  it("shows the vehicle edit page when the user is authenticated", async () => {
+    setPath("/vehicles/vehicle-id/edit");
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            id: "vehicle-id",
+            plate: "ABC1234",
+            brand: "Honda",
+            model: "Civic",
+            manufactureYear: 2020,
+            color: "Prata",
+          }),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: /editar ve.culo/i })).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("ABC1234")).toBeInTheDocument();
+  });
 });
