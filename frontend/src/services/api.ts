@@ -1,4 +1,4 @@
-import type { AuthTokensResponse, LoginRequest, RegisterRequest } from "../types/auth";
+import type { AuthTokensResponse, LoginRequest, LogoutRequest, RegisterRequest } from "../types/auth";
 import type {
   CreateMaintenanceRequest,
   Maintenance,
@@ -104,6 +104,13 @@ export function login(requestBody: LoginRequest) {
 
 export function register(requestBody: RegisterRequest) {
   return request<AuthTokensResponse>("/v1/auth/register", {
+    method: "POST",
+    body: JSON.stringify(requestBody),
+  });
+}
+
+export function logout(requestBody: LogoutRequest) {
+  return request<void>("/v1/auth/logout", {
     method: "POST",
     body: JSON.stringify(requestBody),
   });
