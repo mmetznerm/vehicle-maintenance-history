@@ -12,7 +12,10 @@ public class SpaController {
             "/register",
             "/vehicles",
             "/vehicles/new",
-            "/vehicles/{vehicleId}/edit"
+            "/vehicles/{vehicleId}",
+            "/vehicles/{vehicleId}/edit",
+            "/vehicles/{vehicleId}/maintenances/new",
+            "/vehicles/{vehicleId}/maintenances/{maintenanceId}/edit"
     })
     public String forwardToIndex() {
         return "forward:/index.html";

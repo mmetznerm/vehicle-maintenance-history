@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { MaintenanceHistory } from "../components/MaintenanceHistory";
 import {
   CalendarIcon,
   CarIcon,
@@ -9,8 +10,9 @@ import {
   SettingsIcon,
   TrashIcon,
 } from "../components/Icons";
-import { ApiError, deleteVehicle, listVehicles } from "../services/api";
+import { ApiError, deleteMaintenance, deleteVehicle, listMaintenances, listVehicles } from "../services/api";
 import { clearAuthTokens, getCurrentUserDisplayName } from "../services/authStorage";
+import type { Maintenance } from "../types/maintenance";
 import type { VehicleSummary } from "../types/vehicle";
 
 function getVehiclesErrorMessage(error: unknown) {
@@ -55,6 +57,10 @@ function VehicleSidebar() {
           <CarIcon aria-hidden />
           <span>Painel</span>
         </a>
+        <a className="sidebar-link" href="/vehicles/new">
+          <PlusIcon aria-hidden />
+          <span>Adicionar veículo</span>
+        </a>
         <a className="sidebar-link" href="/settings">
           <SettingsIcon aria-hidden />
           <span>Configurações</span>
@@ -90,10 +96,11 @@ function EmptyVehiclesState() {
 type VehicleCardProps = {
   vehicle: VehicleSummary;
   isDeleting: boolean;
+  showDetailsAction?: boolean;
   onDelete: (vehicle: VehicleSummary) => void;
 };
 
-function VehicleCard({ vehicle, isDeleting, onDelete }: VehicleCardProps) {
+function VehicleCard({ vehicle, isDeleting, showDetailsAction = true, onDelete }: VehicleCardProps) {
   const vehicleName = `${vehicle.brand} ${vehicle.model}`.trim();
 
   return (
@@ -120,10 +127,12 @@ function VehicleCard({ vehicle, isDeleting, onDelete }: VehicleCardProps) {
       </div>
 
       <div className="vehicle-actions" aria-label={`Ações para ${vehicleName || vehicle.plate}`}>
-        <a className="vehicle-action-button" href={`/vehicles/${vehicle.id}`}>
-          <ExternalLinkIcon aria-hidden />
-          <span>Detalhes</span>
-        </a>
+        {showDetailsAction ? (
+          <a className="vehicle-action-button" href={`/vehicles/${vehicle.id}`}>
+            <ExternalLinkIcon aria-hidden />
+            <span>Detalhes</span>
+          </a>
+        ) : null}
         <a className="vehicle-action-button" href={`/vehicles/${vehicle.id}/edit`}>
           <EditIcon aria-hidden />
           <span>Editar</span>
@@ -144,9 +153,12 @@ function VehicleCard({ vehicle, isDeleting, onDelete }: VehicleCardProps) {
 
 export function VehiclesPage() {
   const [vehicles, setVehicles] = useState<VehicleSummary[]>([]);
+  const [singleVehicleMaintenances, setSingleVehicleMaintenances] = useState<Maintenance[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const [maintenanceErrorMessage, setMaintenanceErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [deletingVehicleId, setDeletingVehicleId] = useState<string | null>(null);
+  const [deletingMaintenanceId, setDeletingMaintenanceId] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -154,12 +166,35 @@ export function VehiclesPage() {
     async function loadVehicles() {
       setIsLoading(true);
       setErrorMessage("");
+      setMaintenanceErrorMessage("");
+      setSingleVehicleMaintenances([]);
 
       try {
         const vehiclesResponse = await listVehicles();
 
+        if (vehiclesResponse.length === 1) {
+          window.location.replace(`/vehicles/${vehiclesResponse[0].id}`);
+          return;
+        }
+
         if (isMounted) {
           setVehicles(vehiclesResponse);
+        }
+
+        if (vehiclesResponse.length === 1) {
+          try {
+            const maintenancesResponse = await listMaintenances(vehiclesResponse[0].id);
+
+            if (isMounted) {
+              setSingleVehicleMaintenances(maintenancesResponse);
+            }
+          } catch (error) {
+            if (isMounted) {
+              setMaintenanceErrorMessage(
+                getVehiclesErrorMessage(error) || "Não foi possível carregar as manutenções.",
+              );
+            }
+          }
         }
       } catch (error) {
         if (isMounted) {
@@ -198,6 +233,36 @@ export function VehiclesPage() {
       setErrorMessage(getVehiclesErrorMessage(error) || "Não foi possível excluir o veículo.");
     } finally {
       setDeletingVehicleId(null);
+    }
+  }
+
+  async function handleDeleteMaintenance(maintenance: Maintenance) {
+    const vehicle = vehicles[0];
+
+    if (!vehicle) {
+      return;
+    }
+
+    const shouldDelete = window.confirm(`Excluir a manutenção "${maintenance.description}"?`);
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setDeletingMaintenanceId(maintenance.id);
+    setMaintenanceErrorMessage("");
+
+    try {
+      await deleteMaintenance(vehicle.id, maintenance.id);
+      setSingleVehicleMaintenances((currentMaintenances) =>
+        currentMaintenances.filter((currentMaintenance) => currentMaintenance.id !== maintenance.id),
+      );
+    } catch (error) {
+      setMaintenanceErrorMessage(
+        getVehiclesErrorMessage(error) || "Não foi possível excluir a manutenção.",
+      );
+    } finally {
+      setDeletingMaintenanceId(null);
     }
   }
 
@@ -240,10 +305,6 @@ export function VehiclesPage() {
                   {vehicles.length === 1 ? "" : "s"}.
                 </p>
               </div>
-              <a className="primary-button vehicles-header-button" href="/vehicles/new">
-                <PlusIcon aria-hidden />
-                <span>Adicionar Veículo</span>
-              </a>
             </header>
 
             <div className="vehicles-list" aria-label="Lista de veículos cadastrados">
@@ -252,10 +313,27 @@ export function VehiclesPage() {
                   key={vehicle.id}
                   vehicle={vehicle}
                   isDeleting={deletingVehicleId === vehicle.id}
+                  showDetailsAction={vehicles.length > 1}
                   onDelete={handleDeleteVehicle}
                 />
               ))}
             </div>
+
+            {vehicles.length === 1 ? (
+              <div className="single-vehicle-maintenance-panel">
+                {maintenanceErrorMessage ? (
+                  <p className="form-error" role="alert">
+                    {maintenanceErrorMessage}
+                  </p>
+                ) : null}
+                <MaintenanceHistory
+                  vehicleId={vehicles[0].id}
+                  maintenances={singleVehicleMaintenances}
+                  deletingMaintenanceId={deletingMaintenanceId}
+                  onDeleteMaintenance={handleDeleteMaintenance}
+                />
+              </div>
+            ) : null}
           </section>
         ) : null}
       </main>

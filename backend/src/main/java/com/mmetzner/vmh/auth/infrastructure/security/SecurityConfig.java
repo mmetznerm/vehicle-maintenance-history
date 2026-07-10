@@ -68,7 +68,10 @@ public class SecurityConfig {
                                 "/register",
                                 "/vehicles",
                                 "/vehicles/new",
+                                "/vehicles/*",
                                 "/vehicles/*/edit",
+                                "/vehicles/*/maintenances/new",
+                                "/vehicles/*/maintenances/*/edit",
                                 "/assets/**",
                                 "/favicon.ico",
                                 "/vite.svg"
