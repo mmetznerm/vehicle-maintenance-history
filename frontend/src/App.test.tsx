@@ -47,4 +47,17 @@ describe("App", () => {
     expect(screen.getByRole("link", { name: /adicionar ve.culo/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sair/i })).toBeInTheDocument();
   });
+
+  it("shows the vehicle creation page when the user is authenticated", () => {
+    setPath("/vehicles/new");
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: /detalhes do ve.culo/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /salvar/i })).toBeInTheDocument();
+  });
 });

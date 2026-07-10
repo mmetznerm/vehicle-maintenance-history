@@ -67,6 +67,7 @@ public class SecurityConfig {
                                 "/login",
                                 "/register",
                                 "/vehicles",
+                                "/vehicles/new",
                                 "/assets/**",
                                 "/favicon.ico",
                                 "/vite.svg"
