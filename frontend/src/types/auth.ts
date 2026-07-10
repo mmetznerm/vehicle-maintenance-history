@@ -9,6 +9,10 @@ export type RegisterRequest = {
   password: string;
 };
 
+export type LogoutRequest = {
+  refreshToken: string;
+};
+
 export type AuthTokensResponse = {
   accessToken: string;
   refreshToken: string;

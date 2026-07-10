@@ -44,7 +44,7 @@ describe("App", () => {
     expect(
       await screen.findByRole("heading", { name: /nenhum ve.culo cadastrado/i }),
     ).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /adicionar ve.culo/i })).toHaveLength(2);
+    expect(screen.getByRole("link", { name: /adicionar ve.culo/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sair/i })).toBeInTheDocument();
   });
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AppSidebar } from "../components/AppSidebar";
-import { CalendarIcon, CarIcon, EditIcon, GaugeIcon, TrashIcon } from "../components/Icons";
+import { CalendarIcon, CarIcon, EditIcon, GaugeIcon, PlusIcon, TrashIcon } from "../components/Icons";
 import { MaintenanceHistory } from "../components/MaintenanceHistory";
 import { formatOdometer } from "../components/maintenanceFormat";
 import {
@@ -230,6 +230,13 @@ export function VehicleDetailsPage() {
               {errorMessage}
             </p>
           ) : null}
+
+          <div className="vehicle-details-toolbar">
+            <a className="primary-button vehicles-header-button" href="/vehicles/new">
+              <PlusIcon aria-hidden />
+              <span>Adicionar Veículo</span>
+            </a>
+          </div>
 
           <VehicleSummaryCard
             vehicle={vehicle}

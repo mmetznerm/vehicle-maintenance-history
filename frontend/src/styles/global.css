@@ -952,6 +952,13 @@ a:focus-visible {
   margin: 0 auto 16px;
 }
 
+.vehicle-details-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  width: min(100%, 1086px);
+  margin: 0 auto 12px;
+}
+
 .vehicle-details-card {
   display: flex;
   align-items: center;

@@ -9,6 +9,7 @@ import {
   listMaintenances,
   listVehicles,
   login,
+  logout,
   register,
   updateMaintenance,
   updateVehicle,
@@ -55,6 +56,30 @@ describe("api service", () => {
     expect(fetchMock).toHaveBeenCalledWith("/v1/auth/login", expect.any(Object));
     expect(headers.get("Content-Type")).toBe("application/json");
     expect(headers.get("Authorization")).toBeNull();
+  });
+
+  it("posts logout with the refresh token without an authorization header", async () => {
+    saveAuthTokens({
+      accessToken: "existing-access-token",
+      refreshToken: "existing-refresh-token",
+    });
+
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(logout({ refreshToken: "existing-refresh-token" })).resolves.toBeNull();
+
+    const [, options] = fetchMock.mock.calls[0];
+    const headers = options.headers as Headers;
+
+    expect(fetchMock).toHaveBeenCalledWith("/v1/auth/logout", expect.any(Object));
+    expect(options.method).toBe("POST");
+    expect(headers.get("Content-Type")).toBe("application/json");
+    expect(headers.get("Authorization")).toBeNull();
+    expect(JSON.parse(options.body as string)).toEqual({
+      refreshToken: "existing-refresh-token",
+    });
   });
 
   it("maps api error responses to ApiError", async () => {

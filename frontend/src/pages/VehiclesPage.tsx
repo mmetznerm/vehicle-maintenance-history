@@ -7,11 +7,17 @@ import {
   ExternalLinkIcon,
   PaletteIcon,
   PlusIcon,
-  SettingsIcon,
   TrashIcon,
 } from "../components/Icons";
-import { ApiError, deleteMaintenance, deleteVehicle, listMaintenances, listVehicles } from "../services/api";
-import { clearAuthTokens, getCurrentUserDisplayName } from "../services/authStorage";
+import {
+  ApiError,
+  deleteMaintenance,
+  deleteVehicle,
+  listMaintenances,
+  listVehicles,
+  logout,
+} from "../services/api";
+import { clearAuthTokens, getCurrentUserDisplayName, getRefreshToken } from "../services/authStorage";
 import type { Maintenance } from "../types/maintenance";
 import type { VehicleSummary } from "../types/vehicle";
 
@@ -33,10 +39,25 @@ function getVehiclesErrorMessage(error: unknown) {
 
 function VehicleSidebar() {
   const userDisplayName = getCurrentUserDisplayName();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  function handleLogout() {
-    clearAuthTokens();
-    window.location.assign("/login");
+  async function handleLogout() {
+    if (isLoggingOut) {
+      return;
+    }
+
+    setIsLoggingOut(true);
+
+    try {
+      const refreshToken = getRefreshToken();
+
+      if (refreshToken) {
+        await logout({ refreshToken });
+      }
+    } finally {
+      clearAuthTokens();
+      window.location.assign("/login");
+    }
   }
 
   return (
@@ -57,18 +78,10 @@ function VehicleSidebar() {
           <CarIcon aria-hidden />
           <span>Painel</span>
         </a>
-        <a className="sidebar-link" href="/vehicles/new">
-          <PlusIcon aria-hidden />
-          <span>Adicionar veículo</span>
-        </a>
-        <a className="sidebar-link" href="/settings">
-          <SettingsIcon aria-hidden />
-          <span>Configurações</span>
-        </a>
       </nav>
 
-      <button className="sidebar-logout" type="button" onClick={handleLogout}>
-        Sair
+      <button className="sidebar-logout" type="button" disabled={isLoggingOut} onClick={handleLogout}>
+        {isLoggingOut ? "Saindo..." : "Sair"}
       </button>
     </aside>
   );
@@ -305,6 +318,10 @@ export function VehiclesPage() {
                   {vehicles.length === 1 ? "" : "s"}.
                 </p>
               </div>
+              <a className="primary-button vehicles-header-button" href="/vehicles/new">
+                <PlusIcon aria-hidden />
+                <span>Adicionar Veículo</span>
+              </a>
             </header>
 
             <div className="vehicles-list" aria-label="Lista de veículos cadastrados">
