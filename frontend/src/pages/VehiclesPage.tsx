@@ -7,7 +7,6 @@ import {
   ExternalLinkIcon,
   PaletteIcon,
   PlusIcon,
-  SettingsIcon,
   TrashIcon,
 } from "../components/Icons";
 import {
@@ -78,14 +77,6 @@ function VehicleSidebar() {
         <a className="sidebar-link is-active" href="/vehicles" aria-current="page">
           <CarIcon aria-hidden />
           <span>Painel</span>
-        </a>
-        <a className="sidebar-link" href="/vehicles/new">
-          <PlusIcon aria-hidden />
-          <span>Adicionar veículo</span>
-        </a>
-        <a className="sidebar-link" href="/settings">
-          <SettingsIcon aria-hidden />
-          <span>Configurações</span>
         </a>
       </nav>
 
@@ -327,6 +318,10 @@ export function VehiclesPage() {
                   {vehicles.length === 1 ? "" : "s"}.
                 </p>
               </div>
+              <a className="primary-button vehicles-header-button" href="/vehicles/new">
+                <PlusIcon aria-hidden />
+                <span>Adicionar Veículo</span>
+              </a>
             </header>
 
             <div className="vehicles-list" aria-label="Lista de veículos cadastrados">

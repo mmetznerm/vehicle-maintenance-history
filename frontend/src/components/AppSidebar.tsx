@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CarIcon, PlusIcon, SettingsIcon } from "./Icons";
+import { CarIcon } from "./Icons";
 import { logout } from "../services/api";
 import { clearAuthTokens, getCurrentUserDisplayName, getRefreshToken } from "../services/authStorage";
 
@@ -48,14 +48,6 @@ export function AppSidebar() {
         >
           <CarIcon aria-hidden />
           <span>Painel</span>
-        </a>
-        <a className="sidebar-link" href="/vehicles/new">
-          <PlusIcon aria-hidden />
-          <span>Adicionar veículo</span>
-        </a>
-        <a className="sidebar-link" href="/settings">
-          <SettingsIcon aria-hidden />
-          <span>Configurações</span>
         </a>
       </nav>
 
