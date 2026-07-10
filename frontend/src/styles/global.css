@@ -867,6 +867,26 @@ a:focus-visible {
   margin-top: 0;
 }
 
+.vehicle-form-status {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  gap: 12px;
+  padding: 34px 18px 10px;
+  color: #334155;
+  text-align: center;
+}
+
+.vehicle-form-status p {
+  margin: 0;
+}
+
+.vehicle-status-action {
+  min-height: 38px;
+  padding: 0 16px;
+  text-decoration: none;
+}
+
 .vehicle-form-actions {
   display: flex;
   align-items: center;

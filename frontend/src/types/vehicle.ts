@@ -15,6 +15,8 @@ export type CreateVehicleRequest = {
   color: string;
 };
 
+export type UpdateVehicleRequest = CreateVehicleRequest;
+
 export type Vehicle = VehicleSummary & {
   createdAt?: string;
   updatedAt?: string;
