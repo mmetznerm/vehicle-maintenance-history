@@ -8,3 +8,10 @@ export type Maintenance = {
   createdAt?: string;
   updatedAt?: string;
 };
+
+export type CreateMaintenanceRequest = {
+  maintenanceDate: string;
+  odometer: number;
+  description: string;
+  cost: number;
+};

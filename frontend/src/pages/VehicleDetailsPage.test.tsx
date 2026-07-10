@@ -65,6 +65,8 @@ describe("VehicleDetailsPage", () => {
     expect(screen.getAllByText("45.000 km")).toHaveLength(2);
     expect(screen.getByText("Troca de óleo e filtro")).toBeInTheDocument();
     expect(screen.getByText("R$ 350,00")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "AutoLog" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sair/i })).toBeInTheDocument();
     expect(getVehicleMock).toHaveBeenCalledWith("vehicle-id");
     expect(listMaintenancesMock).toHaveBeenCalledWith("vehicle-id");
   });

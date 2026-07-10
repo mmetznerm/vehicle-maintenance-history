@@ -237,6 +237,25 @@ export function SaveIcon(props: IconProps) {
   );
 }
 
+export function MoneyIcon(props: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <rect x="3" y="6" width="18" height="12" rx="2" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M6 9h.01" />
+      <path d="M18 15h.01" />
+    </svg>
+  );
+}
+
 export function WrenchIcon(props: IconProps) {
   return (
     <svg

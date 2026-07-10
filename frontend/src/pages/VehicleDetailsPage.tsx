@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AppSidebar } from "../components/AppSidebar";
 import { CalendarIcon, CarIcon, EditIcon, GaugeIcon, TrashIcon } from "../components/Icons";
 import { MaintenanceHistory } from "../components/MaintenanceHistory";
 import { formatOdometer } from "../components/maintenanceFormat";
@@ -201,7 +202,10 @@ export function VehicleDetailsPage() {
   }
 
   return (
-    <main className="vehicle-details-page" aria-labelledby="vehicle-details-title">
+    <div className="vehicles-app">
+      <AppSidebar />
+
+      <main className="vehicles-content vehicle-details-page" aria-labelledby="vehicle-details-title">
       {isLoading ? (
         <section className="vehicles-status-card details-status-card" role="status" aria-live="polite">
           <span className="loading-spinner" aria-hidden />
@@ -242,6 +246,7 @@ export function VehicleDetailsPage() {
           />
         </>
       ) : null}
-    </main>
+      </main>
+    </div>
   );
 }

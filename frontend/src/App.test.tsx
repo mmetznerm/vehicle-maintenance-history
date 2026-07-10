@@ -44,7 +44,7 @@ describe("App", () => {
     expect(
       await screen.findByRole("heading", { name: /nenhum ve.culo cadastrado/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /adicionar ve.culo/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /adicionar ve.culo/i })).toHaveLength(2);
     expect(screen.getByRole("button", { name: /sair/i })).toBeInTheDocument();
   });
 
@@ -120,5 +120,18 @@ describe("App", () => {
 
     expect(await screen.findByRole("heading", { name: /honda civic/i })).toBeInTheDocument();
     expect(screen.getByText(/nenhuma manuten..o cadastrada/i)).toBeInTheDocument();
+  });
+
+  it("shows the maintenance creation page when the user is authenticated", () => {
+    setPath("/vehicles/vehicle-id/maintenances/new");
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: /cadastrar manuten..o/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /salvar/i })).toBeInTheDocument();
   });
 });
