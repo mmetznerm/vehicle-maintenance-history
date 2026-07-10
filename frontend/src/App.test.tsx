@@ -89,4 +89,36 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: /editar ve.culo/i })).toBeInTheDocument();
     expect(await screen.findByDisplayValue("ABC1234")).toBeInTheDocument();
   });
+
+  it("shows the vehicle details page when the user is authenticated", async () => {
+    setPath("/vehicles/vehicle-id");
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              id: "vehicle-id",
+              plate: "ABC1234",
+              brand: "Honda",
+              model: "Civic",
+              manufactureYear: 2020,
+              color: "Prata",
+            }),
+            { status: 200 },
+          ),
+        )
+        .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200 })),
+    );
+
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: /honda civic/i })).toBeInTheDocument();
+    expect(screen.getByText(/nenhuma manuten..o cadastrada/i)).toBeInTheDocument();
+  });
 });

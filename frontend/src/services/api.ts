@@ -1,4 +1,5 @@
 import type { AuthTokensResponse, LoginRequest, RegisterRequest } from "../types/auth";
+import type { Maintenance } from "../types/maintenance";
 import type {
   CreateVehicleRequest,
   UpdateVehicleRequest,
@@ -128,6 +129,16 @@ export function updateVehicle(vehicleId: string, requestBody: UpdateVehicleReque
 
 export function deleteVehicle(vehicleId: string) {
   return request<void>(`/v1/vehicles/${vehicleId}`, {
+    method: "DELETE",
+  });
+}
+
+export function listMaintenances(vehicleId: string) {
+  return request<Maintenance[]>(`/v1/vehicles/${vehicleId}/maintenances`);
+}
+
+export function deleteMaintenance(vehicleId: string, maintenanceId: string) {
+  return request<void>(`/v1/vehicles/${vehicleId}/maintenances/${maintenanceId}`, {
     method: "DELETE",
   });
 }

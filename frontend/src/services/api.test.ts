@@ -2,7 +2,9 @@ import {
   ApiError,
   createVehicle,
   deleteVehicle,
+  deleteMaintenance,
   getVehicle,
+  listMaintenances,
   listVehicles,
   login,
   register,
@@ -249,5 +251,58 @@ describe("api service", () => {
       manufactureYear: 2021,
       color: "Preto",
     });
+  });
+
+  it("lists maintenances for a vehicle", async () => {
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+
+    const maintenances = [
+      {
+        id: "maintenance-id",
+        vehicleId: "vehicle-id",
+        maintenanceDate: "2026-07-07",
+        odometer: 35000,
+        description: "Troca de óleo",
+        cost: 250,
+      },
+    ];
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(maintenances), { status: 200 }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(listMaintenances("vehicle-id")).resolves.toEqual(maintenances);
+
+    const [, options] = fetchMock.mock.calls[0];
+    const headers = options.headers as Headers;
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/v1/vehicles/vehicle-id/maintenances",
+      expect.any(Object),
+    );
+    expect(headers.get("Authorization")).toBe("Bearer access-token");
+  });
+
+  it("deletes a maintenance", async () => {
+    saveAuthTokens({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    });
+
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(deleteMaintenance("vehicle-id", "maintenance-id")).resolves.toBeNull();
+
+    const [, options] = fetchMock.mock.calls[0];
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/v1/vehicles/vehicle-id/maintenances/maintenance-id",
+      expect.any(Object),
+    );
+    expect(options.method).toBe("DELETE");
   });
 });
