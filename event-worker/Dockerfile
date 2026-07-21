@@ -6,11 +6,12 @@ COPY backend/.mvn .mvn
 COPY backend/mvnw ./mvnw
 COPY event-worker/pom.xml ./pom.xml
 
-RUN chmod +x mvnw && ./mvnw dependency:go-offline
+RUN sed -i 's/\r$//' mvnw \
+    && chmod +x mvnw
 
 COPY event-worker/src ./src
 
-RUN ./mvnw package -DskipTests
+RUN --mount=type=cache,target=/root/.m2 ./mvnw -B package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
 
