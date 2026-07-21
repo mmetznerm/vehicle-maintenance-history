@@ -16,13 +16,13 @@ function getVehicleCreateErrorMessage(error: unknown) {
     }
 
     if (error.status >= 500) {
-      return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+      return "Could not connect to the server. Check whether the API is running.";
     }
 
-    return error.message || "Não foi possível salvar o veículo.";
+    return error.message || "Could not save the vehicle.";
   }
 
-  return "Não foi possível salvar o veículo agora.";
+  return "Could not save the vehicle.";
 }
 
 function mapApiFieldErrors(error: unknown) {
@@ -76,7 +76,7 @@ export function VehicleCreatePage() {
       <div className="vehicle-form-shell">
         <a className="back-link" href="/vehicles">
           <ArrowLeftIcon aria-hidden />
-          <span>Voltar para veículos</span>
+          <span>Back to vehicles</span>
         </a>
 
         <section className="vehicle-form-card">
@@ -85,8 +85,8 @@ export function VehicleCreatePage() {
               <CarIcon />
             </span>
             <div>
-              <h1 id="vehicle-form-title">Detalhes do veículo</h1>
-              <p>Adicione um novo veículo à sua frota ou atualize as informações existentes.</p>
+              <h1 id="vehicle-form-title">Vehicle details</h1>
+              <p>Add a new vehicle to your fleet or update its existing information.</p>
             </div>
           </header>
 

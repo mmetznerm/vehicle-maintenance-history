@@ -41,7 +41,7 @@ describe("VehicleDetailsPage", () => {
       brand: "Toyota",
       model: "Corolla XEI",
       manufactureYear: 2021,
-      color: "Prata",
+      color: "Silver",
     });
   });
 
@@ -52,21 +52,21 @@ describe("VehicleDetailsPage", () => {
         vehicleId: "vehicle-id",
         maintenanceDate: "2023-10-15",
         odometer: 45000,
-        description: "Troca de óleo e filtro",
+        description: "Oil and filter change",
         cost: 350,
       },
     ]);
 
     render(<VehicleDetailsPage />);
 
-    expect(screen.getByRole("status")).toHaveTextContent(/carregando detalhes/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/loading vehicle details/i);
     expect(await screen.findByRole("heading", { name: /toyota corolla xei/i })).toBeInTheDocument();
     expect(screen.getByText("ABC1234")).toBeInTheDocument();
-    expect(screen.getAllByText("45.000 km")).toHaveLength(2);
-    expect(screen.getByText("Troca de óleo e filtro")).toBeInTheDocument();
-    expect(screen.getByText("R$ 350,00")).toBeInTheDocument();
+    expect(screen.getAllByText("45,000 km")).toHaveLength(2);
+    expect(screen.getByText("Oil and filter change")).toBeInTheDocument();
+    expect(screen.getByText("R$350.00")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "AutoLog" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /sair/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
     expect(getVehicleMock).toHaveBeenCalledWith("vehicle-id");
     expect(listMaintenancesMock).toHaveBeenCalledWith("vehicle-id");
   });
@@ -76,8 +76,8 @@ describe("VehicleDetailsPage", () => {
 
     render(<VehicleDetailsPage />);
 
-    expect(await screen.findByText(/nenhuma manuten..o cadastrada/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /adicionar manuten..o/i })).toHaveAttribute(
+    expect(await screen.findByText(/no maintenance records/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /add maintenance/i })).toHaveAttribute(
       "href",
       "/vehicles/vehicle-id/maintenances/new",
     );
@@ -92,7 +92,7 @@ describe("VehicleDetailsPage", () => {
         vehicleId: "vehicle-id",
         maintenanceDate: "2023-10-15",
         odometer: 45000,
-        description: "Troca de óleo",
+        description: "Oil change",
         cost: 350,
       },
     ]);
@@ -101,11 +101,11 @@ describe("VehicleDetailsPage", () => {
 
     render(<VehicleDetailsPage />);
 
-    await screen.findByText("Troca de óleo");
-    await user.click(screen.getByRole("button", { name: /excluir manuten..o troca de .leo/i }));
+    await screen.findByText("Oil change");
+    await user.click(screen.getByRole("button", { name: /delete maintenance oil change/i }));
 
     expect(deleteMaintenanceMock).toHaveBeenCalledWith("vehicle-id", "maintenance-id");
-    expect(await screen.findByText(/nenhuma manuten..o cadastrada/i)).toBeInTheDocument();
+    expect(await screen.findByText(/no maintenance records/i)).toBeInTheDocument();
   });
 
   it("deletes the vehicle and redirects to the vehicles page", async () => {
@@ -123,7 +123,7 @@ describe("VehicleDetailsPage", () => {
     render(<VehicleDetailsPage />);
 
     await screen.findByRole("heading", { name: /toyota corolla xei/i });
-    await user.click(screen.getByRole("button", { name: /excluir/i }));
+    await user.click(screen.getByRole("button", { name: /delete/i }));
 
     expect(deleteVehicleMock).toHaveBeenCalledWith("vehicle-id");
     expect(assignMock).toHaveBeenCalledWith("/vehicles");

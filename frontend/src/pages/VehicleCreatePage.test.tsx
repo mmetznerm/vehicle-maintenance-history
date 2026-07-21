@@ -25,11 +25,11 @@ describe("VehicleCreatePage", () => {
 
     render(<VehicleCreatePage />);
 
-    await user.click(screen.getByRole("button", { name: /salvar/i }));
+    await user.click(screen.getByRole("button", { name: /save/i }));
 
     expect(createVehicleMock).not.toHaveBeenCalled();
-    expect(screen.getByText(/revise os campos destacados/i)).toBeInTheDocument();
-    expect(screen.getByText(/informe a placa/i)).toBeInTheDocument();
+    expect(screen.getByText(/review the highlighted fields/i)).toBeInTheDocument();
+    expect(screen.getByText(/enter the license plate/i)).toBeInTheDocument();
   });
 
   it("submits the normalized vehicle payload", async () => {
@@ -39,19 +39,19 @@ describe("VehicleCreatePage", () => {
 
     render(<VehicleCreatePage />);
 
-    await user.type(screen.getByLabelText("Placa"), "abc1234");
-    await user.type(screen.getByLabelText("Marca"), "Honda");
-    await user.type(screen.getByLabelText("Modelo"), "Civic");
-    await user.type(screen.getByLabelText("Ano"), "2020");
-    await user.type(screen.getByLabelText("Cor"), "Prata");
-    await user.click(screen.getByRole("button", { name: /salvar/i }));
+    await user.type(screen.getByLabelText("License plate"), "abc1234");
+    await user.type(screen.getByLabelText("Brand"), "Honda");
+    await user.type(screen.getByLabelText("Model"), "Civic");
+    await user.type(screen.getByLabelText("Year"), "2020");
+    await user.type(screen.getByLabelText("Color"), "Silver");
+    await user.click(screen.getByRole("button", { name: /save/i }));
 
     expect(createVehicleMock).toHaveBeenCalledWith({
       plate: "ABC1234",
       brand: "Honda",
       model: "Civic",
       manufactureYear: 2020,
-      color: "Prata",
+      color: "Silver",
     });
   });
 
@@ -59,17 +59,17 @@ describe("VehicleCreatePage", () => {
     const user = userEvent.setup();
 
     createVehicleMock.mockRejectedValue(
-      new ApiError("Invalid request", 400, [{ field: "plate", message: "Placa já cadastrada." }]),
+      new ApiError("Invalid request", 400, [{ field: "plate", message: "License plate already registered." }]),
     );
 
     render(<VehicleCreatePage />);
 
-    await user.type(screen.getByLabelText("Placa"), "ABC1234");
-    await user.type(screen.getByLabelText("Marca"), "Honda");
-    await user.type(screen.getByLabelText("Modelo"), "Civic");
-    await user.type(screen.getByLabelText("Ano"), "2020");
-    await user.click(screen.getByRole("button", { name: /salvar/i }));
+    await user.type(screen.getByLabelText("License plate"), "ABC1234");
+    await user.type(screen.getByLabelText("Brand"), "Honda");
+    await user.type(screen.getByLabelText("Model"), "Civic");
+    await user.type(screen.getByLabelText("Year"), "2020");
+    await user.click(screen.getByRole("button", { name: /save/i }));
 
-    expect(await screen.findByText("Placa já cadastrada.")).toBeInTheDocument();
+    expect(await screen.findByText("License plate already registered.")).toBeInTheDocument();
   });
 });

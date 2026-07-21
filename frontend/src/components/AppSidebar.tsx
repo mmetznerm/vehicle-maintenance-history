@@ -28,14 +28,14 @@ export function AppSidebar() {
   }
 
   return (
-    <aside className="app-sidebar" aria-label="Navegação principal">
+    <aside className="app-sidebar" aria-label="Main navigation">
       <a className="sidebar-brand" href="/vehicles">
         AutoLog
       </a>
 
       <div className="sidebar-user">
         <div>
-          <strong>Bem-vindo</strong>
+          <strong>Welcome</strong>
           <span>{userDisplayName}</span>
         </div>
       </div>
@@ -47,12 +47,12 @@ export function AppSidebar() {
           aria-current={isVehiclesSection ? "page" : undefined}
         >
           <CarIcon aria-hidden />
-          <span>Painel</span>
+          <span>Dashboard</span>
         </a>
       </nav>
 
       <button className="sidebar-logout" type="button" disabled={isLoggingOut} onClick={handleLogout}>
-        {isLoggingOut ? "Saindo..." : "Sair"}
+        {isLoggingOut ? "Signing out..." : "Sign out"}
       </button>
     </aside>
   );

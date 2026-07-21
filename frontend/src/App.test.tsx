@@ -17,7 +17,7 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { name: "AutoLog" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /entrar/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
   });
 
   it("shows the register page on the register route", () => {
@@ -25,7 +25,7 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(screen.getByRole("button", { name: /criar conta/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create account/i })).toBeInTheDocument();
   });
 
   it("shows the vehicles page when the user is authenticated", async () => {
@@ -42,10 +42,10 @@ describe("App", () => {
     render(<App />);
 
     expect(
-      await screen.findByRole("heading", { name: /nenhum ve.culo cadastrado/i }),
+      await screen.findByRole("heading", { name: /no registered vehicles/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /adicionar ve.culo/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /sair/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /add vehicle/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
   });
 
   it("shows the vehicle creation page when the user is authenticated", () => {
@@ -57,8 +57,8 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: /detalhes do ve.culo/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /salvar/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /vehicle details/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
   });
 
   it("shows the vehicle edit page when the user is authenticated", async () => {
@@ -77,7 +77,7 @@ describe("App", () => {
             brand: "Honda",
             model: "Civic",
             manufactureYear: 2020,
-            color: "Prata",
+            color: "Silver",
           }),
           { status: 200 },
         ),
@@ -86,7 +86,7 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: /editar ve.culo/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /edit vehicle/i })).toBeInTheDocument();
     expect(await screen.findByDisplayValue("ABC1234")).toBeInTheDocument();
   });
 
@@ -108,7 +108,7 @@ describe("App", () => {
               brand: "Honda",
               model: "Civic",
               manufactureYear: 2020,
-              color: "Prata",
+              color: "Silver",
             }),
             { status: 200 },
           ),
@@ -119,7 +119,7 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: /honda civic/i })).toBeInTheDocument();
-    expect(screen.getByText(/nenhuma manuten..o cadastrada/i)).toBeInTheDocument();
+    expect(screen.getByText(/no maintenance records/i)).toBeInTheDocument();
   });
 
   it("shows the maintenance creation page when the user is authenticated", () => {
@@ -131,8 +131,8 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: /cadastrar manuten..o/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /salvar/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /add maintenance/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
   });
 
   it("shows the maintenance edit page when the user is authenticated", async () => {
@@ -150,7 +150,7 @@ describe("App", () => {
             vehicleId: "vehicle-id",
             maintenanceDate: "2026-07-07",
             odometer: 35000,
-            description: "Troca de óleo",
+            description: "Oil change",
             cost: 250,
           }),
           { status: 200 },
@@ -160,7 +160,7 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: /editar manuten..o/i })).toBeInTheDocument();
-    expect(await screen.findByDisplayValue("Troca de óleo")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /edit maintenance/i })).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("Oil change")).toBeInTheDocument();
   });
 });

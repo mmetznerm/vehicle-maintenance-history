@@ -63,7 +63,7 @@ class MaintenanceControllerTests {
         CreateMaintenanceRequest request = new CreateMaintenanceRequest(
                 LocalDate.of(2026, 7, 7),
                 35_000,
-                "Troca de óleo",
+                "Oil change",
                 new BigDecimal("250.00")
         );
 
@@ -76,7 +76,7 @@ class MaintenanceControllerTests {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(maintenanceId.toString()))
                 .andExpect(jsonPath("$.vehicleId").value(vehicleId.toString()))
-                .andExpect(jsonPath("$.description").value("Troca de óleo"));
+                .andExpect(jsonPath("$.description").value("Oil change"));
     }
 
     @Test
@@ -164,7 +164,7 @@ class MaintenanceControllerTests {
                 vehicleId,
                 LocalDate.of(2026, 7, 7),
                 35_000,
-                "Troca de óleo",
+                "Oil change",
                 new BigDecimal("250.00"),
                 OffsetDateTime.now(),
                 OffsetDateTime.now()

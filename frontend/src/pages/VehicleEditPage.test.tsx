@@ -35,17 +35,17 @@ describe("VehicleEditPage", () => {
       brand: "Honda",
       model: "Civic",
       manufactureYear: 2020,
-      color: "Prata",
+      color: "Silver",
     });
 
     render(<VehicleEditPage />);
 
-    expect(screen.getByRole("status")).toHaveTextContent(/carregando ve.culo/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/loading vehicle/i);
     expect(await screen.findByDisplayValue("ABC1234")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Honda")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Civic")).toBeInTheDocument();
     expect(screen.getByDisplayValue("2020")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Prata")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Silver")).toBeInTheDocument();
     expect(getVehicleMock).toHaveBeenCalledWith("vehicle-id");
   });
 
@@ -58,23 +58,23 @@ describe("VehicleEditPage", () => {
       brand: "Honda",
       model: "Civic",
       manufactureYear: 2020,
-      color: "Prata",
+      color: "Silver",
     });
     updateVehicleMock.mockReturnValue(new Promise(() => undefined));
 
     render(<VehicleEditPage />);
 
     await screen.findByDisplayValue("ABC1234");
-    await user.clear(screen.getByLabelText("Cor"));
-    await user.type(screen.getByLabelText("Cor"), "Preto");
-    await user.click(screen.getByRole("button", { name: /salvar/i }));
+    await user.clear(screen.getByLabelText("Color"));
+    await user.type(screen.getByLabelText("Color"), "Black");
+    await user.click(screen.getByRole("button", { name: /save/i }));
 
     expect(updateVehicleMock).toHaveBeenCalledWith("vehicle-id", {
       plate: "ABC1234",
       brand: "Honda",
       model: "Civic",
       manufactureYear: 2020,
-      color: "Preto",
+      color: "Black",
     });
   });
 
@@ -83,8 +83,8 @@ describe("VehicleEditPage", () => {
 
     render(<VehicleEditPage />);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(/ve.culo n.o encontrado/i);
-    const backLinks = screen.getAllByRole("link", { name: /voltar para ve.culos/i });
+    expect(await screen.findByRole("alert")).toHaveTextContent(/vehicle not found/i);
+    const backLinks = screen.getAllByRole("link", { name: /back to vehicles/i });
 
     expect(backLinks).toHaveLength(2);
     backLinks.forEach((link) => {

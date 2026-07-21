@@ -134,7 +134,7 @@ describe("api service", () => {
         brand: "Honda",
         model: "Civic",
         manufactureYear: 2020,
-        color: "Prata",
+        color: "Silver",
       },
     ];
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(vehicles), { status: 200 }));
@@ -180,7 +180,7 @@ describe("api service", () => {
       brand: "Honda",
       model: "Civic",
       manufactureYear: 2020,
-      color: "Prata",
+      color: "Silver",
     };
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(vehicle), { status: 201 }));
 
@@ -192,7 +192,7 @@ describe("api service", () => {
         brand: "Honda",
         model: "Civic",
         manufactureYear: 2020,
-        color: "Prata",
+        color: "Silver",
       }),
     ).resolves.toEqual(vehicle);
 
@@ -207,7 +207,7 @@ describe("api service", () => {
       brand: "Honda",
       model: "Civic",
       manufactureYear: 2020,
-      color: "Prata",
+      color: "Silver",
     });
   });
 
@@ -223,7 +223,7 @@ describe("api service", () => {
       brand: "Honda",
       model: "Civic",
       manufactureYear: 2020,
-      color: "Prata",
+      color: "Silver",
     };
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(vehicle), { status: 200 }));
 
@@ -250,7 +250,7 @@ describe("api service", () => {
       brand: "Honda",
       model: "Civic",
       manufactureYear: 2021,
-      color: "Preto",
+      color: "Black",
     };
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(vehicle), { status: 200 }));
 
@@ -262,7 +262,7 @@ describe("api service", () => {
         brand: "Honda",
         model: "Civic",
         manufactureYear: 2021,
-        color: "Preto",
+        color: "Black",
       }),
     ).resolves.toEqual(vehicle);
 
@@ -277,7 +277,7 @@ describe("api service", () => {
       brand: "Honda",
       model: "Civic",
       manufactureYear: 2021,
-      color: "Preto",
+      color: "Black",
     });
   });
 
@@ -293,7 +293,7 @@ describe("api service", () => {
         vehicleId: "vehicle-id",
         maintenanceDate: "2026-07-07",
         odometer: 35000,
-        description: "Troca de óleo",
+        description: "Oil change",
         cost: 250,
       },
     ];
@@ -324,7 +324,7 @@ describe("api service", () => {
       vehicleId: "vehicle-id",
       maintenanceDate: "2026-07-07",
       odometer: 35000,
-      description: "Troca de óleo",
+      description: "Oil change",
       cost: 250,
     };
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(maintenance), { status: 201 }));
@@ -335,7 +335,7 @@ describe("api service", () => {
       createMaintenance("vehicle-id", {
         maintenanceDate: "2026-07-07",
         odometer: 35000,
-        description: "Troca de óleo",
+        description: "Oil change",
         cost: 250,
       }),
     ).resolves.toEqual(maintenance);
@@ -352,7 +352,7 @@ describe("api service", () => {
     expect(JSON.parse(options.body as string)).toEqual({
       maintenanceDate: "2026-07-07",
       odometer: 35000,
-      description: "Troca de óleo",
+      description: "Oil change",
       cost: 250,
     });
   });
@@ -368,7 +368,7 @@ describe("api service", () => {
       vehicleId: "vehicle-id",
       maintenanceDate: "2026-07-07",
       odometer: 35000,
-      description: "Troca de óleo",
+      description: "Oil change",
       cost: 250,
     };
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(maintenance), { status: 200 }));
@@ -398,7 +398,7 @@ describe("api service", () => {
       vehicleId: "vehicle-id",
       maintenanceDate: "2026-07-08",
       odometer: 36000,
-      description: "Troca de óleo e filtro",
+      description: "Oil and filter change",
       cost: 320,
     };
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(maintenance), { status: 200 }));
@@ -409,7 +409,7 @@ describe("api service", () => {
       updateMaintenance("vehicle-id", "maintenance-id", {
         maintenanceDate: "2026-07-08",
         odometer: 36000,
-        description: "Troca de óleo e filtro",
+        description: "Oil and filter change",
         cost: 320,
       }),
     ).resolves.toEqual(maintenance);
@@ -426,7 +426,7 @@ describe("api service", () => {
     expect(JSON.parse(options.body as string)).toEqual({
       maintenanceDate: "2026-07-08",
       odometer: 36000,
-      description: "Troca de óleo e filtro",
+      description: "Oil and filter change",
       cost: 320,
     });
   });

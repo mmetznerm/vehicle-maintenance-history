@@ -10,10 +10,10 @@ export type MaintenanceFormValues = {
 export type MaintenanceFormErrors = Partial<Record<keyof MaintenanceFormValues, string>>;
 
 export const maintenanceFieldLabels: Record<keyof MaintenanceFormValues, string> = {
-  maintenanceDate: "Data da manutenção",
-  odometer: "Odômetro",
-  cost: "Custo total",
-  description: "Descrição do serviço",
+  maintenanceDate: "Maintenance date",
+  odometer: "Odometer",
+  cost: "Total cost",
+  description: "Service description",
 };
 
 export function getTodayDateInputValue() {
@@ -43,25 +43,25 @@ export function validateMaintenance(values: MaintenanceFormValues) {
   const cost = Number(normalizedCost);
 
   if (!values.maintenanceDate) {
-    errors.maintenanceDate = "Informe a data da manutenção.";
+    errors.maintenanceDate = "Enter the maintenance date.";
   }
 
   if (!values.odometer.trim()) {
-    errors.odometer = "Informe o odômetro.";
+    errors.odometer = "Enter the odometer reading.";
   } else if (!Number.isInteger(odometer) || odometer < 0) {
-    errors.odometer = "Informe um odômetro válido.";
+    errors.odometer = "Enter a valid odometer reading.";
   }
 
   if (!values.cost.trim()) {
-    errors.cost = "Informe o custo total.";
+    errors.cost = "Enter the total cost.";
   } else if (!/^\d+([.,]\d{1,2})?$/.test(values.cost.trim()) || Number.isNaN(cost) || cost < 0) {
-    errors.cost = "Informe um custo válido com até 2 casas decimais.";
+    errors.cost = "Enter a valid cost with up to 2 decimal places.";
   }
 
   if (!values.description.trim()) {
-    errors.description = "Informe a descrição do serviço.";
+    errors.description = "Enter the service description.";
   } else if (values.description.trim().length > 500) {
-    errors.description = "Use no máximo 500 caracteres.";
+    errors.description = "Use no more than 500 characters.";
   }
 
   return errors;

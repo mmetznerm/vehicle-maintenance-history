@@ -23,11 +23,11 @@ export function MaintenanceHistory({
         <span className="empty-vehicles-icon" aria-hidden>
           <WrenchIcon />
         </span>
-        <h2 id="empty-maintenance-title">Nenhuma manutenção cadastrada</h2>
-        <p>Cadastre a primeira manutenção para acompanhar custos, datas e quilometragem.</p>
+        <h2 id="empty-maintenance-title">No maintenance records</h2>
+        <p>Add the first maintenance record to track costs, dates, and mileage.</p>
         <a className="primary-button vehicle-add-button" href={`/vehicles/${vehicleId}/maintenances/new`}>
           <PlusIcon aria-hidden />
-          <span>Adicionar manutenção</span>
+          <span>Add maintenance</span>
         </a>
       </section>
     );
@@ -36,10 +36,10 @@ export function MaintenanceHistory({
   return (
     <section className="maintenance-section" aria-labelledby="maintenance-history-title">
       <header className="maintenance-header">
-        <h2 id="maintenance-history-title">Histórico de manutenções</h2>
+        <h2 id="maintenance-history-title">Maintenance history</h2>
         <a className="primary-button maintenance-add-button" href={`/vehicles/${vehicleId}/maintenances/new`}>
           <PlusIcon aria-hidden />
-          <span>Adicionar manutenção</span>
+          <span>Add maintenance</span>
         </a>
       </header>
 
@@ -47,31 +47,31 @@ export function MaintenanceHistory({
         <table className="maintenance-table">
           <thead>
             <tr>
-              <th>Data</th>
-              <th>Odômetro</th>
-              <th>Descrição</th>
-              <th>Custo</th>
-              <th>Ações</th>
+              <th>Date</th>
+              <th>Odometer</th>
+              <th>Description</th>
+              <th>Cost</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {sortedMaintenances.map((maintenance) => (
               <tr key={maintenance.id}>
-                <td data-label="Data">{formatMaintenanceDate(maintenance.maintenanceDate)}</td>
-                <td data-label="Odômetro">{formatOdometer(maintenance.odometer)}</td>
-                <td data-label="Descrição">
+                <td data-label="Date">{formatMaintenanceDate(maintenance.maintenanceDate)}</td>
+                <td data-label="Odometer">{formatOdometer(maintenance.odometer)}</td>
+                <td data-label="Description">
                   <span className="maintenance-description">
                     <WrenchIcon aria-hidden />
                     {maintenance.description}
                   </span>
                 </td>
-                <td data-label="Custo">{formatCurrency(Number(maintenance.cost))}</td>
-                <td data-label="Ações">
+                <td data-label="Cost">{formatCurrency(Number(maintenance.cost))}</td>
+                <td data-label="Actions">
                   <div className="maintenance-row-actions">
                     <a
                       className="icon-action-button"
                       href={`/vehicles/${vehicleId}/maintenances/${maintenance.id}/edit`}
-                      aria-label={`Editar manutenção ${maintenance.description}`}
+                      aria-label={`Edit maintenance ${maintenance.description}`}
                     >
                       <EditIcon aria-hidden />
                     </a>
@@ -79,7 +79,7 @@ export function MaintenanceHistory({
                       className="icon-action-button danger-icon-action"
                       type="button"
                       disabled={deletingMaintenanceId === maintenance.id}
-                      aria-label={`Excluir manutenção ${maintenance.description}`}
+                      aria-label={`Delete maintenance ${maintenance.description}`}
                       onClick={() => onDeleteMaintenance(maintenance)}
                     >
                       <TrashIcon aria-hidden />

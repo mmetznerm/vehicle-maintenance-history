@@ -47,7 +47,7 @@ class VehicleServiceTests {
                 "Honda",
                 "Civic",
                 2020,
-                "Prata"
+                "Silver"
         );
 
         when(userRepository.findById(ownerId))
@@ -123,7 +123,7 @@ class VehicleServiceTests {
                 "Toyota",
                 "Corolla",
                 2022,
-                "Preto"
+                "Black"
         );
 
         when(vehicleRepository.findAllByOwnerId(ownerId)).thenReturn(List.of(vehicle));
@@ -146,7 +146,7 @@ class VehicleServiceTests {
                 "Honda",
                 "Civic",
                 2020,
-                "Prata",
+                "Silver",
                 null,
                 null
         );

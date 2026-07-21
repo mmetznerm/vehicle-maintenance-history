@@ -14,11 +14,11 @@ import { saveAuthTokens } from "../services/authStorage";
 function getLoginErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
     if (error.status === 401 || error.status === 403) {
-      return "E-mail, telefone ou senha inválidos.";
+      return "Email, phone number, or password is invalid.";
     }
 
     if (error.status >= 500) {
-      return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+      return "Could not connect to the server. Check whether the API is running.";
     }
 
     if (error.fieldErrors.length > 0) {
@@ -28,7 +28,7 @@ function getLoginErrorMessage(error: unknown) {
     return error.message;
   }
 
-  return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+  return "Could not connect to the server. Check whether the API is running.";
 }
 
 export function LoginPage() {
@@ -43,7 +43,7 @@ export function LoginPage() {
     setErrorMessage("");
 
     if (!emailOrPhone.trim() || !password) {
-      setErrorMessage("Informe e-mail ou telefone e senha.");
+      setErrorMessage("Enter your email or phone number and password.");
       return;
     }
 
@@ -70,15 +70,15 @@ export function LoginPage() {
         <header className="auth-card-header">
           <CarIcon className="brand-icon" aria-hidden />
           <h1 id="login-title">AutoLog</h1>
-          <p>Gestão eficiente da sua frota</p>
+          <p>Efficient fleet management</p>
         </header>
 
         <form className="login-form" onSubmit={handleSubmit} noValidate>
           <TextField
             id="emailOrPhone"
-            label="E-mail ou telefone"
+            label="Email or phone number"
             value={emailOrPhone}
-            placeholder="nome@empresa.com"
+            placeholder="name@company.com"
             autoComplete="username"
             required
             leadingIcon={<UserIcon aria-hidden />}
@@ -88,7 +88,7 @@ export function LoginPage() {
           <div className="password-row">
             <TextField
               id="password"
-              label="Senha"
+              label="Password"
               type={showPassword ? "text" : "password"}
               value={password}
               placeholder="••••••••"
@@ -99,7 +99,7 @@ export function LoginPage() {
                 <button
                   className="icon-button"
                   type="button"
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   onClick={() => setShowPassword((current) => !current)}
                 >
                   {showPassword ? <EyeOffIcon aria-hidden /> : <EyeIcon aria-hidden />}
@@ -108,7 +108,7 @@ export function LoginPage() {
               onChange={setPassword}
             />
             <a className="forgot-link" href="#forgot-password" onClick={(event) => event.preventDefault()}>
-              Esqueceu sua senha?
+              Forgot your password?
             </a>
           </div>
 
@@ -119,14 +119,14 @@ export function LoginPage() {
           ) : null}
 
           <button className="primary-button" type="submit" disabled={isSubmitting}>
-            <span>{isSubmitting ? "Entrando..." : "Entrar"}</span>
+            <span>{isSubmitting ? "Signing in..." : "Sign in"}</span>
             <ArrowRightIcon aria-hidden />
           </button>
         </form>
 
         <footer className="auth-card-footer">
-          <span>Não tem uma conta?</span>
-          <a href="/register">Cadastre-se aqui</a>
+          <span>Don't have an account?</span>
+          <a href="/register">Sign up here</a>
         </footer>
       </section>
     </main>

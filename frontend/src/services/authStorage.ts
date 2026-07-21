@@ -48,7 +48,7 @@ function readAccessTokenPayload(): AccessTokenPayload | null {
 export function getCurrentUserDisplayName() {
   const payload = readAccessTokenPayload();
 
-  return payload?.fullName?.trim() || payload?.emailOrPhone?.trim() || "Usuário";
+  return payload?.fullName?.trim() || payload?.emailOrPhone?.trim() || "User";
 }
 
 export function hasAuthTokens() {

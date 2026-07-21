@@ -5,9 +5,9 @@ import { ApiError, register } from "../services/api";
 import { saveAuthTokens } from "../services/authStorage";
 
 const FIELD_LABELS: Record<string, string> = {
-  fullName: "nome completo",
-  emailOrPhone: "e-mail ou telefone",
-  password: "senha",
+  fullName: "your full name",
+  emailOrPhone: "your email or phone number",
+  password: "your password",
 };
 
 function translateFieldError(field: string, message: string) {
@@ -15,19 +15,19 @@ function translateFieldError(field: string, message: string) {
   const normalizedMessage = message.toLowerCase();
 
   if (normalizedMessage.includes("must not be blank")) {
-    return `Informe ${label}.`;
+    return `Enter ${label}.`;
   }
 
   if (field === "password" && normalizedMessage.includes("size must be between")) {
-    return "A senha deve ter entre 8 e 72 caracteres.";
+    return "Password must be between 8 and 72 characters.";
   }
 
   if (field === "fullName" && normalizedMessage.includes("size must be between")) {
-    return "O nome completo deve ter no máximo 160 caracteres.";
+    return "Full name must be no more than 160 characters.";
   }
 
   if (field === "emailOrPhone" && normalizedMessage.includes("size must be between")) {
-    return "O e-mail ou telefone deve ter no máximo 180 caracteres.";
+    return "Email or phone number must be no more than 180 characters.";
   }
 
   return `${label}: ${message}`;
@@ -36,11 +36,11 @@ function translateFieldError(field: string, message: string) {
 function getRegisterErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
     if (error.status === 409) {
-      return "Usuário já cadastrado. Volte ao login ou use outro e-mail ou telefone.";
+      return "User is already registered. Return to sign in or use another email or phone number.";
     }
 
     if (error.status >= 500) {
-      return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+      return "Could not connect to the server. Check whether the API is running.";
     }
 
     if (error.fieldErrors.length > 0) {
@@ -49,14 +49,14 @@ function getRegisterErrorMessage(error: unknown) {
         .join(" ");
     }
 
-    if (error.message === "Não foi possível concluir a solicitação.") {
-      return "Não foi possível criar a conta agora. Verifique se a API está em execução.";
+    if (error.message === "Could not complete the request.") {
+      return "Could not create the account. Check whether the API is running.";
     }
 
     return error.message;
   }
 
-  return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+  return "Could not connect to the server. Check whether the API is running.";
 }
 
 export function RegisterPage() {
@@ -71,12 +71,12 @@ export function RegisterPage() {
     setErrorMessage("");
 
     if (!fullName.trim() || !emailOrPhone.trim() || !password) {
-      setErrorMessage("Informe nome completo, e-mail ou telefone e senha.");
+      setErrorMessage("Enter your full name, email or phone number, and password.");
       return;
     }
 
     if (password.length < 8) {
-      setErrorMessage("A senha deve ter pelo menos 8 caracteres.");
+      setErrorMessage("Password must be at least 8 characters long.");
       return;
     }
 
@@ -106,15 +106,15 @@ export function RegisterPage() {
             <CarIcon className="brand-icon" aria-hidden />
           </span>
           <h1 id="register-title">AutoLog</h1>
-          <p>Crie sua conta para gerenciar sua frota.</p>
+          <p>Create your account to manage your fleet.</p>
         </header>
 
         <form className="login-form register-form" onSubmit={handleSubmit} noValidate>
           <TextField
             id="fullName"
-            label="Nome completo"
+            label="Full name"
             value={fullName}
-            placeholder="João Silva"
+            placeholder="John Smith"
             autoComplete="name"
             required
             leadingIcon={<UserIcon aria-hidden />}
@@ -123,9 +123,9 @@ export function RegisterPage() {
 
           <TextField
             id="registerEmailOrPhone"
-            label="E-mail ou telefone"
+            label="Email or phone number"
             value={emailOrPhone}
-            placeholder="joao@empresa.com"
+            placeholder="john@company.com"
             autoComplete="username"
             required
             leadingIcon={<MailIcon aria-hidden />}
@@ -135,7 +135,7 @@ export function RegisterPage() {
           <div>
             <TextField
               id="registerPassword"
-              label="Senha"
+              label="Password"
               type="password"
               value={password}
               placeholder="••••••••"
@@ -144,7 +144,7 @@ export function RegisterPage() {
               leadingIcon={<LockIcon aria-hidden />}
               onChange={setPassword}
             />
-            <p className="field-help">Deve ter pelo menos 8 caracteres.</p>
+            <p className="field-help">Must be at least 8 characters long.</p>
           </div>
 
           {errorMessage ? (
@@ -154,13 +154,13 @@ export function RegisterPage() {
           ) : null}
 
           <button className="primary-button" type="submit" disabled={isSubmitting}>
-            <span>{isSubmitting ? "Criando conta..." : "Criar conta"}</span>
+            <span>{isSubmitting ? "Creating account..." : "Create account"}</span>
           </button>
         </form>
 
         <footer className="auth-card-footer register-card-footer">
-          <span>Já tem uma conta?</span>
-          <a href="/login">Entrar</a>
+          <span>Already have an account?</span>
+          <a href="/login">Sign in</a>
         </footer>
       </section>
     </main>

@@ -32,8 +32,8 @@ export function VehicleForm({
   initialValues = emptyVehicleFormValues,
   errorMessage = "",
   fieldErrors: apiFieldErrors = {},
-  submitLabel = "Salvar",
-  submittingLabel = "Salvando...",
+  submitLabel = "Save",
+  submittingLabel = "Saving...",
   isSubmitting = false,
   cancelHref,
   onSubmit,
@@ -41,7 +41,7 @@ export function VehicleForm({
   const [values, setValues] = useState<VehicleFormValues>(initialValues);
   const [validationErrors, setValidationErrors] = useState<VehicleFormErrors>({});
   const [validationMessage, setValidationMessage] = useState("");
-  const requiredText = useMemo(() => "* Obrigatório", []);
+  const requiredText = useMemo(() => "* Required", []);
   const visibleErrorMessage = validationMessage || errorMessage;
 
   function updateField(field: keyof VehicleFormValues, value: string) {
@@ -64,7 +64,7 @@ export function VehicleForm({
 
     if (Object.keys(validationErrors).length > 0) {
       setValidationErrors(validationErrors);
-      setValidationMessage("Revise os campos destacados antes de salvar.");
+      setValidationMessage("Review the highlighted fields before saving.");
       return;
     }
 
@@ -94,7 +94,7 @@ export function VehicleForm({
           id="brand"
           label={vehicleFieldLabels.brand}
           value={values.brand}
-          placeholder="ex.: Toyota"
+          placeholder="e.g., Toyota"
           autoComplete="organization"
           required
           errorMessage={validationErrors.brand || apiFieldErrors.brand}
@@ -106,7 +106,7 @@ export function VehicleForm({
           id="model"
           label={vehicleFieldLabels.model}
           value={values.model}
-          placeholder="ex.: Corolla"
+          placeholder="e.g., Corolla"
           autoComplete="off"
           required
           errorMessage={validationErrors.model || apiFieldErrors.model}
@@ -116,10 +116,10 @@ export function VehicleForm({
 
         <TextField
           id="manufactureYear"
-          label="Ano"
+          label="Year"
           type="number"
           value={values.manufactureYear}
-          placeholder="AAAA"
+          placeholder="YYYY"
           autoComplete="off"
           required
           errorMessage={validationErrors.manufactureYear || apiFieldErrors.manufactureYear}
@@ -131,7 +131,7 @@ export function VehicleForm({
           id="color"
           label={vehicleFieldLabels.color}
           value={values.color}
-          placeholder="ex.: Prata"
+          placeholder="e.g., Silver"
           autoComplete="off"
           errorMessage={validationErrors.color || apiFieldErrors.color}
           leadingIcon={<PaletteIcon aria-hidden />}
@@ -147,7 +147,7 @@ export function VehicleForm({
 
       <footer className="vehicle-form-actions">
         <a className="text-button" href={cancelHref}>
-          Cancelar
+          Cancel
         </a>
         <button className="primary-button vehicle-save-button" type="submit" disabled={isSubmitting}>
           <SaveIcon aria-hidden />

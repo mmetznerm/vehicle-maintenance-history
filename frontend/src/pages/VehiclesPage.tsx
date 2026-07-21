@@ -28,13 +28,13 @@ function getVehiclesErrorMessage(error: unknown) {
     }
 
     if (error.status >= 500) {
-      return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+      return "Could not connect to the server. Check whether the API is running.";
     }
 
     return error.message;
   }
 
-  return "Não foi possível carregar seus veículos agora.";
+  return "Could not load your vehicles.";
 }
 
 function VehicleSidebar() {
@@ -61,14 +61,14 @@ function VehicleSidebar() {
   }
 
   return (
-    <aside className="app-sidebar" aria-label="Navegação principal">
+    <aside className="app-sidebar" aria-label="Main navigation">
       <a className="sidebar-brand" href="/vehicles">
         AutoLog
       </a>
 
       <div className="sidebar-user">
         <div>
-          <strong>Bem-vindo</strong>
+          <strong>Welcome</strong>
           <span>{userDisplayName}</span>
         </div>
       </div>
@@ -76,12 +76,12 @@ function VehicleSidebar() {
       <nav className="sidebar-nav">
         <a className="sidebar-link is-active" href="/vehicles" aria-current="page">
           <CarIcon aria-hidden />
-          <span>Painel</span>
+          <span>Dashboard</span>
         </a>
       </nav>
 
       <button className="sidebar-logout" type="button" disabled={isLoggingOut} onClick={handleLogout}>
-        {isLoggingOut ? "Saindo..." : "Sair"}
+        {isLoggingOut ? "Signing out..." : "Sign out"}
       </button>
     </aside>
   );
@@ -93,14 +93,14 @@ function EmptyVehiclesState() {
       <span className="empty-vehicles-icon" aria-hidden>
         <CarIcon />
       </span>
-      <h1 id="empty-vehicles-title">Nenhum veículo cadastrado</h1>
+      <h1 id="empty-vehicles-title">No registered vehicles</h1>
       <p>
-        Você ainda não possui veículos em sua frota. Comece adicionando o seu primeiro veículo
-        para acompanhar manutenções e relatórios.
+        You do not have any vehicles in your fleet yet. Start by adding your first vehicle to track
+        maintenance and reports.
       </p>
       <a className="primary-button vehicle-add-button" href="/vehicles/new">
         <PlusIcon aria-hidden />
-        <span>Adicionar Veículo</span>
+        <span>Add Vehicle</span>
       </a>
     </section>
   );
@@ -124,7 +124,7 @@ function VehicleCard({ vehicle, isDeleting, showDetailsAction = true, onDelete }
         </span>
 
         <div className="vehicle-card-content">
-          <h2 id={`vehicle-${vehicle.id}-title`}>{vehicleName || "Veículo sem modelo"}</h2>
+          <h2 id={`vehicle-${vehicle.id}-title`}>{vehicleName || "Vehicle without a model"}</h2>
           <div className="vehicle-meta-row">
             <span className="plate-badge">{vehicle.plate}</span>
             <span className="vehicle-meta-item">
@@ -139,16 +139,16 @@ function VehicleCard({ vehicle, isDeleting, showDetailsAction = true, onDelete }
         </div>
       </div>
 
-      <div className="vehicle-actions" aria-label={`Ações para ${vehicleName || vehicle.plate}`}>
+      <div className="vehicle-actions" aria-label={`Actions for ${vehicleName || vehicle.plate}`}>
         {showDetailsAction ? (
           <a className="vehicle-action-button" href={`/vehicles/${vehicle.id}`}>
             <ExternalLinkIcon aria-hidden />
-            <span>Detalhes</span>
+            <span>Details</span>
           </a>
         ) : null}
         <a className="vehicle-action-button" href={`/vehicles/${vehicle.id}/edit`}>
           <EditIcon aria-hidden />
-          <span>Editar</span>
+          <span>Edit</span>
         </a>
         <button
           className="vehicle-action-button danger-action"
@@ -157,7 +157,7 @@ function VehicleCard({ vehicle, isDeleting, showDetailsAction = true, onDelete }
           onClick={() => onDelete(vehicle)}
         >
           <TrashIcon aria-hidden />
-          <span>{isDeleting ? "Excluindo..." : "Excluir"}</span>
+          <span>{isDeleting ? "Deleting..." : "Delete"}</span>
         </button>
       </div>
     </article>
@@ -204,7 +204,7 @@ export function VehiclesPage() {
           } catch (error) {
             if (isMounted) {
               setMaintenanceErrorMessage(
-                getVehiclesErrorMessage(error) || "Não foi possível carregar as manutenções.",
+                getVehiclesErrorMessage(error) || "Could not load the maintenance records.",
               );
             }
           }
@@ -228,7 +228,7 @@ export function VehiclesPage() {
   }, []);
 
   async function handleDeleteVehicle(vehicle: VehicleSummary) {
-    const shouldDelete = window.confirm(`Excluir o veículo ${vehicle.plate}?`);
+    const shouldDelete = window.confirm(`Delete vehicle ${vehicle.plate}?`);
 
     if (!shouldDelete) {
       return;
@@ -243,7 +243,7 @@ export function VehiclesPage() {
         currentVehicles.filter((currentVehicle) => currentVehicle.id !== vehicle.id),
       );
     } catch (error) {
-      setErrorMessage(getVehiclesErrorMessage(error) || "Não foi possível excluir o veículo.");
+      setErrorMessage(getVehiclesErrorMessage(error) || "Could not delete the vehicle.");
     } finally {
       setDeletingVehicleId(null);
     }
@@ -256,7 +256,7 @@ export function VehiclesPage() {
       return;
     }
 
-    const shouldDelete = window.confirm(`Excluir a manutenção "${maintenance.description}"?`);
+    const shouldDelete = window.confirm(`Delete maintenance "${maintenance.description}"?`);
 
     if (!shouldDelete) {
       return;
@@ -272,7 +272,7 @@ export function VehiclesPage() {
       );
     } catch (error) {
       setMaintenanceErrorMessage(
-        getVehiclesErrorMessage(error) || "Não foi possível excluir a manutenção.",
+        getVehiclesErrorMessage(error) || "Could not delete the maintenance record.",
       );
     } finally {
       setDeletingMaintenanceId(null);
@@ -287,20 +287,20 @@ export function VehiclesPage() {
         {isLoading ? (
           <section className="vehicles-status-card" role="status" aria-live="polite">
             <span className="loading-spinner" aria-hidden />
-            <p>Carregando veículos...</p>
+            <p>Loading vehicles...</p>
           </section>
         ) : null}
 
         {!isLoading && errorMessage ? (
           <section className="vehicles-status-card error-status" role="alert">
-            <h1 id="vehicles-page-title">Veículos</h1>
+            <h1 id="vehicles-page-title">Vehicles</h1>
             <p>{errorMessage}</p>
             <button
               type="button"
               className="secondary-button"
               onClick={() => window.location.reload()}
             >
-              Tentar novamente
+              Try again
             </button>
           </section>
         ) : null}
@@ -312,19 +312,18 @@ export function VehiclesPage() {
             <header className="vehicles-page-header">
               <div>
                 <p className="section-eyebrow">AutoLog</p>
-                <h1 id="vehicles-page-title">Veículos</h1>
+                <h1 id="vehicles-page-title">Vehicles</h1>
                 <p>
-                  {vehicles.length} veículo{vehicles.length === 1 ? "" : "s"} cadastrado
-                  {vehicles.length === 1 ? "" : "s"}.
+                  {vehicles.length} registered vehicle{vehicles.length === 1 ? "" : "s"}.
                 </p>
               </div>
               <a className="primary-button vehicles-header-button" href="/vehicles/new">
                 <PlusIcon aria-hidden />
-                <span>Adicionar Veículo</span>
+                <span>Add Vehicle</span>
               </a>
             </header>
 
-            <div className="vehicles-list" aria-label="Lista de veículos cadastrados">
+            <div className="vehicles-list" aria-label="List of registered vehicles">
               {vehicles.map((vehicle) => (
                 <VehicleCard
                   key={vehicle.id}

@@ -61,7 +61,7 @@ class VehicleApiIT {
                 "Honda",
                 "Civic",
                 2020,
-                "Prata"
+                "Silver"
         );
 
         String createVehicleResponse = mockMvc.perform(post("/v1/vehicles")
@@ -74,7 +74,7 @@ class VehicleApiIT {
                 .andExpect(jsonPath("$.brand").value("Honda"))
                 .andExpect(jsonPath("$.model").value("Civic"))
                 .andExpect(jsonPath("$.manufactureYear").value(2020))
-                .andExpect(jsonPath("$.color").value("Prata"))
+                .andExpect(jsonPath("$.color").value("Silver"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -101,7 +101,7 @@ class VehicleApiIT {
                 "Toyota",
                 "Corolla",
                 2024,
-                "Preto"
+                "Black"
         );
 
         mockMvc.perform(put("/v1/vehicles/{vehicleId}", vehicleId)
@@ -114,7 +114,7 @@ class VehicleApiIT {
                 .andExpect(jsonPath("$.brand").value("Toyota"))
                 .andExpect(jsonPath("$.model").value("Corolla"))
                 .andExpect(jsonPath("$.manufactureYear").value(2024))
-                .andExpect(jsonPath("$.color").value("Preto"));
+                .andExpect(jsonPath("$.color").value("Black"));
 
         mockMvc.perform(delete("/v1/vehicles/{vehicleId}", vehicleId)
                         .header(AUTHORIZATION, bearer(accessToken)))
@@ -134,7 +134,7 @@ class VehicleApiIT {
                 "Honda",
                 "Civic",
                 2020,
-                "Prata"
+                "Silver"
         );
 
         mockMvc.perform(post("/v1/vehicles")

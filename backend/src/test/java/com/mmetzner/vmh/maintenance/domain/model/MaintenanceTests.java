@@ -19,7 +19,7 @@ class MaintenanceTests {
                 vehicleId,
                 LocalDate.of(2026, 7, 7),
                 35_000,
-                " Troca de óleo ",
+                " Oil change ",
                 new BigDecimal("250.00")
         );
 
@@ -27,7 +27,7 @@ class MaintenanceTests {
         assertThat(maintenance.vehicleId()).isEqualTo(vehicleId);
         assertThat(maintenance.maintenanceDate()).isEqualTo(LocalDate.of(2026, 7, 7));
         assertThat(maintenance.odometer()).isEqualTo(35_000);
-        assertThat(maintenance.description()).isEqualTo("Troca de óleo");
+        assertThat(maintenance.description()).isEqualTo("Oil change");
         assertThat(maintenance.cost()).isEqualByComparingTo("250.00");
     }
 
@@ -37,7 +37,7 @@ class MaintenanceTests {
                 UUID.randomUUID(),
                 LocalDate.now(),
                 -1,
-                "Troca de pneus",
+                "Tire replacement",
                 new BigDecimal("800.00")
         ))
                 .isInstanceOf(IllegalArgumentException.class)

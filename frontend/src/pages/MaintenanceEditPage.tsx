@@ -22,7 +22,7 @@ function getMaintenanceRouteParams(pathname: string) {
 function getMaintenanceLoadErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
     if (error.status === 404) {
-      return "Manutenção não encontrada.";
+      return "Maintenance record not found.";
     }
 
     if (error.status === 401) {
@@ -30,19 +30,19 @@ function getMaintenanceLoadErrorMessage(error: unknown) {
     }
 
     if (error.status >= 500) {
-      return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+      return "Could not connect to the server. Check whether the API is running.";
     }
 
-    return error.message || "Não foi possível carregar a manutenção.";
+    return error.message || "Could not load the maintenance record.";
   }
 
-  return "Não foi possível carregar a manutenção agora.";
+  return "Could not load the maintenance record.";
 }
 
 function getMaintenanceUpdateErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
     if (error.status === 404) {
-      return "Manutenção não encontrada.";
+      return "Maintenance record not found.";
     }
 
     if (error.status === 401) {
@@ -50,13 +50,13 @@ function getMaintenanceUpdateErrorMessage(error: unknown) {
     }
 
     if (error.status >= 500) {
-      return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+      return "Could not connect to the server. Check whether the API is running.";
     }
 
-    return error.message || "Não foi possível salvar a manutenção.";
+    return error.message || "Could not save the maintenance record.";
   }
 
-  return "Não foi possível salvar a manutenção agora.";
+  return "Could not save the maintenance record.";
 }
 
 function mapApiFieldErrors(error: unknown) {
@@ -91,7 +91,7 @@ export function MaintenanceEditPage() {
 
     async function loadMaintenance() {
       if (!vehicleId || !maintenanceId) {
-        setErrorMessage("Manutenção não encontrada.");
+        setErrorMessage("Maintenance record not found.");
         setIsLoading(false);
         return;
       }
@@ -128,7 +128,7 @@ export function MaintenanceEditPage() {
     setFieldErrors({});
 
     if (!vehicleId || !maintenanceId) {
-      setErrorMessage("Manutenção não encontrada.");
+      setErrorMessage("Maintenance record not found.");
       return;
     }
 
@@ -149,10 +149,10 @@ export function MaintenanceEditPage() {
     <main className="maintenance-create-page" aria-labelledby="maintenance-edit-title">
       <div className="maintenance-create-shell">
         <header className="maintenance-create-header">
-          <a className="maintenance-back-button" href={cancelHref} aria-label="Voltar para detalhes do veículo">
+          <a className="maintenance-back-button" href={cancelHref} aria-label="Back to vehicle details">
             <ArrowLeftIcon aria-hidden />
           </a>
-          <h1 id="maintenance-edit-title">Editar manutenção</h1>
+          <h1 id="maintenance-edit-title">Edit maintenance</h1>
           <span aria-hidden />
         </header>
 
@@ -160,7 +160,7 @@ export function MaintenanceEditPage() {
           {isLoading ? (
             <div className="vehicle-form-status" role="status" aria-live="polite">
               <span className="loading-spinner" aria-hidden />
-              <p>Carregando manutenção...</p>
+              <p>Loading maintenance...</p>
             </div>
           ) : null}
 
@@ -168,7 +168,7 @@ export function MaintenanceEditPage() {
             <div className="vehicle-form-status error-status" role="alert">
               <p>{errorMessage}</p>
               <a className="secondary-button vehicle-status-action" href={cancelHref}>
-                Voltar para veículo
+                Back to vehicle
               </a>
             </div>
           ) : null}

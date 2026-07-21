@@ -22,7 +22,7 @@ function getVehicleIdFromPath(pathname: string) {
 function getVehicleDetailsErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
     if (error.status === 404) {
-      return "Veículo não encontrado.";
+      return "Vehicle not found.";
     }
 
     if (error.status === 401) {
@@ -30,13 +30,13 @@ function getVehicleDetailsErrorMessage(error: unknown) {
     }
 
     if (error.status >= 500) {
-      return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+      return "Could not connect to the server. Check whether the API is running.";
     }
 
-    return error.message || "Não foi possível carregar os detalhes do veículo.";
+    return error.message || "Could not load the vehicle details.";
   }
 
-  return "Não foi possível carregar os detalhes do veículo agora.";
+  return "Could not load the vehicle details.";
 }
 
 type VehicleSummaryCardProps = {
@@ -52,7 +52,7 @@ function VehicleSummaryCard({
   isDeleting,
   onDelete,
 }: VehicleSummaryCardProps) {
-  const vehicleName = `${vehicle.brand} ${vehicle.model}`.trim() || "Veículo";
+  const vehicleName = `${vehicle.brand} ${vehicle.model}`.trim() || "Vehicle";
 
   return (
     <section className="vehicle-details-card" aria-labelledby="vehicle-details-title">
@@ -79,10 +79,10 @@ function VehicleSummaryCard({
         </div>
       </div>
 
-      <div className="vehicle-details-actions" aria-label={`Ações para ${vehicleName}`}>
+      <div className="vehicle-details-actions" aria-label={`Actions for ${vehicleName}`}>
         <a className="vehicle-action-button" href={`/vehicles/${vehicle.id}/edit`}>
           <EditIcon aria-hidden />
-          <span>Editar</span>
+          <span>Edit</span>
         </a>
         <button
           className="vehicle-action-button danger-action"
@@ -91,7 +91,7 @@ function VehicleSummaryCard({
           onClick={onDelete}
         >
           <TrashIcon aria-hidden />
-          <span>{isDeleting ? "Excluindo..." : "Excluir"}</span>
+          <span>{isDeleting ? "Deleting..." : "Delete"}</span>
         </button>
       </div>
     </section>
@@ -119,7 +119,7 @@ export function VehicleDetailsPage() {
 
     async function loadDetails() {
       if (!vehicleId) {
-        setErrorMessage("Veículo não encontrado.");
+        setErrorMessage("Vehicle not found.");
         setIsLoading(false);
         return;
       }
@@ -160,7 +160,7 @@ export function VehicleDetailsPage() {
       return;
     }
 
-    const shouldDelete = window.confirm(`Excluir o veículo ${vehicle.plate}?`);
+    const shouldDelete = window.confirm(`Delete vehicle ${vehicle.plate}?`);
 
     if (!shouldDelete) {
       return;
@@ -173,14 +173,14 @@ export function VehicleDetailsPage() {
       await deleteVehicle(vehicle.id);
       window.location.assign("/vehicles");
     } catch (error) {
-      setErrorMessage(getVehicleDetailsErrorMessage(error) || "Não foi possível excluir o veículo.");
+      setErrorMessage(getVehicleDetailsErrorMessage(error) || "Could not delete the vehicle.");
     } finally {
       setIsDeletingVehicle(false);
     }
   }
 
   async function handleDeleteMaintenance(maintenance: Maintenance) {
-    const shouldDelete = window.confirm(`Excluir a manutenção "${maintenance.description}"?`);
+    const shouldDelete = window.confirm(`Delete maintenance "${maintenance.description}"?`);
 
     if (!shouldDelete) {
       return;
@@ -195,7 +195,7 @@ export function VehicleDetailsPage() {
         currentMaintenances.filter((currentMaintenance) => currentMaintenance.id !== maintenance.id),
       );
     } catch (error) {
-      setErrorMessage(getVehicleDetailsErrorMessage(error) || "Não foi possível excluir a manutenção.");
+      setErrorMessage(getVehicleDetailsErrorMessage(error) || "Could not delete the maintenance record.");
     } finally {
       setDeletingMaintenanceId(null);
     }
@@ -209,16 +209,16 @@ export function VehicleDetailsPage() {
       {isLoading ? (
         <section className="vehicles-status-card details-status-card" role="status" aria-live="polite">
           <span className="loading-spinner" aria-hidden />
-          <p>Carregando detalhes do veículo...</p>
+          <p>Loading vehicle details...</p>
         </section>
       ) : null}
 
       {!isLoading && errorMessage && !vehicle ? (
         <section className="vehicles-status-card details-status-card error-status" role="alert">
-          <h1 id="vehicle-details-title">Detalhes do veículo</h1>
+          <h1 id="vehicle-details-title">Vehicle details</h1>
           <p>{errorMessage}</p>
           <a className="secondary-button vehicle-status-action" href="/vehicles">
-            Voltar para veículos
+            Back to vehicles
           </a>
         </section>
       ) : null}
@@ -234,7 +234,7 @@ export function VehicleDetailsPage() {
           <div className="vehicle-details-toolbar">
             <a className="primary-button vehicles-header-button" href="/vehicles/new">
               <PlusIcon aria-hidden />
-              <span>Adicionar Veículo</span>
+              <span>Add Vehicle</span>
             </a>
           </div>
 

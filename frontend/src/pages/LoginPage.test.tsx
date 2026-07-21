@@ -25,10 +25,10 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
-    await user.click(screen.getByRole("button", { name: /entrar/i }));
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(loginMock).not.toHaveBeenCalled();
-    expect(screen.getByRole("alert")).toHaveTextContent(/informe e-mail ou telefone e senha/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/enter your email or phone number and password/i);
   });
 
   it("toggles password visibility", async () => {
@@ -36,15 +36,15 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
-    const passwordInput = screen.getByLabelText("Senha");
+    const passwordInput = screen.getByLabelText("Password");
 
     expect(passwordInput).toHaveAttribute("type", "password");
 
-    await user.click(screen.getByRole("button", { name: /mostrar senha/i }));
+    await user.click(screen.getByRole("button", { name: /show password/i }));
 
     expect(passwordInput).toHaveAttribute("type", "text");
 
-    await user.click(screen.getByRole("button", { name: /ocultar senha/i }));
+    await user.click(screen.getByRole("button", { name: /hide password/i }));
 
     expect(passwordInput).toHaveAttribute("type", "password");
   });
@@ -53,19 +53,19 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
 
     loginMock.mockRejectedValue(
-      new ApiError("Invalid request", 400, [{ field: "password", message: "Senha obrigatoria." }]),
+      new ApiError("Invalid request", 400, [{ field: "password", message: "Password is required." }]),
     );
 
     render(<LoginPage />);
 
-    await user.type(screen.getByLabelText("E-mail ou telefone"), "driver@example.com");
-    await user.type(screen.getByLabelText("Senha"), "secret-password");
-    await user.click(screen.getByRole("button", { name: /entrar/i }));
+    await user.type(screen.getByLabelText("Email or phone number"), "driver@example.com");
+    await user.type(screen.getByLabelText("Password"), "secret-password");
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(loginMock).toHaveBeenCalledWith({
       emailOrPhone: "driver@example.com",
       password: "secret-password",
     });
-    expect(await screen.findByRole("alert")).toHaveTextContent("Senha obrigatoria.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Password is required.");
   });
 });

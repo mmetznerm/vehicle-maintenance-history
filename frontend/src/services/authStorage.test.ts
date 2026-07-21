@@ -93,6 +93,6 @@ describe("authStorage", () => {
 
     clearAuthTokens();
 
-    expect(getCurrentUserDisplayName()).toBe("Usuário");
+    expect(getCurrentUserDisplayName()).toBe("User");
   });
 });

@@ -54,7 +54,7 @@ describe("VehiclesPage", () => {
         brand: "Mitsubishi",
         model: "Lancer",
         manufactureYear: 2012,
-        color: "Preta",
+        color: "Black",
       },
     ]);
 
@@ -72,7 +72,7 @@ describe("VehiclesPage", () => {
         brand: "Honda",
         model: "Civic",
         manufactureYear: 2020,
-        color: "Prata",
+        color: "Silver",
       },
       {
         id: "vehicle-two",
@@ -80,7 +80,7 @@ describe("VehiclesPage", () => {
         brand: "Toyota",
         model: "Corolla",
         manufactureYear: 2021,
-        color: "Preta",
+        color: "Black",
       },
     ]);
 
@@ -88,8 +88,8 @@ describe("VehiclesPage", () => {
 
     expect(await screen.findByRole("heading", { name: /honda civic/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /toyota corolla/i })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /detalhes/i })).toHaveLength(2);
-    expect(screen.queryByText(/hist.rico de manuten..es/i)).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /details/i })).toHaveLength(2);
+    expect(screen.queryByText(/maintenance history/i)).not.toBeInTheDocument();
     expect(listMaintenancesMock).not.toHaveBeenCalled();
   });
 
@@ -110,8 +110,8 @@ describe("VehiclesPage", () => {
 
     render(<VehiclesPage />);
 
-    await screen.findByRole("heading", { name: /nenhum ve.culo cadastrado/i });
-    await user.click(screen.getByRole("button", { name: /sair/i }));
+    await screen.findByRole("heading", { name: /no registered vehicles/i });
+    await user.click(screen.getByRole("button", { name: /sign out/i }));
 
     expect(logoutMock).toHaveBeenCalledWith({ refreshToken: "refresh-token" });
     expect(getStoredTokens()).toBeNull();

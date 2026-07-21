@@ -47,7 +47,7 @@ function mapApiFieldErrors(error: unknown) {
 function getVehicleLoadErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
     if (error.status === 404) {
-      return "Veículo não encontrado.";
+      return "Vehicle not found.";
     }
 
     if (error.status === 401) {
@@ -55,19 +55,19 @@ function getVehicleLoadErrorMessage(error: unknown) {
     }
 
     if (error.status >= 500) {
-      return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+      return "Could not connect to the server. Check whether the API is running.";
     }
 
-    return error.message || "Não foi possível carregar os dados do veículo.";
+    return error.message || "Could not load the vehicle data.";
   }
 
-  return "Não foi possível carregar os dados do veículo agora.";
+  return "Could not load the vehicle data.";
 }
 
 function getVehicleUpdateErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
     if (error.status === 404) {
-      return "Veículo não encontrado.";
+      return "Vehicle not found.";
     }
 
     if (error.status === 401) {
@@ -75,13 +75,13 @@ function getVehicleUpdateErrorMessage(error: unknown) {
     }
 
     if (error.status >= 500) {
-      return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+      return "Could not connect to the server. Check whether the API is running.";
     }
 
-    return error.message || "Não foi possível salvar as alterações.";
+    return error.message || "Could not save the changes.";
   }
 
-  return "Não foi possível salvar as alterações agora.";
+  return "Could not save the changes.";
 }
 
 export function VehicleEditPage() {
@@ -97,7 +97,7 @@ export function VehicleEditPage() {
 
     async function loadVehicle() {
       if (!vehicleId) {
-        setErrorMessage("Veículo não encontrado.");
+        setErrorMessage("Vehicle not found.");
         setIsLoading(false);
         return;
       }
@@ -157,7 +157,7 @@ export function VehicleEditPage() {
       <div className="vehicle-form-shell">
         <a className="back-link" href="/vehicles">
           <ArrowLeftIcon aria-hidden />
-          <span>Voltar para veículos</span>
+          <span>Back to vehicles</span>
         </a>
 
         <section className="vehicle-form-card">
@@ -166,15 +166,15 @@ export function VehicleEditPage() {
               <CarIcon />
             </span>
             <div>
-              <h1 id="vehicle-form-title">Editar veículo</h1>
-              <p>Atualize os dados cadastrais do veículo selecionado.</p>
+              <h1 id="vehicle-form-title">Edit vehicle</h1>
+              <p>Update the selected vehicle's information.</p>
             </div>
           </header>
 
           {isLoading ? (
             <div className="vehicle-form-status" role="status" aria-live="polite">
               <span className="loading-spinner" aria-hidden />
-              <p>Carregando veículo...</p>
+              <p>Loading vehicle...</p>
             </div>
           ) : null}
 
@@ -182,7 +182,7 @@ export function VehicleEditPage() {
             <div className="vehicle-form-status error-status" role="alert">
               <p>{errorMessage}</p>
               <a className="secondary-button vehicle-status-action" href="/vehicles">
-                Voltar para veículos
+                Back to vehicles
               </a>
             </div>
           ) : null}

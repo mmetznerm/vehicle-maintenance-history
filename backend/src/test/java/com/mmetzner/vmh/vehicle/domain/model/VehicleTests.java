@@ -17,7 +17,7 @@ class VehicleTests {
                 "Honda",
                 "Civic",
                 2020,
-                "Prata"
+                "Silver"
         );
 
         assertThat(vehicle.id()).isNotNull();
@@ -25,7 +25,7 @@ class VehicleTests {
         assertThat(vehicle.brand()).isEqualTo("Honda");
         assertThat(vehicle.model()).isEqualTo("Civic");
         assertThat(vehicle.manufactureYear()).isEqualTo(2020);
-        assertThat(vehicle.color()).isEqualTo("Prata");
+        assertThat(vehicle.color()).isEqualTo("Silver");
     }
 
     @Test
@@ -50,7 +50,7 @@ class VehicleTests {
                 "Toyota",
                 "Corolla",
                 2022,
-                "Preto"
+                "Black"
         ))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("plate is required");

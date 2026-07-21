@@ -53,7 +53,7 @@ export function MaintenanceForm({
 
     if (Object.keys(validationErrors).length > 0) {
       setValidationErrors(validationErrors);
-      setValidationMessage("Revise os campos destacados antes de salvar.");
+      setValidationMessage("Review the highlighted fields before saving.");
       return;
     }
 
@@ -115,7 +115,7 @@ export function MaintenanceForm({
             min="0"
             step="1"
             value={values.odometer}
-            placeholder="ex.: 45000"
+            placeholder="e.g., 45000"
             required
             aria-invalid={validationErrors.odometer || apiFieldErrors.odometer ? "true" : undefined}
             aria-describedby={validationErrors.odometer || apiFieldErrors.odometer ? "odometer-error" : undefined}
@@ -148,7 +148,7 @@ export function MaintenanceForm({
             type="text"
             inputMode="decimal"
             value={values.cost}
-            placeholder="0,00"
+            placeholder="0.00"
             required
             aria-invalid={validationErrors.cost || apiFieldErrors.cost ? "true" : undefined}
             aria-describedby={validationErrors.cost || apiFieldErrors.cost ? "cost-error" : undefined}
@@ -177,7 +177,7 @@ export function MaintenanceForm({
             className="maintenance-textarea"
             value={values.description}
             maxLength={500}
-            placeholder="Troca de óleo, pastilhas de freio etc."
+            placeholder="Oil change, brake pads, etc."
             required
             aria-invalid={validationErrors.description || apiFieldErrors.description ? "true" : undefined}
             aria-describedby={
@@ -201,10 +201,10 @@ export function MaintenanceForm({
 
       <footer className="maintenance-create-actions">
         <a className="text-button" href={cancelHref}>
-          Cancelar
+          Cancel
         </a>
         <button className="primary-button maintenance-save-button" type="submit" disabled={isSubmitting}>
-          <span>{isSubmitting ? "Salvando..." : "Salvar"}</span>
+          <span>{isSubmitting ? "Saving..." : "Save"}</span>
         </button>
       </footer>
     </form>

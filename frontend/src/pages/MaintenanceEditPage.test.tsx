@@ -35,17 +35,17 @@ describe("MaintenanceEditPage", () => {
       vehicleId: "vehicle-id",
       maintenanceDate: "2026-07-07",
       odometer: 35000,
-      description: "Troca de óleo",
+      description: "Oil change",
       cost: 250,
     });
 
     render(<MaintenanceEditPage />);
 
-    expect(screen.getByRole("status")).toHaveTextContent(/carregando manutenção/i);
+    expect(screen.getByRole("status")).toHaveTextContent(/loading maintenance/i);
     expect(await screen.findByDisplayValue("2026-07-07")).toBeInTheDocument();
     expect(screen.getByDisplayValue("35000")).toBeInTheDocument();
     expect(screen.getByDisplayValue("250.00")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Troca de óleo")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Oil change")).toBeInTheDocument();
     expect(getMaintenanceMock).toHaveBeenCalledWith("vehicle-id", "maintenance-id");
   });
 
@@ -58,7 +58,7 @@ describe("MaintenanceEditPage", () => {
       vehicleId: "vehicle-id",
       maintenanceDate: "2026-07-07",
       odometer: 35000,
-      description: "Troca de óleo",
+      description: "Oil change",
       cost: 250,
     });
     updateMaintenanceMock.mockResolvedValue({
@@ -66,7 +66,7 @@ describe("MaintenanceEditPage", () => {
       vehicleId: "vehicle-id",
       maintenanceDate: "2026-07-08",
       odometer: 36000,
-      description: "Troca de óleo e filtro",
+      description: "Oil and filter change",
       cost: 320,
     });
     vi.stubGlobal("location", {
@@ -76,22 +76,22 @@ describe("MaintenanceEditPage", () => {
 
     render(<MaintenanceEditPage />);
 
-    await screen.findByDisplayValue("Troca de óleo");
-    fireEvent.change(screen.getByLabelText("Data da manutenção"), {
+    await screen.findByDisplayValue("Oil change");
+    fireEvent.change(screen.getByLabelText("Maintenance date"), {
       target: { value: "2026-07-08" },
     });
-    await user.clear(screen.getByLabelText("Odômetro"));
-    await user.type(screen.getByLabelText("Odômetro"), "36000");
-    await user.clear(screen.getByLabelText("Custo total"));
-    await user.type(screen.getByLabelText("Custo total"), "320,00");
-    await user.clear(screen.getByLabelText("Descrição do serviço"));
-    await user.type(screen.getByLabelText("Descrição do serviço"), "Troca de óleo e filtro");
-    await user.click(screen.getByRole("button", { name: /salvar/i }));
+    await user.clear(screen.getByLabelText("Odometer"));
+    await user.type(screen.getByLabelText("Odometer"), "36000");
+    await user.clear(screen.getByLabelText("Total cost"));
+    await user.type(screen.getByLabelText("Total cost"), "320.00");
+    await user.clear(screen.getByLabelText("Service description"));
+    await user.type(screen.getByLabelText("Service description"), "Oil and filter change");
+    await user.click(screen.getByRole("button", { name: /save/i }));
 
     expect(updateMaintenanceMock).toHaveBeenCalledWith("vehicle-id", "maintenance-id", {
       maintenanceDate: "2026-07-08",
       odometer: 36000,
-      description: "Troca de óleo e filtro",
+      description: "Oil and filter change",
       cost: 320,
     });
     await waitFor(() => expect(assignMock).toHaveBeenCalledWith("/vehicles/vehicle-id"));
@@ -102,8 +102,8 @@ describe("MaintenanceEditPage", () => {
 
     render(<MaintenanceEditPage />);
 
-    expect(await screen.findByText("Manutenção não encontrada.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /voltar para veículo/i })).toHaveAttribute(
+    expect(await screen.findByText("Maintenance record not found.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^back to vehicle$/i })).toHaveAttribute(
       "href",
       "/vehicles/vehicle-id",
     );

@@ -63,7 +63,7 @@ class MaintenanceApiIT {
         CreateMaintenanceRequest createRequest = new CreateMaintenanceRequest(
                 LocalDate.of(2026, 7, 7),
                 35_000,
-                "Troca de óleo",
+                "Oil change",
                 new BigDecimal("250.00")
         );
 
@@ -76,7 +76,7 @@ class MaintenanceApiIT {
                 .andExpect(jsonPath("$.vehicleId").value(vehicleId.toString()))
                 .andExpect(jsonPath("$.maintenanceDate").value("2026-07-07"))
                 .andExpect(jsonPath("$.odometer").value(35_000))
-                .andExpect(jsonPath("$.description").value("Troca de óleo"))
+                .andExpect(jsonPath("$.description").value("Oil change"))
                 .andExpect(jsonPath("$.cost").value(250.00))
                 .andReturn()
                 .getResponse()
@@ -91,7 +91,7 @@ class MaintenanceApiIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(maintenanceId.toString()))
                 .andExpect(jsonPath("$[0].vehicleId").value(vehicleId.toString()))
-                .andExpect(jsonPath("$[0].description").value("Troca de óleo"));
+                .andExpect(jsonPath("$[0].description").value("Oil change"));
 
         mockMvc.perform(get(
                         "/v1/vehicles/{vehicleId}/maintenances/{maintenanceId}",
@@ -106,7 +106,7 @@ class MaintenanceApiIT {
         UpdateMaintenanceRequest updateRequest = new UpdateMaintenanceRequest(
                 LocalDate.of(2026, 7, 8),
                 36_000,
-                "Troca de óleo e filtro",
+                "Oil and filter change",
                 new BigDecimal("300.00")
         );
 
@@ -122,7 +122,7 @@ class MaintenanceApiIT {
                 .andExpect(jsonPath("$.id").value(maintenanceId.toString()))
                 .andExpect(jsonPath("$.maintenanceDate").value("2026-07-08"))
                 .andExpect(jsonPath("$.odometer").value(36_000))
-                .andExpect(jsonPath("$.description").value("Troca de óleo e filtro"))
+                .andExpect(jsonPath("$.description").value("Oil and filter change"))
                 .andExpect(jsonPath("$.cost").value(300.00));
 
         mockMvc.perform(delete(
@@ -152,7 +152,7 @@ class MaintenanceApiIT {
         CreateMaintenanceRequest request = new CreateMaintenanceRequest(
                 LocalDate.of(2026, 7, 7),
                 35_000,
-                "Troca de óleo",
+                "Oil change",
                 new BigDecimal("250.00")
         );
 
@@ -198,7 +198,7 @@ class MaintenanceApiIT {
                 "Honda",
                 "Civic",
                 2020,
-                "Prata"
+                "Silver"
         );
 
         String response = mockMvc.perform(post("/v1/vehicles")

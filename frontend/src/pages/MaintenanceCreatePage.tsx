@@ -22,17 +22,17 @@ function getMaintenanceCreateErrorMessage(error: unknown) {
     }
 
     if (error.status === 404) {
-      return "Veículo não encontrado.";
+      return "Vehicle not found.";
     }
 
     if (error.status >= 500) {
-      return "Não foi possível conectar ao servidor. Verifique se a API está em execução.";
+      return "Could not connect to the server. Check whether the API is running.";
     }
 
-    return error.message || "Não foi possível salvar a manutenção.";
+    return error.message || "Could not save the maintenance record.";
   }
 
-  return "Não foi possível salvar a manutenção agora.";
+  return "Could not save the maintenance record.";
 }
 
 function mapApiFieldErrors(error: unknown) {
@@ -65,7 +65,7 @@ export function MaintenanceCreatePage() {
     setFieldErrors({});
 
     if (!vehicleId) {
-      setErrorMessage("Veículo não encontrado.");
+      setErrorMessage("Vehicle not found.");
       return;
     }
 
@@ -86,10 +86,10 @@ export function MaintenanceCreatePage() {
     <main className="maintenance-create-page" aria-labelledby="maintenance-create-title">
       <div className="maintenance-create-shell">
         <header className="maintenance-create-header">
-          <a className="maintenance-back-button" href={cancelHref} aria-label="Voltar para detalhes do veículo">
+          <a className="maintenance-back-button" href={cancelHref} aria-label="Back to vehicle details">
             <ArrowLeftIcon aria-hidden />
           </a>
-          <h1 id="maintenance-create-title">Cadastrar manutenção</h1>
+          <h1 id="maintenance-create-title">Add maintenance</h1>
           <span aria-hidden />
         </header>
 

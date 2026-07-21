@@ -17,11 +17,11 @@ export const emptyVehicleFormValues: VehicleFormValues = {
 };
 
 export const vehicleFieldLabels: Record<keyof VehicleFormValues, string> = {
-  plate: "Placa",
-  brand: "Marca",
-  model: "Modelo",
-  manufactureYear: "Ano de fabricação",
-  color: "Cor",
+  plate: "License plate",
+  brand: "Brand",
+  model: "Model",
+  manufactureYear: "Manufacture year",
+  color: "Color",
 };
 
 export function normalizePlate(value: string) {
@@ -33,27 +33,27 @@ export function validateVehicle(values: VehicleFormValues) {
   const year = Number(values.manufactureYear);
 
   if (!values.plate.trim()) {
-    errors.plate = "Informe a placa.";
+    errors.plate = "Enter the license plate.";
   } else if (normalizePlate(values.plate).length > 10) {
-    errors.plate = "A placa deve ter no máximo 10 caracteres.";
+    errors.plate = "License plate must be no more than 10 characters.";
   }
 
   if (!values.brand.trim()) {
-    errors.brand = "Informe a marca.";
+    errors.brand = "Enter the brand.";
   }
 
   if (!values.model.trim()) {
-    errors.model = "Informe o modelo.";
+    errors.model = "Enter the model.";
   }
 
   if (!values.manufactureYear.trim()) {
-    errors.manufactureYear = "Informe o ano de fabricação.";
+    errors.manufactureYear = "Enter the manufacture year.";
   } else if (!Number.isInteger(year) || year < 1886 || year > 2100) {
-    errors.manufactureYear = "Informe um ano válido entre 1886 e 2100.";
+    errors.manufactureYear = "Enter a valid year between 1886 and 2100.";
   }
 
   if (values.color.trim().length > 40) {
-    errors.color = "A cor deve ter no máximo 40 caracteres.";
+    errors.color = "Color must be no more than 40 characters.";
   }
 
   return errors;

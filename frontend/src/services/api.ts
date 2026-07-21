@@ -73,7 +73,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     });
   } catch {
     throw new ApiError(
-      "Não foi possível conectar ao servidor. Verifique se a API está em execução.",
+      "Could not connect to the server. Check whether the API is running.",
       503,
     );
   }
@@ -82,7 +82,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     const apiError = body as ApiErrorResponse | null;
-    const message = apiError?.message || "Não foi possível concluir a solicitação.";
+    const message = apiError?.message || "Could not complete the request.";
 
     if (response.status === 401 && path !== "/v1/auth/login") {
       clearAuthTokens();

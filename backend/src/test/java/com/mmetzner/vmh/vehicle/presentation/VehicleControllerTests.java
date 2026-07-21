@@ -59,7 +59,7 @@ class VehicleControllerTests {
                 "Honda",
                 "Civic",
                 2020,
-                "Prata"
+                "Silver"
         );
 
         VehicleResponse response = new VehicleResponse(
@@ -68,7 +68,7 @@ class VehicleControllerTests {
                 "Honda",
                 "Civic",
                 2020,
-                "Prata",
+                "Silver",
                 OffsetDateTime.now(),
                 OffsetDateTime.now()
         );
@@ -99,7 +99,7 @@ class VehicleControllerTests {
                         "Honda",
                         "Civic",
                         2020,
-                        "Prata"
+                        "Silver"
                 )));
 
         authenticateAs(ownerId);
@@ -122,7 +122,7 @@ class VehicleControllerTests {
                         "Honda",
                         "Civic",
                         2020,
-                        "Prata",
+                        "Silver",
                         OffsetDateTime.now(),
                         OffsetDateTime.now()
                 ));

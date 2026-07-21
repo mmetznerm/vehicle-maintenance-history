@@ -54,7 +54,7 @@ class MaintenanceServiceTests {
         CreateMaintenanceRequest request = new CreateMaintenanceRequest(
                 LocalDate.of(2026, 7, 7),
                 35_000,
-                "Troca de óleo",
+                "Oil change",
                 new BigDecimal("250.00")
         );
 
@@ -62,7 +62,7 @@ class MaintenanceServiceTests {
 
         assertThat(response.id()).isNotNull();
         assertThat(response.vehicleId()).isEqualTo(vehicleId);
-        assertThat(response.description()).isEqualTo("Troca de óleo");
+        assertThat(response.description()).isEqualTo("Oil change");
 
         verify(maintenanceRepository).save(any(Maintenance.class));
     }
@@ -100,7 +100,7 @@ class MaintenanceServiceTests {
                 vehicleId,
                 LocalDate.of(2026, 7, 7),
                 35_000,
-                "Troca de óleo",
+                "Oil change",
                 new BigDecimal("250.00")
         );
 
@@ -111,7 +111,7 @@ class MaintenanceServiceTests {
 
         assertThat(response).hasSize(1);
         assertThat(response.getFirst().vehicleId()).isEqualTo(vehicleId);
-        assertThat(response.getFirst().description()).isEqualTo("Troca de óleo");
+        assertThat(response.getFirst().description()).isEqualTo("Oil change");
     }
 
     @Test
@@ -125,7 +125,7 @@ class MaintenanceServiceTests {
                 vehicleId,
                 LocalDate.of(2026, 7, 7),
                 35_000,
-                "Troca de óleo",
+                "Oil change",
                 new BigDecimal("250.00"),
                 null,
                 null
@@ -143,7 +143,7 @@ class MaintenanceServiceTests {
         UpdateMaintenanceRequest request = new UpdateMaintenanceRequest(
                 LocalDate.of(2026, 7, 8),
                 36_000,
-                "Troca de óleo e filtro",
+                "Oil and filter change",
                 new BigDecimal("300.00")
         );
 
@@ -151,7 +151,7 @@ class MaintenanceServiceTests {
 
         assertThat(response.id()).isEqualTo(maintenanceId);
         assertThat(response.odometer()).isEqualTo(36_000);
-        assertThat(response.description()).isEqualTo("Troca de óleo e filtro");
+        assertThat(response.description()).isEqualTo("Oil and filter change");
         assertThat(response.cost()).isEqualByComparingTo("300.00");
     }
 
@@ -166,7 +166,7 @@ class MaintenanceServiceTests {
                 vehicleId,
                 LocalDate.of(2026, 7, 7),
                 35_000,
-                "Troca de óleo",
+                "Oil change",
                 new BigDecimal("250.00"),
                 null,
                 null
@@ -207,7 +207,7 @@ class MaintenanceServiceTests {
                 "Honda",
                 "Civic",
                 2020,
-                "Prata",
+                "Silver",
                 null,
                 null
         );
