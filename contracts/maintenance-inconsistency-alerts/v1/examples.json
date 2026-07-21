@@ -1,0 +1,40 @@
+{
+  "MaintenanceInconsistencyDetected": {
+    "eventId": "c54d21fa-f59f-4877-ad42-330cc37bb721",
+    "eventType": "MaintenanceInconsistencyDetected",
+    "eventVersion": 1,
+    "alertId": "38eff6d4-ffce-3630-8390-3312e3e47ab1",
+    "vehicleId": "c699fd08-70f8-4fa6-b125-80673ff27c9f",
+    "occurredAt": "2026-07-21T19:00:00Z",
+    "correlationId": "request-123",
+    "payload": {
+      "rule": "ODOMETER_ROLLBACK",
+      "severity": "CRITICAL",
+      "maintenanceIds": [
+        "461af58a-9321-4fb9-9468-f3bac5c7ac98",
+        "75a6c25b-98b7-48d5-ae5a-7038864973bd"
+      ],
+      "summary": "Odometer reading decreased between maintenance records",
+      "details": "Reading changed from 45000 km to 42000 km in chronological order."
+    }
+  },
+  "MaintenanceInconsistencyResolved": {
+    "eventId": "5ddf278e-2580-4913-920f-e75bc31277ef",
+    "eventType": "MaintenanceInconsistencyResolved",
+    "eventVersion": 1,
+    "alertId": "38eff6d4-ffce-3630-8390-3312e3e47ab1",
+    "vehicleId": "c699fd08-70f8-4fa6-b125-80673ff27c9f",
+    "occurredAt": "2026-07-21T19:05:00Z",
+    "correlationId": "request-456",
+    "payload": {
+      "rule": "ODOMETER_ROLLBACK",
+      "severity": "CRITICAL",
+      "maintenanceIds": [
+        "461af58a-9321-4fb9-9468-f3bac5c7ac98",
+        "75a6c25b-98b7-48d5-ae5a-7038864973bd"
+      ],
+      "summary": "Odometer reading decreased between maintenance records",
+      "details": "The source records were corrected and no longer violate this rule."
+    }
+  }
+}

@@ -11,8 +11,10 @@ import {
   enableVehicleHistorySharing,
   getVehicleHistorySharing,
   getVehicle,
+  listMaintenanceInconsistencies,
   listMaintenances,
 } from "../services/api";
+import type { MaintenanceInconsistency } from "../types/inconsistency";
 import type { Maintenance } from "../types/maintenance";
 import type { Vehicle, VehicleHistorySharing } from "../types/vehicle";
 
@@ -153,6 +155,73 @@ function HistorySharingCard({
   );
 }
 
+const inconsistencyRuleLabels: Record<MaintenanceInconsistency["rule"], string> = {
+  ODOMETER_ROLLBACK: "Quilometragem regressiva",
+  POSSIBLE_DUPLICATE: "Possível duplicidade",
+  DATE_BEFORE_MANUFACTURE: "Data anterior à fabricação",
+};
+
+type InconsistencyAlertsProps = {
+  inconsistencies: MaintenanceInconsistency[];
+  includeResolved: boolean;
+  isLoading: boolean;
+  errorMessage: string;
+  onToggleResolved: () => void;
+};
+
+function InconsistencyAlerts({
+  inconsistencies,
+  includeResolved,
+  isLoading,
+  errorMessage,
+  onToggleResolved,
+}: InconsistencyAlertsProps) {
+  const activeCount = inconsistencies.filter(({ status }) => status === "ACTIVE").length;
+
+  return (
+    <section className="inconsistency-card" aria-labelledby="inconsistency-title">
+      <div className="inconsistency-header">
+        <div>
+          <p className="inconsistency-eyebrow">Análise assíncrona</p>
+          <h2 id="inconsistency-title">Consistência do histórico</h2>
+          <p>Alertas detectados automaticamente a partir dos eventos de manutenção.</p>
+        </div>
+        <span className={`inconsistency-count${activeCount > 0 ? " has-alerts" : ""}`}>
+          {activeCount} {activeCount === 1 ? "alerta ativo" : "alertas ativos"}
+        </span>
+      </div>
+
+      {isLoading ? <p className="inconsistency-status" role="status">Atualizando análise...</p> : null}
+      {errorMessage ? <p className="inconsistency-status error-text" role="alert">{errorMessage}</p> : null}
+
+      {!isLoading && !errorMessage && inconsistencies.length === 0 ? (
+        <p className="inconsistency-empty">Nenhuma inconsistência ativa detectada.</p>
+      ) : null}
+
+      {!isLoading && !errorMessage && inconsistencies.length > 0 ? (
+        <ul className="inconsistency-list">
+          {inconsistencies.map((inconsistency) => (
+            <li className={`inconsistency-item severity-${inconsistency.severity.toLowerCase()}`} key={inconsistency.alertId}>
+              <div className="inconsistency-item-heading">
+                <strong>{inconsistencyRuleLabels[inconsistency.rule] ?? inconsistency.rule}</strong>
+                <span className={`status-badge status-${inconsistency.status.toLowerCase()}`}>
+                  {inconsistency.status === "ACTIVE" ? "Ativo" : "Resolvido"}
+                </span>
+              </div>
+              <p>{inconsistency.summary}</p>
+              <small>{inconsistency.details}</small>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <button className="text-button inconsistency-toggle" type="button" onClick={onToggleResolved}>
+        {includeResolved ? "Ocultar resolvidos" : "Mostrar resolvidos"}
+      </button>
+    </section>
+  );
+}
+
 export function VehicleDetailsPage() {
   const vehicleId = getVehicleIdFromPath(window.location.pathname);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -164,6 +233,10 @@ export function VehicleDetailsPage() {
   const [historySharing, setHistorySharing] = useState<VehicleHistorySharing | null>(null);
   const [isUpdatingSharing, setIsUpdatingSharing] = useState(false);
   const [sharingFeedback, setSharingFeedback] = useState("");
+  const [inconsistencies, setInconsistencies] = useState<MaintenanceInconsistency[]>([]);
+  const [includeResolved, setIncludeResolved] = useState(false);
+  const [isLoadingInconsistencies, setIsLoadingInconsistencies] = useState(true);
+  const [inconsistencyError, setInconsistencyError] = useState("");
   const currentOdometer = useMemo(() => {
     if (maintenances.length === 0) {
       return null;
@@ -212,6 +285,31 @@ export function VehicleDetailsPage() {
       isMounted = false;
     };
   }, [vehicleId]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadInconsistencies() {
+      if (!vehicleId) return;
+
+      setIsLoadingInconsistencies(true);
+      setInconsistencyError("");
+      try {
+        const response = await listMaintenanceInconsistencies(vehicleId, includeResolved);
+        if (isMounted) setInconsistencies(response);
+      } catch {
+        if (isMounted) setInconsistencyError("Não foi possível consultar a análise de consistência.");
+      } finally {
+        if (isMounted) setIsLoadingInconsistencies(false);
+      }
+    }
+
+    void loadInconsistencies();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [vehicleId, includeResolved]);
 
   useEffect(() => {
     let isMounted = true;
@@ -370,6 +468,14 @@ export function VehicleDetailsPage() {
             onEnable={handleEnableSharing}
             onDisable={handleDisableSharing}
             onCopy={handleCopySharingLink}
+          />
+
+          <InconsistencyAlerts
+            inconsistencies={inconsistencies}
+            includeResolved={includeResolved}
+            isLoading={isLoadingInconsistencies}
+            errorMessage={inconsistencyError}
+            onToggleResolved={() => setIncludeResolved((current) => !current)}
           />
 
           <MaintenanceHistory

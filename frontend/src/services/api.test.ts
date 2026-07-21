@@ -7,6 +7,7 @@ import {
   getMaintenance,
   getVehicle,
   listMaintenances,
+  listMaintenanceInconsistencies,
   listVehicles,
   login,
   logout,
@@ -311,6 +312,19 @@ describe("api service", () => {
       expect.any(Object),
     );
     expect(headers.get("Authorization")).toBe("Bearer access-token");
+  });
+
+  it("lists resolved maintenance inconsistencies when requested", async () => {
+    saveAuthTokens({ accessToken: "access-token", refreshToken: "refresh-token" });
+    const fetchMock = vi.fn().mockResolvedValue(new Response("[]", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(listMaintenanceInconsistencies("vehicle-id", true)).resolves.toEqual([]);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/v1/vehicles/vehicle-id/inconsistencies?includeResolved=true",
+      expect.any(Object),
+    );
   });
 
   it("creates a maintenance with the authorization header", async () => {

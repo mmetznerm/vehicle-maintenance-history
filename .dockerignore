@@ -3,6 +3,7 @@
 .vscode/
 backend/target/
 event-worker/target/
+consistency-worker/target/
 frontend/dist/
 frontend/node_modules/
 target/

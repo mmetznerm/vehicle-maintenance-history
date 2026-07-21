@@ -7,6 +7,7 @@ import {
   enableVehicleHistorySharing,
   getVehicleHistorySharing,
   getVehicle,
+  listMaintenanceInconsistencies,
   listMaintenances,
 } from "../services/api";
 import { VehicleDetailsPage } from "./VehicleDetailsPage";
@@ -22,6 +23,7 @@ vi.mock("../services/api", async (importActual) => {
     enableVehicleHistorySharing: vi.fn(),
     getVehicleHistorySharing: vi.fn(),
     getVehicle: vi.fn(),
+    listMaintenanceInconsistencies: vi.fn(),
     listMaintenances: vi.fn(),
   };
 });
@@ -32,6 +34,7 @@ const disableVehicleHistorySharingMock = vi.mocked(disableVehicleHistorySharing)
 const enableVehicleHistorySharingMock = vi.mocked(enableVehicleHistorySharing);
 const getVehicleHistorySharingMock = vi.mocked(getVehicleHistorySharing);
 const getVehicleMock = vi.mocked(getVehicle);
+const listMaintenanceInconsistenciesMock = vi.mocked(listMaintenanceInconsistencies);
 const listMaintenancesMock = vi.mocked(listMaintenances);
 
 function setPath(path: string) {
@@ -53,6 +56,7 @@ describe("VehicleDetailsPage", () => {
       color: "Prata",
     });
     getVehicleHistorySharingMock.mockResolvedValue({ enabled: false, publicId: null });
+    listMaintenanceInconsistenciesMock.mockResolvedValue([]);
   });
 
   it("loads vehicle data and maintenance history", async () => {
@@ -162,5 +166,34 @@ describe("VehicleDetailsPage", () => {
 
     expect(disableVehicleHistorySharingMock).toHaveBeenCalledWith("vehicle-id");
     expect(await screen.findByRole("button", { name: /ativar compartilhamento/i })).toBeInTheDocument();
+  });
+
+  it("shows active inconsistency alerts and loads resolved alerts on demand", async () => {
+    const user = userEvent.setup();
+    listMaintenancesMock.mockResolvedValue([]);
+    listMaintenanceInconsistenciesMock
+      .mockResolvedValueOnce([
+        {
+          alertId: "alert-id",
+          rule: "ODOMETER_ROLLBACK",
+          severity: "CRITICAL",
+          maintenanceIds: ["maintenance-id"],
+          summary: "Odometer reading decreased",
+          details: "Reading changed from 50000 km to 40000 km.",
+          status: "ACTIVE",
+          detectedAt: "2026-07-20T12:00:00Z",
+          resolvedAt: null,
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    render(<VehicleDetailsPage />);
+
+    expect(await screen.findByText("Quilometragem regressiva")).toBeInTheDocument();
+    expect(screen.getByText("1 alerta ativo")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /mostrar resolvidos/i }));
+
+    expect(listMaintenanceInconsistenciesMock).toHaveBeenLastCalledWith("vehicle-id", true);
+    expect(await screen.findByText(/nenhuma inconsistência ativa/i)).toBeInTheDocument();
   });
 });

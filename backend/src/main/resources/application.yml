@@ -23,11 +23,14 @@ spring:
     consumer:
       group-id: ${SPRING_KAFKA_CONSUMER_GROUP_ID:vehicle-maintenance-history}
       auto-offset-reset: earliest
+      enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      ack-mode: record
 
 springdoc:
   swagger-ui:
@@ -65,6 +68,11 @@ app:
       name: ${KAFKA_VEHICLE_MAINTENANCE_TOPIC:vehicle-maintenance-events.v1}
       partitions: ${KAFKA_VEHICLE_MAINTENANCE_PARTITIONS:3}
       replication-factor: ${KAFKA_VEHICLE_MAINTENANCE_REPLICATION_FACTOR:1}
+    alert-topic:
+      name: ${KAFKA_MAINTENANCE_ALERT_TOPIC:maintenance-inconsistency-alerts.v1}
+      partitions: ${KAFKA_MAINTENANCE_ALERT_PARTITIONS:3}
+      replication-factor: ${KAFKA_MAINTENANCE_ALERT_REPLICATION_FACTOR:1}
+      consumer-group: ${KAFKA_MAINTENANCE_ALERT_CONSUMER_GROUP:vehicle-maintenance-alerts-v1}
     outbox:
       poll-interval: ${KAFKA_OUTBOX_POLL_INTERVAL:1s}
       batch-size: ${KAFKA_OUTBOX_BATCH_SIZE:50}

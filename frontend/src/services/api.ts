@@ -12,6 +12,7 @@ import type {
   VehicleHistorySharing,
   PublicVehicleHistory,
 } from "../types/vehicle";
+import type { MaintenanceInconsistency } from "../types/inconsistency";
 import { clearAuthTokens, getAccessToken } from "./authStorage";
 
 const DEFAULT_API_BASE_URL = "";
@@ -128,6 +129,11 @@ export function listVehicles() {
 
 export function getVehicle(vehicleId: string) {
   return request<Vehicle>(`/v1/vehicles/${vehicleId}`);
+}
+
+export function listMaintenanceInconsistencies(vehicleId: string, includeResolved = false) {
+  const query = includeResolved ? "?includeResolved=true" : "";
+  return request<MaintenanceInconsistency[]>(`/v1/vehicles/${vehicleId}/inconsistencies${query}`);
 }
 
 export function createVehicle(requestBody: CreateVehicleRequest) {

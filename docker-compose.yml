@@ -11,6 +11,7 @@ services:
       SPRING_DATASOURCE_USERNAME: vehicle-maintenance-history
       SPRING_DATASOURCE_PASSWORD: vehicle-maintenance-history
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_MAINTENANCE_ALERT_TOPIC: maintenance-inconsistency-alerts.v1
       JWT_SECRET: ${JWT_SECRET:-dev-only-secret-key-change-before-production-123456789}
       APP_SECURITY_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174
     ports:
@@ -58,6 +59,37 @@ services:
       retries: 5
       start_period: 30s
 
+  consistency-worker:
+    build:
+      context: .
+      dockerfile: consistency-worker/Dockerfile
+    container_name: vehicle-maintenance-history-consistency-worker
+    profiles:
+      - app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://consistency-postgres:5432/maintenance-consistency
+      SPRING_DATASOURCE_USERNAME: maintenance-consistency
+      SPRING_DATASOURCE_PASSWORD: maintenance-consistency
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_VEHICLE_MAINTENANCE_TOPIC: vehicle-maintenance-events.v1
+      KAFKA_MAINTENANCE_ALERT_TOPIC: maintenance-inconsistency-alerts.v1
+      SPRING_KAFKA_CONSUMER_GROUP_ID: maintenance-consistency-v1
+    ports:
+      - "8082:8082"
+    depends_on:
+      consistency-postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://localhost:8082/actuator/health/readiness > /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   postgres:
     image: postgres:16-alpine
     container_name: vehicle-maintenance-history-postgres
@@ -96,6 +128,25 @@ services:
       timeout: 5s
       retries: 5
 
+  consistency-postgres:
+    image: postgres:16-alpine
+    container_name: vehicle-maintenance-history-consistency-postgres
+    environment:
+      POSTGRES_DB: maintenance-consistency
+      POSTGRES_USER: maintenance-consistency
+      POSTGRES_PASSWORD: maintenance-consistency
+    ports:
+      - "5434:5432"
+    volumes:
+      - consistency_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U maintenance-consistency -d maintenance-consistency
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   kafka:
     image: apache/kafka:3.9.1
     container_name: vehicle-maintenance-history-kafka
@@ -130,4 +181,5 @@ services:
 volumes:
   postgres_data:
   history_postgres_data:
+  consistency_postgres_data:
   kafka_data:
