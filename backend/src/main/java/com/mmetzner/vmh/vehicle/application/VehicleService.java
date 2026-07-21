@@ -8,10 +8,12 @@ import com.mmetzner.vmh.shared.exception.ResourceNotFoundException;
 import com.mmetzner.vmh.shared.event.EventType;
 import com.mmetzner.vmh.shared.event.OutboxEventWriter;
 import com.mmetzner.vmh.shared.event.VehicleEventPayload;
+import com.mmetzner.vmh.shared.event.HistorySharingEventPayload;
 import com.mmetzner.vmh.vehicle.application.dto.CreateVehicleRequest;
 import com.mmetzner.vmh.vehicle.application.dto.UpdateVehicleRequest;
 import com.mmetzner.vmh.vehicle.application.dto.VehicleResponse;
 import com.mmetzner.vmh.vehicle.application.dto.VehicleSummaryResponse;
+import com.mmetzner.vmh.vehicle.application.dto.VehicleHistorySharingResponse;
 import com.mmetzner.vmh.vehicle.application.mapper.VehicleMapper;
 import com.mmetzner.vmh.vehicle.domain.model.Vehicle;
 import com.mmetzner.vmh.vehicle.domain.repository.VehicleRepository;
@@ -97,6 +99,36 @@ public class VehicleService {
         vehicleRepository.delete(vehicle);
     }
 
+    @Transactional(readOnly = true)
+    public VehicleHistorySharingResponse getHistorySharing(UUID ownerId, UUID vehicleId) {
+        Vehicle vehicle = findVehicleByIdAndOwnerId(ownerId, vehicleId);
+        return toHistorySharingResponse(vehicle);
+    }
+
+    @Transactional
+    public VehicleHistorySharingResponse enableHistorySharing(UUID ownerId, UUID vehicleId) {
+        Vehicle currentVehicle = findVehicleByIdAndOwnerId(ownerId, vehicleId);
+        Vehicle enabledVehicle = currentVehicle.enableHistorySharing();
+
+        if (enabledVehicle != currentVehicle) {
+            enabledVehicle = vehicleRepository.save(enabledVehicle);
+            writeHistorySharingEvent(enabledVehicle);
+        }
+
+        return toHistorySharingResponse(enabledVehicle);
+    }
+
+    @Transactional
+    public void disableHistorySharing(UUID ownerId, UUID vehicleId) {
+        Vehicle currentVehicle = findVehicleByIdAndOwnerId(ownerId, vehicleId);
+        Vehicle disabledVehicle = currentVehicle.disableHistorySharing();
+
+        if (disabledVehicle != currentVehicle) {
+            disabledVehicle = vehicleRepository.save(disabledVehicle);
+            writeHistorySharingEvent(disabledVehicle);
+        }
+    }
+
     private void ensureUserExists(UUID ownerId) {
         userRepository.findById(ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -133,6 +165,25 @@ public class VehicleService {
                         vehicle.manufactureYear(),
                         vehicle.color()
                 )
+        );
+    }
+
+    private void writeHistorySharingEvent(Vehicle vehicle) {
+        outboxEventWriter.write(
+                EventType.VEHICLE_HISTORY_SHARING_CHANGED,
+                vehicle.id(),
+                vehicle.id(),
+                new HistorySharingEventPayload(
+                        vehicle.historySharingEnabled(),
+                        vehicle.historyPublicId()
+                )
+        );
+    }
+
+    private VehicleHistorySharingResponse toHistorySharingResponse(Vehicle vehicle) {
+        return new VehicleHistorySharingResponse(
+                vehicle.historySharingEnabled(),
+                vehicle.historyPublicId()
         );
     }
 }

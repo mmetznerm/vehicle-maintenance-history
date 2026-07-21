@@ -19,7 +19,9 @@ public final class VehicleEntityMapper {
                 entity.getManufactureYear(),
                 entity.getColor(),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                entity.getUpdatedAt(),
+                entity.isHistorySharingEnabled(),
+                entity.getHistoryPublicId()
         );
     }
 
@@ -33,7 +35,9 @@ public final class VehicleEntityMapper {
                 vehicle.manufactureYear(),
                 vehicle.color(),
                 vehicle.createdAt(),
-                vehicle.updatedAt()
+                vehicle.updatedAt(),
+                vehicle.historySharingEnabled(),
+                vehicle.historyPublicId()
         );
     }
 }

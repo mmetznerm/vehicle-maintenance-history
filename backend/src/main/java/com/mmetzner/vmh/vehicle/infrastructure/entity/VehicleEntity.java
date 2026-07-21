@@ -51,6 +51,12 @@ public class VehicleEntity {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    @Column(name = "history_sharing_enabled", nullable = false)
+    private boolean historySharingEnabled;
+
+    @Column(name = "history_public_id", unique = true)
+    private UUID historyPublicId;
+
     public VehicleEntity(
             UUID id,
             UserEntity owner,
@@ -60,7 +66,9 @@ public class VehicleEntity {
             Integer manufactureYear,
             String color,
             OffsetDateTime createdAt,
-            OffsetDateTime updatedAt
+            OffsetDateTime updatedAt,
+            boolean historySharingEnabled,
+            UUID historyPublicId
     ) {
         this.id = id;
         this.owner = owner;
@@ -71,6 +79,8 @@ public class VehicleEntity {
         this.color = color;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.historySharingEnabled = historySharingEnabled;
+        this.historyPublicId = historyPublicId;
     }
 
     public static VehicleEntity reference(UUID id) {
