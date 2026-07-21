@@ -2,6 +2,7 @@
 .idea/
 .vscode/
 backend/target/
+event-worker/target/
 frontend/dist/
 frontend/node_modules/
 target/

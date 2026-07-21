@@ -38,6 +38,23 @@ updates:
           - "@vitejs/*"
           - "@vitest/*"
 
+  - package-ecosystem: maven
+    directory: /event-worker
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:45"
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    groups:
+      spring:
+        patterns:
+          - org.springframework*
+          - org.springdoc*
+      testcontainers:
+        patterns:
+          - org.testcontainers*
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

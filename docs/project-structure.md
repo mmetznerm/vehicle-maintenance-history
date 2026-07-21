@@ -1,19 +1,22 @@
 # Project Structure
 
-AutoLog is organized as a Spring Boot backend with a Vite frontend in the same
-repository.
+AutoLog is organized as two Spring Boot applications with a Vite frontend in the
+same repository. Keeping the producer, consumer and event contracts together
+makes the portfolio example runnable and reviewable as one coherent system.
 
 ## Root Folders
 
 ```text
-backend/    Spring Boot backend source code.
-docs/       Project documentation.
-frontend/   React + TypeScript + Vite app.
+backend/       Transactional API and outbox producer.
+event-worker/  Kafka consumer and public read model.
+contracts/     Versioned event contracts and examples.
+docs/          Project documentation.
+frontend/      React + TypeScript + Vite app.
 ```
 
-Generated folders such as `backend/target/`, `frontend/node_modules/`,
-`frontend/dist/`, and `backend/src/main/resources/static/` should stay hidden
-from Git.
+Generated folders such as `backend/target/`, `event-worker/target/`,
+`frontend/node_modules/`, `frontend/dist/`, and
+`backend/src/main/resources/static/` should stay hidden from Git.
 
 ## Backend
 
@@ -37,6 +40,21 @@ presentation/
 ```
 
 This structure is already good for the current project and should be kept.
+
+## Event Worker
+
+The worker owns its projection database and is organized by responsibility:
+
+```text
+event-worker/src/main/java/com/mmetzner/vmh/history/
+  event/       Kafka envelope, listener and idempotent processor.
+  projection/  JPA read-model entities and repositories.
+  api/         Sanitized public HTTP contract.
+  config/      CORS and application configuration.
+```
+
+The worker must not query the backend database. Kafka events are its only source
+of vehicle and maintenance state, which keeps the service boundary explicit.
 
 ## Frontend
 

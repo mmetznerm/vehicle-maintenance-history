@@ -8,7 +8,8 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![Coverage Gate](https://img.shields.io/badge/Coverage%20Gate-60%25-success)
 
-REST API and frontend to manage vehicles and their maintenance history.
+Event-driven application to manage vehicle maintenance and publish a privacy-safe,
+revocable digital history for each vehicle.
 
 ## Stack
 
@@ -32,9 +33,11 @@ REST API and frontend to manage vehicles and their maintenance history.
 
 ```text
 vehicle-maintenance-history/
-  backend/     Spring Boot API and static frontend output.
-  frontend/    React + TypeScript + Vite source code.
-  docs/        Project documentation.
+  backend/       Transactional API, source database and Kafka outbox producer.
+  event-worker/  Kafka consumer and public-history read model.
+  frontend/      React + TypeScript + Vite source code.
+  contracts/     Versioned event schemas and examples.
+  docs/          Project documentation.
 ```
 
 Backend package structure:
@@ -63,6 +66,11 @@ presentation
 - Refresh token and logout
 - Vehicle CRUD
 - Maintenance CRUD by vehicle
+- Revocable public sharing links with identifier rotation
+- Versioned vehicle and maintenance events on Kafka
+- Transactional outbox with at-least-once delivery
+- Idempotent public-history projection in an independent database
+- Public history without owner, license plate or maintenance cost
 - Standard error responses
 - Database migrations with Flyway
 - Unit and integration tests
@@ -78,6 +86,12 @@ Application:
 
 ```text
 http://localhost:8080
+```
+
+Public-history worker API:
+
+```text
+http://localhost:8081
 ```
 
 Swagger:
@@ -98,10 +112,10 @@ For day-to-day development, prefer running PostgreSQL and Kafka in Docker and ru
 the Spring Boot application locally from the IDE. This keeps Java debugging,
 breakpoints, hot reload and logs easier to use.
 
-Start the local infrastructure:
+Start the local infrastructure (the two PostgreSQL databases and Kafka):
 
 ```bash
-docker compose up -d postgres kafka
+docker compose up -d postgres history-postgres kafka
 ```
 
 Build the frontend into Spring Boot static resources:
@@ -118,11 +132,15 @@ a single origin:
 http://localhost:8080
 ```
 
+Start `VehicleHistoryWorkerApplication` from the IDE as well when exercising
+public history. The worker listens on `http://localhost:8081`.
+
 Useful frontend routes:
 
 ```text
 http://localhost:8080/login
 http://localhost:8080/register
+http://localhost:8080/history/{publicId}
 ```
 
 In IntelliJ IDEA, make the green Start button build the frontend before starting
@@ -169,12 +187,21 @@ cd backend
 
 Integration tests use Testcontainers, so Docker must be running.
 
+Event-worker unit and Kafka integration tests:
+
+```bash
+cd backend
+.\mvnw.cmd -f ..\event-worker\pom.xml verify
+.\mvnw.cmd -f ..\event-worker\pom.xml verify -Pintegration-tests
+```
+
 ## CI Quality Gates
 
 Pull requests are checked with:
 
 - Backend unit, controller and coverage checks with Maven and JaCoCo.
 - Backend integration tests with Testcontainers and PostgreSQL.
+- Event-worker unit tests and Kafka/PostgreSQL integration tests.
 - Frontend lint, Vitest coverage and production build.
 - OpenAPI contract export as a workflow artifact.
 - CodeQL, Dependency Review and Trivy security scans.
@@ -219,6 +246,9 @@ Basic flow:
 | GET | `/v1/vehicles/{vehicleId}` | Find vehicle |
 | PUT | `/v1/vehicles/{vehicleId}` | Update vehicle |
 | DELETE | `/v1/vehicles/{vehicleId}` | Delete vehicle |
+| GET | `/v1/vehicles/{vehicleId}/history-sharing` | Read sharing status |
+| POST | `/v1/vehicles/{vehicleId}/history-sharing` | Enable public history |
+| DELETE | `/v1/vehicles/{vehicleId}/history-sharing` | Revoke public history |
 
 ### Maintenances
 
@@ -229,6 +259,12 @@ Basic flow:
 | GET | `/v1/vehicles/{vehicleId}/maintenances/{maintenanceId}` | Find maintenance |
 | PUT | `/v1/vehicles/{vehicleId}/maintenances/{maintenanceId}` | Update maintenance |
 | DELETE | `/v1/vehicles/{vehicleId}/maintenances/{maintenanceId}` | Delete maintenance |
+
+### Public history
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `http://localhost:8081/v1/public/vehicle-histories/{publicId}` | Read the sanitized public history |
 
 ## Configuration
 
@@ -247,6 +283,10 @@ SPRING_DATASOURCE_USERNAME
 SPRING_DATASOURCE_PASSWORD
 SPRING_KAFKA_BOOTSTRAP_SERVERS
 SPRING_KAFKA_CONSUMER_GROUP_ID
+KAFKA_VEHICLE_MAINTENANCE_TOPIC
+KAFKA_OUTBOX_POLL_INTERVAL
+KAFKA_OUTBOX_BATCH_SIZE
+VITE_HISTORY_API_BASE_URL
 ```
 
 The default Kafka bootstrap server is `localhost:29092` when the backend runs
@@ -266,6 +306,7 @@ Flyway migrations are located at:
 
 ```text
 backend/src/main/resources/db/migration
+event-worker/src/main/resources/db/migration
 ```
 
 ## Observability
@@ -281,8 +322,12 @@ a new one.
 
 ## Out Of Scope
 
+See [`docs/event-driven-architecture.md`](docs/event-driven-architecture.md) for
+the delivery guarantees, privacy boundary, replay procedure and demo flow.
+
 The following topics were intentionally left out for now:
 
-- Outbox
 - Kubernetes
 - Advanced CI/CD
+- Schema Registry
+- Multi-broker Kafka deployment
