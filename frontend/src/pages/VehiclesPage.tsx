@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { MaintenanceHistory } from "../components/MaintenanceHistory";
+import { VehicleHistoryMark } from "../components/VehicleHistoryLogo";
 import {
   CalendarIcon,
   CarIcon,
@@ -63,7 +64,8 @@ function VehicleSidebar() {
   return (
     <aside className="app-sidebar" aria-label="Main navigation">
       <a className="sidebar-brand" href="/vehicles">
-        Vehicle History
+        <VehicleHistoryMark className="sidebar-brand-mark" />
+        <span>Vehicle History</span>
       </a>
 
       <div className="sidebar-user">

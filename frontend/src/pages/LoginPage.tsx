@@ -1,13 +1,13 @@
 import { FormEvent, useState } from "react";
 import {
   ArrowRightIcon,
-  CarIcon,
   EyeIcon,
   EyeOffIcon,
   LockIcon,
   UserIcon,
 } from "../components/Icons";
 import { TextField } from "../components/TextField";
+import { VehicleHistoryMark } from "../components/VehicleHistoryLogo";
 import { ApiError, login } from "../services/api";
 import { saveAuthTokens } from "../services/authStorage";
 
@@ -68,8 +68,10 @@ export function LoginPage() {
     <main className="auth-page" aria-labelledby="login-title">
       <section className="auth-card">
         <header className="auth-card-header">
-          <CarIcon className="brand-icon" aria-hidden />
-          <h1 id="login-title">Vehicle History</h1>
+          <div className="brand-lockup">
+            <VehicleHistoryMark />
+            <h1 id="login-title">Vehicle History</h1>
+          </div>
           <p>Efficient fleet management</p>
         </header>
 

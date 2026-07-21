@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CarIcon } from "./Icons";
+import { VehicleHistoryMark } from "./VehicleHistoryLogo";
 import { logout } from "../services/api";
 import { clearAuthTokens, getCurrentUserDisplayName, getRefreshToken } from "../services/authStorage";
 
@@ -30,7 +31,8 @@ export function AppSidebar() {
   return (
     <aside className="app-sidebar" aria-label="Main navigation">
       <a className="sidebar-brand" href="/vehicles">
-        Vehicle History
+        <VehicleHistoryMark className="sidebar-brand-mark" />
+        <span>Vehicle History</span>
       </a>
 
       <div className="sidebar-user">

@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
-import { CarIcon, LockIcon, MailIcon, UserIcon } from "../components/Icons";
+import { LockIcon, MailIcon, UserIcon } from "../components/Icons";
 import { TextField } from "../components/TextField";
+import { VehicleHistoryMark } from "../components/VehicleHistoryLogo";
 import { ApiError, register } from "../services/api";
 import { saveAuthTokens } from "../services/authStorage";
 
@@ -102,10 +103,10 @@ export function RegisterPage() {
     <main className="auth-page" aria-labelledby="register-title">
       <section className="auth-card register-card">
         <header className="auth-card-header register-card-header">
-          <span className="brand-icon-badge">
-            <CarIcon className="brand-icon" aria-hidden />
-          </span>
-          <h1 id="register-title">Vehicle History</h1>
+          <div className="brand-lockup">
+            <VehicleHistoryMark />
+            <h1 id="register-title">Vehicle History</h1>
+          </div>
           <p>Create your account to manage your fleet.</p>
         </header>
 

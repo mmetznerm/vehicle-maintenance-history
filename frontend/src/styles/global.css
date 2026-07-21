@@ -16,6 +16,18 @@
   --danger: #b42318;
   --danger-surface: #fff1f0;
   --shadow: 0 12px 30px rgb(15 23 42 / 8%), 0 2px 8px rgb(15 23 42 / 4%);
+  --ui-card-radius: 12px;
+  --ui-card-padding-block: 32px;
+  --ui-card-padding-inline: 28px;
+  --ui-control-height: 44px;
+  --ui-control-radius: 7px;
+  --ui-title-size: 26px;
+  --ui-body-size: 13px;
+  --ui-input-size: 14px;
+  --ui-label-size: 12px;
+  --ui-help-size: 11px;
+  --ui-button-size: 13px;
+  --ui-icon-control-size: 28px;
 }
 
 * {
@@ -31,6 +43,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  font-size: var(--ui-body-size);
 }
 
 button,
@@ -59,16 +72,16 @@ a {
 
 .auth-card {
   width: min(100%, 430px);
-  padding: 32px 28px 26px;
+  padding: var(--ui-card-padding-block) var(--ui-card-padding-inline) 26px;
   border: 1px solid rgb(204 213 228 / 88%);
-  border-radius: 12px;
+  border-radius: var(--ui-card-radius);
   background: rgb(255 255 255 / 96%);
   box-shadow: var(--shadow);
 }
 
 .register-card {
   overflow: hidden;
-  padding: 24px 24px 0;
+  padding: var(--ui-card-padding-block) var(--ui-card-padding-inline) 0;
 }
 
 .auth-card-header {
@@ -79,34 +92,70 @@ a {
   text-align: center;
 }
 
-.brand-icon {
-  width: 30px;
-  height: 30px;
-  color: var(--brand-strong);
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
-.brand-icon-badge {
+.vehicle-history-mark {
   display: inline-flex;
   width: 48px;
   height: 48px;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #3474f4 0%, #2563eb 100%);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 28% 18%, rgb(255 255 255 / 26%), transparent 34%),
+    linear-gradient(145deg, #3f83f8 0%, #1764e8 58%, #0649bd 100%);
   color: #ffffff;
-  box-shadow: 0 8px 18px rgb(37 99 235 / 22%);
+  box-shadow:
+    0 9px 20px rgb(37 99 235 / 24%),
+    inset 0 1px 0 rgb(255 255 255 / 22%);
 }
 
-.brand-icon-badge .brand-icon {
-  width: 25px;
-  height: 25px;
-  color: currentColor;
+.vehicle-history-mark svg {
+  width: 40px;
+  height: 40px;
+}
+
+.vehicle-history-mark-arc,
+.vehicle-history-mark-arrow,
+.vehicle-history-mark-car,
+.vehicle-history-mark-wheel {
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.vehicle-history-mark-arc,
+.vehicle-history-mark-arrow {
+  stroke-width: 2.1;
+  opacity: 0.82;
+}
+
+.vehicle-history-mark-car {
+  fill: rgb(255 255 255 / 16%);
+  stroke-width: 2.2;
+}
+
+.vehicle-history-mark-window {
+  fill: rgb(255 255 255 / 32%);
+}
+
+.vehicle-history-mark-wheel {
+  fill: #0c4fbd;
+  stroke-width: 2.1;
 }
 
 .auth-card-header h1 {
   margin: 0;
   color: #0759e6;
-  font-size: 26px;
+  font-size: var(--ui-title-size);
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1.1;
@@ -115,20 +164,12 @@ a {
 .auth-card-header p {
   margin: 0;
   color: #475569;
-  font-size: 13px;
+  font-size: var(--ui-body-size);
 }
 
 .register-card-header {
-  gap: 8px;
-  margin-bottom: 18px;
-}
-
-.register-card-header h1 {
-  font-size: 20px;
-}
-
-.register-card-header p {
-  font-size: 14px;
+  gap: 6px;
+  margin-bottom: 24px;
 }
 
 .login-form {
@@ -137,7 +178,7 @@ a {
 }
 
 .register-form {
-  gap: 12px;
+  gap: 14px;
 }
 
 .field-group {
@@ -147,18 +188,18 @@ a {
 
 .field-label {
   color: #0f172a;
-  font-size: 12px;
+  font-size: var(--ui-label-size);
   font-weight: 700;
 }
 
 .field-control {
   display: flex;
-  min-height: 44px;
+  min-height: var(--ui-control-height);
   align-items: center;
   gap: 10px;
   padding: 0 12px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: var(--ui-control-radius);
   background: var(--surface-subtle);
   transition:
     border-color 160ms ease,
@@ -198,7 +239,7 @@ a {
   outline: 0;
   background: transparent;
   color: #0f172a;
-  font-size: 14px;
+  font-size: var(--ui-input-size);
 }
 
 .field-input::placeholder {
@@ -209,14 +250,14 @@ a {
 .field-help {
   margin: 5px 0 0;
   color: #475569;
-  font-size: 11px;
+  font-size: var(--ui-help-size);
   line-height: 1.35;
 }
 
 .field-error {
   margin: 0;
   color: var(--danger);
-  font-size: 11px;
+  font-size: var(--ui-help-size);
   font-weight: 700;
   line-height: 1.35;
 }
@@ -248,8 +289,8 @@ a {
 
 .icon-button {
   display: inline-flex;
-  width: 28px;
-  height: 28px;
+  width: var(--ui-icon-control-size);
+  height: var(--ui-icon-control-size);
   align-items: center;
   justify-content: center;
   border: 0;
@@ -276,24 +317,24 @@ a:focus-visible {
   margin: 0;
   padding: 10px 12px;
   border: 1px solid #ffb8ae;
-  border-radius: 7px;
+  border-radius: var(--ui-control-radius);
   background: var(--danger-surface);
   color: var(--danger);
-  font-size: 13px;
+  font-size: var(--ui-body-size);
   line-height: 1.4;
 }
 
 .primary-button,
 .secondary-button {
   display: inline-flex;
-  min-height: 44px;
+  min-height: var(--ui-control-height);
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: 0;
-  border-radius: 7px;
+  border-radius: var(--ui-control-radius);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--ui-button-size);
   font-weight: 800;
   transition:
     transform 140ms ease,
@@ -343,7 +384,7 @@ a:focus-visible {
 }
 
 .register-card-footer {
-  margin: 22px -24px 0;
+  margin: 22px calc(0px - var(--ui-card-padding-inline)) 0;
   padding: 18px 16px;
   border-top: 1px solid #e6ecfb;
   background: #f0f5ff;
@@ -374,10 +415,25 @@ a:focus-visible {
 }
 
 .sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   color: #0055d8;
   font-size: 18px;
   font-weight: 800;
   text-decoration: none;
+}
+
+.sidebar-brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  box-shadow: 0 6px 14px rgb(37 99 235 / 20%);
+}
+
+.sidebar-brand-mark svg {
+  width: 29px;
+  height: 29px;
 }
 
 .sidebar-user {
@@ -395,13 +451,13 @@ a:focus-visible {
 }
 
 .sidebar-user strong {
-  font-size: 14px;
+  font-size: var(--ui-body-size);
   font-weight: 800;
 }
 
 .sidebar-user span {
   color: #334155;
-  font-size: 13px;
+  font-size: var(--ui-label-size);
 }
 
 .sidebar-nav {
@@ -412,13 +468,13 @@ a:focus-visible {
 .sidebar-link,
 .sidebar-logout {
   display: inline-flex;
-  min-height: 42px;
+  min-height: var(--ui-control-height);
   align-items: center;
   gap: 12px;
   border: 0;
-  border-radius: 7px;
+  border-radius: var(--ui-control-radius);
   color: #233047;
-  font-size: 14px;
+  font-size: var(--ui-button-size);
   font-weight: 600;
   text-decoration: none;
 }
@@ -468,9 +524,9 @@ a:focus-visible {
   width: min(100%, 600px);
   min-height: 267px;
   margin: 0 auto;
-  padding: 34px 32px;
+  padding: var(--ui-card-padding-block) var(--ui-card-padding-inline);
   border: 1px solid #edf1f8;
-  border-radius: 8px;
+  border-radius: var(--ui-card-radius);
   background: #ffffff;
   box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
   text-align: center;
@@ -500,7 +556,7 @@ a:focus-visible {
 .empty-vehicles-card h1 {
   margin: 14px 0 6px;
   color: #020817;
-  font-size: 21px;
+  font-size: var(--ui-title-size);
   font-weight: 800;
   line-height: 1.2;
 }
@@ -509,16 +565,16 @@ a:focus-visible {
   width: min(100%, 372px);
   margin: 0;
   color: #1f2937;
-  font-size: 12px;
+  font-size: var(--ui-body-size);
   line-height: 1.35;
 }
 
 .vehicle-add-button {
-  min-height: 30px;
+  min-height: var(--ui-control-height);
   margin-top: 18px;
   padding: 0 18px;
-  border-radius: 5px;
-  font-size: 11px;
+  border-radius: var(--ui-control-radius);
+  font-size: var(--ui-button-size);
   text-decoration: none;
 }
 
@@ -532,6 +588,7 @@ a:focus-visible {
   place-items: center;
   gap: 12px;
   color: #334155;
+  font-size: var(--ui-body-size);
 }
 
 .vehicles-status-card p {
@@ -540,6 +597,8 @@ a:focus-visible {
 
 .vehicles-status-card h1 {
   margin: 0;
+  font-size: var(--ui-title-size);
+  line-height: 1.15;
 }
 
 .error-status {
@@ -583,7 +642,7 @@ a:focus-visible {
 .vehicles-page-header h1 {
   margin: 0;
   color: #020817;
-  font-size: 26px;
+  font-size: var(--ui-title-size);
   font-weight: 800;
   line-height: 1.15;
 }
@@ -591,11 +650,11 @@ a:focus-visible {
 .vehicles-page-header p:not(.section-eyebrow) {
   margin: 5px 0 0;
   color: #536071;
-  font-size: 14px;
+  font-size: var(--ui-body-size);
 }
 
 .vehicles-header-button {
-  min-height: 44px;
+  min-height: var(--ui-control-height);
   padding: 0 18px;
   text-decoration: none;
 }
@@ -611,9 +670,9 @@ a:focus-visible {
   justify-content: space-between;
   gap: 24px;
   min-height: 124px;
-  padding: 24px;
+  padding: var(--ui-card-padding-inline);
   border: 1px solid #d8e4f8;
-  border-radius: 7px;
+  border-radius: var(--ui-card-radius);
   background: #ffffff;
   box-shadow: 0 2px 6px rgb(37 99 235 / 8%);
 }
@@ -650,7 +709,7 @@ a:focus-visible {
   overflow-wrap: anywhere;
   margin: 0 0 8px;
   color: #020817;
-  font-size: 26px;
+  font-size: var(--ui-title-size);
   font-weight: 800;
   line-height: 1.15;
 }
@@ -661,7 +720,7 @@ a:focus-visible {
   align-items: center;
   gap: 10px 15px;
   color: #263244;
-  font-size: 15px;
+  font-size: var(--ui-input-size);
 }
 
 .plate-badge {
@@ -697,17 +756,17 @@ a:focus-visible {
 
 .vehicle-action-button {
   display: inline-flex;
-  min-height: 44px;
+  min-height: var(--ui-control-height);
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 0 13px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--ui-control-radius);
   background: #edf3ff;
   color: #0055d8;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--ui-button-size);
   font-weight: 700;
   text-decoration: none;
 }
@@ -773,9 +832,9 @@ a:focus-visible {
 }
 
 .vehicle-form-card {
-  padding: 33px 36px 33px;
+  padding: var(--ui-card-padding-block) var(--ui-card-padding-inline);
   border: 1px solid #dce3ef;
-  border-radius: 9px;
+  border-radius: var(--ui-card-radius);
   background: #ffffff;
   box-shadow: 0 2px 8px rgb(15 23 42 / 8%);
 }
@@ -808,7 +867,7 @@ a:focus-visible {
 .vehicle-form-header h1 {
   margin: 0 0 5px;
   color: #020817;
-  font-size: 25px;
+  font-size: var(--ui-title-size);
   font-weight: 800;
   line-height: 1.1;
 }
@@ -816,7 +875,7 @@ a:focus-visible {
 .vehicle-form-header p {
   margin: 0;
   color: #213047;
-  font-size: 13px;
+  font-size: var(--ui-body-size);
   line-height: 1.35;
 }
 
@@ -846,16 +905,16 @@ a:focus-visible {
 }
 
 .vehicle-form .field-control {
-  min-height: 39px;
-  padding: 0 11px;
+  min-height: var(--ui-control-height);
+  padding: 0 12px;
   border-color: #c6cfdf;
-  border-radius: 6px;
+  border-radius: var(--ui-control-radius);
   background: #f8f9fe;
 }
 
 .vehicle-form .field-input {
-  height: 37px;
-  font-size: 13px;
+  height: 42px;
+  font-size: var(--ui-input-size);
 }
 
 .vehicle-form .field-icon svg {
@@ -874,6 +933,7 @@ a:focus-visible {
   gap: 12px;
   padding: 34px 18px 10px;
   color: #334155;
+  font-size: var(--ui-body-size);
   text-align: center;
 }
 
@@ -882,7 +942,7 @@ a:focus-visible {
 }
 
 .vehicle-status-action {
-  min-height: 38px;
+  min-height: var(--ui-control-height);
   padding: 0 16px;
   text-decoration: none;
 }
@@ -899,19 +959,19 @@ a:focus-visible {
 
 .text-button {
   display: inline-flex;
-  min-height: 32px;
+  min-height: var(--ui-control-height);
   align-items: center;
   color: #0759e6;
-  font-size: 12px;
+  font-size: var(--ui-button-size);
   font-weight: 800;
   text-decoration: none;
 }
 
 .vehicle-save-button {
-  min-height: 38px;
+  min-height: var(--ui-control-height);
   min-width: 118px;
   padding: 0 18px;
-  border-radius: 7px;
+  border-radius: var(--ui-control-radius);
 }
 
 .vehicle-save-button svg {
@@ -967,9 +1027,9 @@ a:focus-visible {
   width: min(100%, 1086px);
   min-height: 128px;
   margin: 0 auto 22px;
-  padding: 22px 22px;
+  padding: var(--ui-card-padding-inline);
   border: 1px solid #d7e2f4;
-  border-radius: 7px;
+  border-radius: var(--ui-card-radius);
   background: #ffffff;
   box-shadow: 0 2px 5px rgb(37 99 235 / 9%);
 }
@@ -1006,7 +1066,7 @@ a:focus-visible {
   overflow-wrap: anywhere;
   margin: 0 0 7px;
   color: #020817;
-  font-size: 25px;
+  font-size: var(--ui-title-size);
   font-weight: 800;
   line-height: 1.15;
 }
@@ -1017,7 +1077,7 @@ a:focus-visible {
   align-items: center;
   gap: 9px 16px;
   color: #233047;
-  font-size: 14px;
+  font-size: var(--ui-input-size);
 }
 
 .vehicle-details-actions {
@@ -1045,12 +1105,12 @@ a:focus-visible {
 .maintenance-header h2 {
   margin: 0;
   color: #020817;
-  font-size: 20px;
+  font-size: var(--ui-title-size);
   font-weight: 800;
 }
 
 .maintenance-add-button {
-  min-height: 39px;
+  min-height: var(--ui-control-height);
   padding: 0 18px;
   text-decoration: none;
 }
@@ -1058,7 +1118,7 @@ a:focus-visible {
 .maintenance-table-wrap {
   overflow: hidden;
   border: 1px solid #d7e2f4;
-  border-radius: 6px;
+  border-radius: var(--ui-card-radius);
   background: #ffffff;
   box-shadow: 0 1px 3px rgb(15 23 42 / 5%);
 }
@@ -1067,7 +1127,7 @@ a:focus-visible {
   width: 100%;
   border-collapse: collapse;
   color: #020817;
-  font-size: 14px;
+  font-size: var(--ui-input-size);
 }
 
 .maintenance-table th,
@@ -1081,7 +1141,7 @@ a:focus-visible {
 .maintenance-table th {
   background: #f8f9fe;
   color: #2b3650;
-  font-size: 11px;
+  font-size: var(--ui-label-size);
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1134,12 +1194,12 @@ a:focus-visible {
 
 .icon-action-button {
   display: inline-flex;
-  width: 34px;
-  height: 34px;
+  width: var(--ui-icon-control-size);
+  height: var(--ui-icon-control-size);
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 6px;
   background: #edf3ff;
   color: #0055d8;
   cursor: pointer;
@@ -1178,9 +1238,9 @@ a:focus-visible {
   width: min(100%, 1086px);
   min-height: 248px;
   margin: 0 auto;
-  padding: 32px 26px;
+  padding: var(--ui-card-padding-block) var(--ui-card-padding-inline);
   border: 1px solid #edf1f8;
-  border-radius: 8px;
+  border-radius: var(--ui-card-radius);
   background: #ffffff;
   box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
   text-align: center;
@@ -1189,7 +1249,7 @@ a:focus-visible {
 .empty-maintenance-card h2 {
   margin: 5px 0 0;
   color: #020817;
-  font-size: 20px;
+  font-size: var(--ui-title-size);
   font-weight: 800;
 }
 
@@ -1197,7 +1257,7 @@ a:focus-visible {
   width: min(100%, 390px);
   margin: 0;
   color: #334155;
-  font-size: 13px;
+  font-size: var(--ui-body-size);
   line-height: 1.4;
 }
 
@@ -1208,7 +1268,7 @@ a:focus-visible {
 }
 
 .maintenance-create-shell {
-  width: min(100%, 374px);
+  width: min(100%, 430px);
   margin: 0 auto;
 }
 
@@ -1222,7 +1282,7 @@ a:focus-visible {
 .maintenance-create-header h1 {
   margin: 0;
   color: #020817;
-  font-size: 18px;
+  font-size: var(--ui-title-size);
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1.2;
@@ -1231,11 +1291,11 @@ a:focus-visible {
 
 .maintenance-back-button {
   display: inline-flex;
-  width: 28px;
-  height: 28px;
+  width: var(--ui-icon-control-size);
+  height: var(--ui-icon-control-size);
   align-items: center;
   justify-content: center;
-  border-radius: 7px;
+  border-radius: 6px;
   color: #173968;
   text-decoration: none;
 }
@@ -1252,46 +1312,46 @@ a:focus-visible {
 }
 
 .maintenance-create-card {
-  padding: 18px 14px 14px;
+  padding: var(--ui-card-padding-block) var(--ui-card-padding-inline);
   border: 1px solid #eef2f7;
-  border-radius: 8px;
+  border-radius: var(--ui-card-radius);
   background: #ffffff;
-  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+  box-shadow: var(--shadow);
 }
 
 .maintenance-create-form {
   display: grid;
-  gap: 13px;
+  gap: 14px;
 }
 
 .maintenance-create-form .field-label {
-  font-size: 11px;
+  font-size: var(--ui-label-size);
   font-weight: 700;
 }
 
 .maintenance-field-control {
-  min-height: 30px;
-  gap: 8px;
-  padding: 0 9px;
+  min-height: var(--ui-control-height);
+  gap: 10px;
+  padding: 0 12px;
   border-color: #cbd5e1;
-  border-radius: 5px;
+  border-radius: var(--ui-control-radius);
   background: #f8f9fe;
 }
 
 .maintenance-field-control .field-input {
-  height: 28px;
-  font-size: 12px;
+  height: 42px;
+  font-size: var(--ui-input-size);
 }
 
 .maintenance-field-control .field-icon svg {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
 }
 
 .field-affix {
   flex: 0 0 auto;
   color: #475569;
-  font-size: 10px;
+  font-size: var(--ui-help-size);
   line-height: 1;
 }
 
@@ -1300,7 +1360,7 @@ a:focus-visible {
   min-height: 247px;
   padding: 9px;
   border-color: #cbd5e1;
-  border-radius: 5px;
+  border-radius: var(--ui-control-radius);
   background: #f8f9fe;
 }
 
@@ -1314,7 +1374,7 @@ a:focus-visible {
   background: transparent;
   color: #0f172a;
   font: inherit;
-  font-size: 12px;
+  font-size: var(--ui-input-size);
   line-height: 1.45;
 }
 
@@ -1324,30 +1384,30 @@ a:focus-visible {
 }
 
 .maintenance-form-error {
-  font-size: 12px;
+  font-size: var(--ui-body-size);
 }
 
 .maintenance-create-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 22px;
+  gap: 18px;
   margin-top: 1px;
-  padding-top: 10px;
+  padding-top: 18px;
   border-top: 1px solid #e2e8f0;
 }
 
 .maintenance-save-button {
-  min-width: 54px;
-  min-height: 30px;
+  min-width: 118px;
+  min-height: var(--ui-control-height);
   padding: 0 16px;
-  border-radius: 6px;
-  font-size: 11px;
+  border-radius: var(--ui-control-radius);
+  font-size: var(--ui-button-size);
 }
 
 .maintenance-create-actions .text-button {
-  min-height: 30px;
-  font-size: 11px;
+  min-height: var(--ui-control-height);
+  font-size: var(--ui-button-size);
 }
 
 @keyframes spin {
@@ -1364,11 +1424,11 @@ a:focus-visible {
 
   .auth-card {
     padding: 28px 18px 22px;
-    border-radius: 10px;
+    border-radius: var(--ui-card-radius);
   }
 
   .register-card {
-    padding: 24px 18px 0;
+    padding: 28px 18px 0;
   }
 
   .auth-card-header h1 {
@@ -1376,7 +1436,7 @@ a:focus-visible {
   }
 
   .register-card-header h1 {
-    font-size: 20px;
+    font-size: 24px;
   }
 
   .register-card-footer {
@@ -1456,7 +1516,7 @@ a:focus-visible {
     align-items: stretch;
     flex-direction: column;
     gap: 18px;
-    padding: 18px;
+    padding: 28px 18px;
   }
 
   .vehicle-card-main {
@@ -1474,7 +1534,7 @@ a:focus-visible {
   }
 
   .vehicle-card h2 {
-    font-size: 21px;
+    font-size: 24px;
   }
 
   .vehicle-actions {
@@ -1508,7 +1568,7 @@ a:focus-visible {
   }
 
   .sidebar-logout {
-    min-height: 28px;
+    min-height: var(--ui-control-height);
   }
 
   .empty-vehicles-card,
@@ -1544,7 +1604,7 @@ a:focus-visible {
   }
 
   .vehicle-form-card {
-    padding: 24px 18px;
+    padding: 28px 18px;
   }
 
   .vehicle-form-header {
@@ -1553,7 +1613,7 @@ a:focus-visible {
   }
 
   .vehicle-form-header h1 {
-    font-size: 22px;
+    font-size: 24px;
   }
 
   .vehicle-form-grid {
@@ -1581,7 +1641,7 @@ a:focus-visible {
   .vehicle-details-card {
     align-items: stretch;
     flex-direction: column;
-    padding: 18px;
+    padding: 28px 18px;
   }
 
   .vehicle-details-main {
@@ -1595,7 +1655,7 @@ a:focus-visible {
   }
 
   .vehicle-details-copy h1 {
-    font-size: 22px;
+    font-size: 24px;
   }
 
   .vehicle-details-actions {
@@ -1606,6 +1666,10 @@ a:focus-visible {
   .maintenance-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .maintenance-header h2 {
+    font-size: 24px;
   }
 
   .maintenance-add-button {
@@ -1634,7 +1698,7 @@ a:focus-visible {
   .maintenance-table tr {
     margin-bottom: 12px;
     border: 1px solid #d7e2f4;
-    border-radius: 7px;
+    border-radius: var(--ui-card-radius);
     background: #ffffff;
     box-shadow: 0 1px 3px rgb(15 23 42 / 5%);
   }
@@ -1653,7 +1717,7 @@ a:focus-visible {
   .maintenance-table td::before {
     content: attr(data-label);
     color: #2b3650;
-    font-size: 11px;
+    font-size: var(--ui-label-size);
     font-weight: 800;
     letter-spacing: 0.04em;
     text-align: left;
@@ -1675,7 +1739,11 @@ a:focus-visible {
   }
 
   .maintenance-create-card {
-    padding: 16px 12px 12px;
+    padding: 28px 18px;
+  }
+
+  .maintenance-create-header h1 {
+    font-size: 24px;
   }
 
   .maintenance-create-actions {
