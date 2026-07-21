@@ -108,6 +108,42 @@ jobs:
           path: event-worker/target/site/jacoco
           if-no-files-found: warn
 
+  consistency-worker-tests:
+    name: Consistency Worker Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: consistency-worker/pom.xml
+
+      - name: Make Maven wrapper executable
+        working-directory: backend
+        run: chmod +x mvnw
+
+      - name: Run consistency worker tests
+        working-directory: backend
+        run: ./mvnw -B -f ../consistency-worker/pom.xml verify
+
+      - name: Run consistency worker integration tests
+        working-directory: backend
+        run: ./mvnw -B -f ../consistency-worker/pom.xml verify -Pintegration-tests
+
+      - name: Upload consistency worker coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: consistency-worker-jacoco-report
+          path: consistency-worker/target/site/jacoco
+          if-no-files-found: warn
+
   frontend-quality:
     name: Frontend Quality
     runs-on: ubuntu-latest
