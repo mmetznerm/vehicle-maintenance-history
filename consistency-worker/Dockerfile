@@ -27,4 +27,7 @@ USER consistency
 
 EXPOSE 8082
 
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
+    CMD curl -fsS http://localhost:8082/actuator/health/readiness || exit 1
+
 ENTRYPOINT ["java", "-jar", "app.jar"]
