@@ -6,6 +6,7 @@ import com.mmetzner.vmh.vehicle.application.dto.CreateVehicleRequest;
 import com.mmetzner.vmh.vehicle.application.dto.UpdateVehicleRequest;
 import com.mmetzner.vmh.vehicle.application.dto.VehicleResponse;
 import com.mmetzner.vmh.vehicle.application.dto.VehicleSummaryResponse;
+import com.mmetzner.vmh.vehicle.application.dto.VehicleHistorySharingResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -62,5 +63,30 @@ public class VehicleController {
             @PathVariable UUID vehicleId
     ) {
         vehicleService.deleteVehicle(ownerId, vehicleId);
+    }
+
+    @GetMapping("/{vehicleId}/history-sharing")
+    public VehicleHistorySharingResponse getHistorySharing(
+            @AuthenticationPrincipal UUID ownerId,
+            @PathVariable UUID vehicleId
+    ) {
+        return vehicleService.getHistorySharing(ownerId, vehicleId);
+    }
+
+    @PostMapping("/{vehicleId}/history-sharing")
+    public VehicleHistorySharingResponse enableHistorySharing(
+            @AuthenticationPrincipal UUID ownerId,
+            @PathVariable UUID vehicleId
+    ) {
+        return vehicleService.enableHistorySharing(ownerId, vehicleId);
+    }
+
+    @DeleteMapping("/{vehicleId}/history-sharing")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void disableHistorySharing(
+            @AuthenticationPrincipal UUID ownerId,
+            @PathVariable UUID vehicleId
+    ) {
+        vehicleService.disableHistorySharing(ownerId, vehicleId);
     }
 }

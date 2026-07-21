@@ -4,6 +4,8 @@ import com.mmetzner.vmh.auth.domain.model.User;
 import com.mmetzner.vmh.auth.domain.repository.UserRepository;
 import com.mmetzner.vmh.shared.exception.ConflictException;
 import com.mmetzner.vmh.shared.exception.ResourceNotFoundException;
+import com.mmetzner.vmh.shared.event.OutboxEventWriter;
+import com.mmetzner.vmh.shared.event.EventType;
 import com.mmetzner.vmh.vehicle.application.dto.CreateVehicleRequest;
 import com.mmetzner.vmh.vehicle.application.dto.UpdateVehicleRequest;
 import com.mmetzner.vmh.vehicle.application.mapper.VehicleMapper;
@@ -26,16 +28,19 @@ class VehicleServiceTests {
 
     private UserRepository userRepository;
     private VehicleRepository vehicleRepository;
+    private OutboxEventWriter outboxEventWriter;
     private VehicleService vehicleService;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         vehicleRepository = mock(VehicleRepository.class);
+        outboxEventWriter = mock(OutboxEventWriter.class);
         vehicleService = new VehicleService(
                 userRepository,
                 vehicleRepository,
-                new VehicleMapper()
+                new VehicleMapper(),
+                outboxEventWriter
         );
     }
 
@@ -219,5 +224,42 @@ class VehicleServiceTests {
 
         assertThatThrownBy(() -> vehicleService.findVehicle(ownerId, vehicleId))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void shouldEnableAndDisablePublicHistorySharing() {
+        UUID ownerId = UUID.randomUUID();
+        UUID vehicleId = UUID.randomUUID();
+        Vehicle vehicle = new Vehicle(
+                vehicleId, ownerId, "ABC1234", "Honda", "Civic", 2020,
+                "Black", null, null
+        );
+
+        when(vehicleRepository.findByIdAndOwnerId(vehicleId, ownerId))
+                .thenReturn(Optional.of(vehicle));
+        when(vehicleRepository.save(any(Vehicle.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        var enabled = vehicleService.enableHistorySharing(ownerId, vehicleId);
+
+        assertThat(enabled.enabled()).isTrue();
+        assertThat(enabled.publicId()).isNotNull();
+        verify(outboxEventWriter).write(
+                eq(EventType.VEHICLE_HISTORY_SHARING_CHANGED),
+                eq(vehicleId),
+                eq(vehicleId),
+                any()
+        );
+
+        Vehicle sharedVehicle = vehicle.enableHistorySharing();
+        when(vehicleRepository.findByIdAndOwnerId(vehicleId, ownerId))
+                .thenReturn(Optional.of(sharedVehicle));
+
+        vehicleService.disableHistorySharing(ownerId, vehicleId);
+
+        ArgumentCaptor<Vehicle> savedVehicle = ArgumentCaptor.forClass(Vehicle.class);
+        verify(vehicleRepository, atLeastOnce()).save(savedVehicle.capture());
+        assertThat(savedVehicle.getValue().historySharingEnabled()).isFalse();
+        assertThat(savedVehicle.getValue().historyPublicId()).isNull();
     }
 }

@@ -28,7 +28,10 @@ import com.mmetzner.vmh.auth.application.dto.LogoutRequest;
 import com.mmetzner.vmh.auth.application.dto.RefreshTokenRequest;
 import com.mmetzner.vmh.auth.application.dto.RegisterRequest;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "spring.kafka.admin.auto-create=false",
+        "app.kafka.outbox.enabled=false"
+})
 @AutoConfigureMockMvc
 @Testcontainers
 class AuthApiIT {

@@ -6,6 +6,7 @@ import com.mmetzner.vmh.maintenance.application.mapper.MaintenanceMapper;
 import com.mmetzner.vmh.maintenance.domain.model.Maintenance;
 import com.mmetzner.vmh.maintenance.domain.repository.MaintenanceRepository;
 import com.mmetzner.vmh.shared.exception.ResourceNotFoundException;
+import com.mmetzner.vmh.shared.event.OutboxEventWriter;
 import com.mmetzner.vmh.vehicle.domain.model.Vehicle;
 import com.mmetzner.vmh.vehicle.domain.repository.VehicleRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,17 +27,20 @@ class MaintenanceServiceTests {
 
     private VehicleRepository vehicleRepository;
     private MaintenanceRepository maintenanceRepository;
+    private OutboxEventWriter outboxEventWriter;
     private MaintenanceService maintenanceService;
 
     @BeforeEach
     void setUp() {
         vehicleRepository = mock(VehicleRepository.class);
         maintenanceRepository = mock(MaintenanceRepository.class);
+        outboxEventWriter = mock(OutboxEventWriter.class);
 
         maintenanceService = new MaintenanceService(
                 vehicleRepository,
                 maintenanceRepository,
-                new MaintenanceMapper()
+                new MaintenanceMapper(),
+                outboxEventWriter
         );
     }
 

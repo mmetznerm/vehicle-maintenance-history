@@ -7,11 +7,14 @@ import {
   ApiError,
   deleteMaintenance,
   deleteVehicle,
+  disableVehicleHistorySharing,
+  enableVehicleHistorySharing,
+  getVehicleHistorySharing,
   getVehicle,
   listMaintenances,
 } from "../services/api";
 import type { Maintenance } from "../types/maintenance";
-import type { Vehicle } from "../types/vehicle";
+import type { Vehicle, VehicleHistorySharing } from "../types/vehicle";
 
 function getVehicleIdFromPath(pathname: string) {
   const match = pathname.match(/^\/vehicles\/([^/]+)$/);
@@ -98,6 +101,58 @@ function VehicleSummaryCard({
   );
 }
 
+type HistorySharingCardProps = {
+  sharing: VehicleHistorySharing | null;
+  isUpdating: boolean;
+  feedback: string;
+  onEnable: () => void;
+  onDisable: () => void;
+  onCopy: () => void;
+};
+
+function HistorySharingCard({
+  sharing,
+  isUpdating,
+  feedback,
+  onEnable,
+  onDisable,
+  onCopy,
+}: HistorySharingCardProps) {
+  const publicPath = sharing?.publicId ? `/history/${sharing.publicId}` : "";
+
+  return (
+    <section className="history-sharing-card" aria-labelledby="history-sharing-title">
+      <div>
+        <p className="history-sharing-eyebrow">Histórico digital</p>
+        <h2 id="history-sharing-title">Compartilhamento público</h2>
+        <p>
+          Gere um link sem dados pessoais para apresentar as manutenções registradas deste veículo.
+        </p>
+      </div>
+
+      {sharing?.enabled && publicPath ? (
+        <div className="history-sharing-actions">
+          <a className="secondary-button" href={publicPath} target="_blank" rel="noreferrer">
+            Visualizar histórico
+          </a>
+          <button className="secondary-button" type="button" onClick={onCopy}>
+            Copiar link
+          </button>
+          <button className="text-button danger-text" type="button" disabled={isUpdating} onClick={onDisable}>
+            {isUpdating ? "Desativando..." : "Desativar"}
+          </button>
+        </div>
+      ) : (
+        <button className="primary-button history-sharing-enable" type="button" disabled={isUpdating} onClick={onEnable}>
+          {isUpdating ? "Ativando..." : "Ativar compartilhamento"}
+        </button>
+      )}
+
+      {feedback ? <p className="history-sharing-feedback" role="status">{feedback}</p> : null}
+    </section>
+  );
+}
+
 export function VehicleDetailsPage() {
   const vehicleId = getVehicleIdFromPath(window.location.pathname);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -106,6 +161,9 @@ export function VehicleDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeletingVehicle, setIsDeletingVehicle] = useState(false);
   const [deletingMaintenanceId, setDeletingMaintenanceId] = useState<string | null>(null);
+  const [historySharing, setHistorySharing] = useState<VehicleHistorySharing | null>(null);
+  const [isUpdatingSharing, setIsUpdatingSharing] = useState(false);
+  const [sharingFeedback, setSharingFeedback] = useState("");
   const currentOdometer = useMemo(() => {
     if (maintenances.length === 0) {
       return null;
@@ -149,6 +207,27 @@ export function VehicleDetailsPage() {
     }
 
     void loadDetails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [vehicleId]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSharing() {
+      if (!vehicleId) return;
+
+      try {
+        const response = await getVehicleHistorySharing(vehicleId);
+        if (isMounted) setHistorySharing(response);
+      } catch {
+        if (isMounted) setSharingFeedback("Não foi possível consultar o compartilhamento.");
+      }
+    }
+
+    void loadSharing();
 
     return () => {
       isMounted = false;
@@ -201,6 +280,45 @@ export function VehicleDetailsPage() {
     }
   }
 
+  async function handleEnableSharing() {
+    setIsUpdatingSharing(true);
+    setSharingFeedback("");
+    try {
+      const response = await enableVehicleHistorySharing(vehicleId);
+      setHistorySharing(response);
+      setSharingFeedback("Compartilhamento ativado. O histórico pode levar alguns segundos para aparecer.");
+    } catch {
+      setSharingFeedback("Não foi possível ativar o compartilhamento.");
+    } finally {
+      setIsUpdatingSharing(false);
+    }
+  }
+
+  async function handleDisableSharing() {
+    setIsUpdatingSharing(true);
+    setSharingFeedback("");
+    try {
+      await disableVehicleHistorySharing(vehicleId);
+      setHistorySharing({ enabled: false, publicId: null });
+      setSharingFeedback("Compartilhamento desativado e link anterior invalidado.");
+    } catch {
+      setSharingFeedback("Não foi possível desativar o compartilhamento.");
+    } finally {
+      setIsUpdatingSharing(false);
+    }
+  }
+
+  async function handleCopySharingLink() {
+    if (!historySharing?.publicId) return;
+    const url = `${window.location.origin}/history/${historySharing.publicId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setSharingFeedback("Link copiado.");
+    } catch {
+      setSharingFeedback(url);
+    }
+  }
+
   return (
     <div className="vehicles-app">
       <AppSidebar />
@@ -243,6 +361,15 @@ export function VehicleDetailsPage() {
             currentOdometer={currentOdometer}
             isDeleting={isDeletingVehicle}
             onDelete={handleDeleteVehicle}
+          />
+
+          <HistorySharingCard
+            sharing={historySharing}
+            isUpdating={isUpdatingSharing}
+            feedback={sharingFeedback}
+            onEnable={handleEnableSharing}
+            onDisable={handleDisableSharing}
+            onCopy={handleCopySharingLink}
           />
 
           <MaintenanceHistory

@@ -186,6 +186,26 @@ Response:
 204 No Content
 ```
 
+### Manage public history sharing
+
+```http
+GET /v1/vehicles/{vehicleId}/history-sharing
+POST /v1/vehicles/{vehicleId}/history-sharing
+DELETE /v1/vehicles/{vehicleId}/history-sharing
+```
+
+The `GET` and `POST` responses use:
+
+```json
+{
+  "enabled": true,
+  "publicId": "opaque-public-id"
+}
+```
+
+Disabling sharing returns `204`. Enabling after a revocation generates a new
+identifier instead of restoring the old public URL.
+
 ## Maintenances
 
 ### Create maintenance
@@ -249,6 +269,38 @@ Response:
 ```text
 204 No Content
 ```
+
+## Public vehicle history
+
+The public-history service uses `http://localhost:8081` and does not require an
+access token.
+
+```http
+GET /v1/public/vehicle-histories/{publicId}
+```
+
+Response `200`:
+
+```json
+{
+  "publicId": "opaque-public-id",
+  "brand": "Honda",
+  "model": "Civic",
+  "manufactureYear": 2020,
+  "color": "Silver",
+  "maintenances": [
+    {
+      "id": "maintenance-id",
+      "maintenanceDate": "2026-07-07",
+      "odometer": 35000,
+      "description": "Oil change"
+    }
+  ]
+}
+```
+
+Owner data, license plate and cost are intentionally absent. A revoked or
+unknown identifier returns `404`.
 
 ## Error response
 

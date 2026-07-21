@@ -19,12 +19,13 @@ WORKDIR /workspace
 COPY backend/.mvn .mvn
 COPY backend/mvnw backend/pom.xml ./
 
-RUN chmod +x mvnw && ./mvnw dependency:go-offline
+RUN sed -i 's/\r$//' mvnw \
+    && chmod +x mvnw
 
 COPY backend/src src
 COPY --from=frontend-build /workspace/backend/src/main/resources/static src/main/resources/static
 
-RUN ./mvnw package -DskipTests
+RUN --mount=type=cache,target=/root/.m2 ./mvnw -B package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
 

@@ -5,10 +5,15 @@ import com.mmetzner.vmh.shared.common.ApiMessages;
 import com.mmetzner.vmh.shared.exception.ApiErrorCode;
 import com.mmetzner.vmh.shared.exception.ConflictException;
 import com.mmetzner.vmh.shared.exception.ResourceNotFoundException;
+import com.mmetzner.vmh.shared.event.EventType;
+import com.mmetzner.vmh.shared.event.OutboxEventWriter;
+import com.mmetzner.vmh.shared.event.VehicleEventPayload;
+import com.mmetzner.vmh.shared.event.HistorySharingEventPayload;
 import com.mmetzner.vmh.vehicle.application.dto.CreateVehicleRequest;
 import com.mmetzner.vmh.vehicle.application.dto.UpdateVehicleRequest;
 import com.mmetzner.vmh.vehicle.application.dto.VehicleResponse;
 import com.mmetzner.vmh.vehicle.application.dto.VehicleSummaryResponse;
+import com.mmetzner.vmh.vehicle.application.dto.VehicleHistorySharingResponse;
 import com.mmetzner.vmh.vehicle.application.mapper.VehicleMapper;
 import com.mmetzner.vmh.vehicle.domain.model.Vehicle;
 import com.mmetzner.vmh.vehicle.domain.repository.VehicleRepository;
@@ -26,6 +31,7 @@ public class VehicleService {
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
+    private final OutboxEventWriter outboxEventWriter;
 
     @Transactional
     public VehicleResponse registerVehicle(UUID ownerId, CreateVehicleRequest request) {
@@ -43,6 +49,7 @@ public class VehicleService {
         ensurePlateIsAvailable(ownerId, vehicle.plate());
 
         Vehicle savedVehicle = vehicleRepository.save(vehicle);
+        writeVehicleEvent(EventType.VEHICLE_CREATED, savedVehicle);
 
         return vehicleMapper.toResponse(savedVehicle);
     }
@@ -79,6 +86,7 @@ public class VehicleService {
         }
 
         Vehicle savedVehicle = vehicleRepository.save(updatedVehicle);
+        writeVehicleEvent(EventType.VEHICLE_UPDATED, savedVehicle);
 
         return vehicleMapper.toResponse(savedVehicle);
     }
@@ -87,7 +95,39 @@ public class VehicleService {
     public void deleteVehicle(UUID ownerId, UUID vehicleId) {
         Vehicle vehicle = findVehicleByIdAndOwnerId(ownerId, vehicleId);
 
+        outboxEventWriter.write(EventType.VEHICLE_DELETED, vehicle.id(), vehicle.id(), null);
         vehicleRepository.delete(vehicle);
+    }
+
+    @Transactional(readOnly = true)
+    public VehicleHistorySharingResponse getHistorySharing(UUID ownerId, UUID vehicleId) {
+        Vehicle vehicle = findVehicleByIdAndOwnerId(ownerId, vehicleId);
+        return toHistorySharingResponse(vehicle);
+    }
+
+    @Transactional
+    public VehicleHistorySharingResponse enableHistorySharing(UUID ownerId, UUID vehicleId) {
+        Vehicle currentVehicle = findVehicleByIdAndOwnerId(ownerId, vehicleId);
+        Vehicle enabledVehicle = currentVehicle.enableHistorySharing();
+
+        if (enabledVehicle != currentVehicle) {
+            enabledVehicle = vehicleRepository.save(enabledVehicle);
+            writeVehicleEvent(EventType.VEHICLE_UPDATED, enabledVehicle);
+            writeHistorySharingEvent(enabledVehicle);
+        }
+
+        return toHistorySharingResponse(enabledVehicle);
+    }
+
+    @Transactional
+    public void disableHistorySharing(UUID ownerId, UUID vehicleId) {
+        Vehicle currentVehicle = findVehicleByIdAndOwnerId(ownerId, vehicleId);
+        Vehicle disabledVehicle = currentVehicle.disableHistorySharing();
+
+        if (disabledVehicle != currentVehicle) {
+            disabledVehicle = vehicleRepository.save(disabledVehicle);
+            writeHistorySharingEvent(disabledVehicle);
+        }
     }
 
     private void ensureUserExists(UUID ownerId) {
@@ -113,5 +153,38 @@ public class VehicleService {
                         ApiErrorCode.VEHICLE_NOT_FOUND,
                         ApiMessages.Vehicles.NOT_FOUND
                 ));
+    }
+
+    private void writeVehicleEvent(EventType type, Vehicle vehicle) {
+        outboxEventWriter.write(
+                type,
+                vehicle.id(),
+                vehicle.id(),
+                new VehicleEventPayload(
+                        vehicle.brand(),
+                        vehicle.model(),
+                        vehicle.manufactureYear(),
+                        vehicle.color()
+                )
+        );
+    }
+
+    private void writeHistorySharingEvent(Vehicle vehicle) {
+        outboxEventWriter.write(
+                EventType.VEHICLE_HISTORY_SHARING_CHANGED,
+                vehicle.id(),
+                vehicle.id(),
+                new HistorySharingEventPayload(
+                        vehicle.historySharingEnabled(),
+                        vehicle.historyPublicId()
+                )
+        );
+    }
+
+    private VehicleHistorySharingResponse toHistorySharingResponse(Vehicle vehicle) {
+        return new VehicleHistorySharingResponse(
+                vehicle.historySharingEnabled(),
+                vehicle.historyPublicId()
+        );
     }
 }

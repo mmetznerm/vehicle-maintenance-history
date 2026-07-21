@@ -14,7 +14,9 @@ public record Vehicle(
         Integer manufactureYear,
         String color,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime updatedAt,
+        boolean historySharingEnabled,
+        UUID historyPublicId
 ) {
 
     public Vehicle {
@@ -36,6 +38,28 @@ public record Vehicle(
         if (color != null && color.isBlank()) {
             color = null;
         }
+
+        if (historySharingEnabled && historyPublicId == null) {
+            throw new IllegalArgumentException("historyPublicId is required when sharing is enabled");
+        }
+
+        if (!historySharingEnabled && historyPublicId != null) {
+            throw new IllegalArgumentException("historyPublicId must be null when sharing is disabled");
+        }
+    }
+
+    public Vehicle(
+            UUID id,
+            UUID ownerId,
+            String plate,
+            String brand,
+            String model,
+            Integer manufactureYear,
+            String color,
+            OffsetDateTime createdAt,
+            OffsetDateTime updatedAt
+    ) {
+        this(id, ownerId, plate, brand, model, manufactureYear, color, createdAt, updatedAt, false, null);
     }
 
     public static Vehicle create(
@@ -55,6 +79,8 @@ public record Vehicle(
                 manufactureYear,
                 color,
                 null,
+                null,
+                false,
                 null
         );
     }
@@ -75,7 +101,31 @@ public record Vehicle(
                 manufactureYear,
                 color,
                 createdAt,
-                updatedAt
+                updatedAt,
+                historySharingEnabled,
+                historyPublicId
+        );
+    }
+
+    public Vehicle enableHistorySharing() {
+        if (historySharingEnabled) {
+            return this;
+        }
+
+        return new Vehicle(
+                id, ownerId, plate, brand, model, manufactureYear, color,
+                createdAt, updatedAt, true, UUID.randomUUID()
+        );
+    }
+
+    public Vehicle disableHistorySharing() {
+        if (!historySharingEnabled) {
+            return this;
+        }
+
+        return new Vehicle(
+                id, ownerId, plate, brand, model, manufactureYear, color,
+                createdAt, updatedAt, false, null
         );
     }
 

@@ -55,4 +55,24 @@ class VehicleTests {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("plate is required");
     }
+
+    @Test
+    void shouldGenerateAndRevokePublicHistoryIdentifiers() {
+        Vehicle vehicle = Vehicle.create(
+                UUID.randomUUID(), "ABC1234", "Toyota", "Corolla", 2022, "Black"
+        );
+
+        Vehicle sharedVehicle = vehicle.enableHistorySharing();
+
+        assertThat(sharedVehicle.historySharingEnabled()).isTrue();
+        assertThat(sharedVehicle.historyPublicId()).isNotNull();
+        assertThat(sharedVehicle.enableHistorySharing()).isSameAs(sharedVehicle);
+
+        Vehicle privateVehicle = sharedVehicle.disableHistorySharing();
+
+        assertThat(privateVehicle.historySharingEnabled()).isFalse();
+        assertThat(privateVehicle.historyPublicId()).isNull();
+        assertThat(privateVehicle.enableHistorySharing().historyPublicId())
+                .isNotEqualTo(sharedVehicle.historyPublicId());
+    }
 }
