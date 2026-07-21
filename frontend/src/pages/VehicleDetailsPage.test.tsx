@@ -3,6 +3,9 @@ import userEvent from "@testing-library/user-event";
 import {
   deleteMaintenance,
   deleteVehicle,
+  disableVehicleHistorySharing,
+  enableVehicleHistorySharing,
+  getVehicleHistorySharing,
   getVehicle,
   listMaintenances,
 } from "../services/api";
@@ -15,6 +18,9 @@ vi.mock("../services/api", async (importActual) => {
     ...actual,
     deleteMaintenance: vi.fn(),
     deleteVehicle: vi.fn(),
+    disableVehicleHistorySharing: vi.fn(),
+    enableVehicleHistorySharing: vi.fn(),
+    getVehicleHistorySharing: vi.fn(),
     getVehicle: vi.fn(),
     listMaintenances: vi.fn(),
   };
@@ -22,6 +28,9 @@ vi.mock("../services/api", async (importActual) => {
 
 const deleteMaintenanceMock = vi.mocked(deleteMaintenance);
 const deleteVehicleMock = vi.mocked(deleteVehicle);
+const disableVehicleHistorySharingMock = vi.mocked(disableVehicleHistorySharing);
+const enableVehicleHistorySharingMock = vi.mocked(enableVehicleHistorySharing);
+const getVehicleHistorySharingMock = vi.mocked(getVehicleHistorySharing);
 const getVehicleMock = vi.mocked(getVehicle);
 const listMaintenancesMock = vi.mocked(listMaintenances);
 
@@ -43,6 +52,7 @@ describe("VehicleDetailsPage", () => {
       manufactureYear: 2021,
       color: "Prata",
     });
+    getVehicleHistorySharingMock.mockResolvedValue({ enabled: false, publicId: null });
   });
 
   it("loads vehicle data and maintenance history", async () => {
@@ -127,5 +137,30 @@ describe("VehicleDetailsPage", () => {
 
     expect(deleteVehicleMock).toHaveBeenCalledWith("vehicle-id");
     expect(assignMock).toHaveBeenCalledWith("/vehicles");
+  });
+
+  it("enables and disables public history sharing", async () => {
+    const user = userEvent.setup();
+    listMaintenancesMock.mockResolvedValue([]);
+    enableVehicleHistorySharingMock.mockResolvedValue({
+      enabled: true,
+      publicId: "public-history-id",
+    });
+    disableVehicleHistorySharingMock.mockResolvedValue(undefined);
+
+    render(<VehicleDetailsPage />);
+
+    await user.click(await screen.findByRole("button", { name: /ativar compartilhamento/i }));
+
+    expect(enableVehicleHistorySharingMock).toHaveBeenCalledWith("vehicle-id");
+    expect(await screen.findByRole("link", { name: /visualizar histórico/i })).toHaveAttribute(
+      "href",
+      "/history/public-history-id",
+    );
+
+    await user.click(screen.getByRole("button", { name: /desativar/i }));
+
+    expect(disableVehicleHistorySharingMock).toHaveBeenCalledWith("vehicle-id");
+    expect(await screen.findByRole("button", { name: /ativar compartilhamento/i })).toBeInTheDocument();
   });
 });

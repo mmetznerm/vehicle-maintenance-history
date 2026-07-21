@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,7 +29,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "spring.kafka.admin.auto-create=false",
+        "app.kafka.outbox.enabled=false"
+})
 @AutoConfigureMockMvc
 @Testcontainers
 class VehicleApiIT {
@@ -44,6 +48,9 @@ class VehicleApiIT {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @DynamicPropertySource
     static void configureDatasource(DynamicPropertyRegistry registry) {
@@ -82,6 +89,8 @@ class VehicleApiIT {
         UUID vehicleId = UUID.fromString(
                 objectMapper.readTree(createVehicleResponse).get("id").asText()
         );
+
+        assertThat(outboxEventCount(vehicleId, "VehicleCreated")).isEqualTo(1);
 
         mockMvc.perform(get("/v1/vehicles")
                         .header(AUTHORIZATION, bearer(accessToken)))
@@ -137,17 +146,67 @@ class VehicleApiIT {
                 "Prata"
         );
 
-        mockMvc.perform(post("/v1/vehicles")
+        String response = mockMvc.perform(post("/v1/vehicles")
                         .header(AUTHORIZATION, bearer(accessToken))
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        UUID vehicleId = UUID.fromString(objectMapper.readTree(response).get("id").asText());
 
         mockMvc.perform(post("/v1/vehicles")
                         .header(AUTHORIZATION, bearer(accessToken))
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict());
+
+        assertThat(outboxEventCount(vehicleId, "VehicleCreated")).isEqualTo(1);
+    }
+
+    @Test
+    void shouldEnableRevokeAndRotatePublicHistorySharing() throws Exception {
+        String accessToken = registerUserAndGetAccessToken();
+        CreateVehicleRequest request = new CreateVehicleRequest(
+                "share-123", "Volvo", "XC40", 2023, "Blue"
+        );
+
+        String response = mockMvc.perform(post("/v1/vehicles")
+                        .header(AUTHORIZATION, bearer(accessToken))
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        UUID vehicleId = UUID.fromString(objectMapper.readTree(response).get("id").asText());
+
+        String firstSharingResponse = mockMvc.perform(post("/v1/vehicles/{vehicleId}/history-sharing", vehicleId)
+                        .header(AUTHORIZATION, bearer(accessToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.publicId").isNotEmpty())
+                .andReturn().getResponse().getContentAsString();
+        UUID firstPublicId = UUID.fromString(objectMapper.readTree(firstSharingResponse).get("publicId").asText());
+
+        mockMvc.perform(get("/v1/vehicles/{vehicleId}/history-sharing", vehicleId)
+                        .header(AUTHORIZATION, bearer(accessToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.enabled").value(true))
+                .andExpect(jsonPath("$.publicId").value(firstPublicId.toString()));
+
+        mockMvc.perform(delete("/v1/vehicles/{vehicleId}/history-sharing", vehicleId)
+                        .header(AUTHORIZATION, bearer(accessToken)))
+                .andExpect(status().isNoContent());
+
+        String secondSharingResponse = mockMvc.perform(post("/v1/vehicles/{vehicleId}/history-sharing", vehicleId)
+                        .header(AUTHORIZATION, bearer(accessToken)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        UUID secondPublicId = UUID.fromString(objectMapper.readTree(secondSharingResponse).get("publicId").asText());
+
+        assertThat(secondPublicId).isNotEqualTo(firstPublicId);
+        assertThat(outboxEventCount(vehicleId, "VehicleHistorySharingChanged")).isEqualTo(3);
     }
 
     @Test
@@ -184,5 +243,15 @@ class VehicleApiIT {
 
     private String bearer(String accessToken) {
         return "Bearer " + accessToken;
+    }
+
+    private long outboxEventCount(UUID aggregateId, String eventType) {
+        Long count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM outbox_events WHERE aggregate_id = ? AND event_type = ?",
+                Long.class,
+                aggregateId,
+                eventType
+        );
+        return count == null ? 0 : count;
     }
 }
