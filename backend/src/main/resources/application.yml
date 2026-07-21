@@ -18,6 +18,8 @@ spring:
 
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    admin:
+      auto-create: true
     consumer:
       group-id: ${SPRING_KAFKA_CONSUMER_GROUP_ID:vehicle-maintenance-history}
       auto-offset-reset: earliest
@@ -58,6 +60,17 @@ logging:
     level: "%5p [requestId:%X{requestId:-}]"
 
 app:
+  kafka:
+    topic:
+      name: ${KAFKA_VEHICLE_MAINTENANCE_TOPIC:vehicle-maintenance-events.v1}
+      partitions: ${KAFKA_VEHICLE_MAINTENANCE_PARTITIONS:3}
+      replication-factor: ${KAFKA_VEHICLE_MAINTENANCE_REPLICATION_FACTOR:1}
+    outbox:
+      poll-interval: ${KAFKA_OUTBOX_POLL_INTERVAL:1s}
+      batch-size: ${KAFKA_OUTBOX_BATCH_SIZE:50}
+      max-attempts: ${KAFKA_OUTBOX_MAX_ATTEMPTS:10}
+      publish-timeout: ${KAFKA_OUTBOX_PUBLISH_TIMEOUT:10s}
+
   security:
     cors:
       allowed-origins:

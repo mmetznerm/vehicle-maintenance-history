@@ -4,6 +4,7 @@ import com.mmetzner.vmh.auth.domain.model.User;
 import com.mmetzner.vmh.auth.domain.repository.UserRepository;
 import com.mmetzner.vmh.shared.exception.ConflictException;
 import com.mmetzner.vmh.shared.exception.ResourceNotFoundException;
+import com.mmetzner.vmh.shared.event.OutboxEventWriter;
 import com.mmetzner.vmh.vehicle.application.dto.CreateVehicleRequest;
 import com.mmetzner.vmh.vehicle.application.dto.UpdateVehicleRequest;
 import com.mmetzner.vmh.vehicle.application.mapper.VehicleMapper;
@@ -26,16 +27,19 @@ class VehicleServiceTests {
 
     private UserRepository userRepository;
     private VehicleRepository vehicleRepository;
+    private OutboxEventWriter outboxEventWriter;
     private VehicleService vehicleService;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         vehicleRepository = mock(VehicleRepository.class);
+        outboxEventWriter = mock(OutboxEventWriter.class);
         vehicleService = new VehicleService(
                 userRepository,
                 vehicleRepository,
-                new VehicleMapper()
+                new VehicleMapper(),
+                outboxEventWriter
         );
     }
 
