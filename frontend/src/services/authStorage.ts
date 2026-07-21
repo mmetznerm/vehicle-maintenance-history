@@ -1,7 +1,7 @@
 import type { AuthTokensResponse } from "../types/auth";
 
-const ACCESS_TOKEN_KEY = "autolog.accessToken";
-const REFRESH_TOKEN_KEY = "autolog.refreshToken";
+const ACCESS_TOKEN_KEY = "vehicle-history.accessToken";
+const REFRESH_TOKEN_KEY = "vehicle-history.refreshToken";
 
 export function saveAuthTokens(tokens: AuthTokensResponse) {
   localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);

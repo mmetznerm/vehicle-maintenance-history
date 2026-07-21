@@ -1,6 +1,6 @@
-# AutoLog Frontend
+# Vehicle History Frontend
 
-React + TypeScript + Vite frontend for AutoLog.
+React + TypeScript + Vite frontend for Vehicle History.
 
 ## Folder Guide
 

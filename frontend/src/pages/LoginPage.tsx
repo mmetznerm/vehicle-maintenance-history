@@ -69,7 +69,7 @@ export function LoginPage() {
       <section className="auth-card">
         <header className="auth-card-header">
           <CarIcon className="brand-icon" aria-hidden />
-          <h1 id="login-title">AutoLog</h1>
+          <h1 id="login-title">Vehicle History</h1>
           <p>Efficient fleet management</p>
         </header>
 

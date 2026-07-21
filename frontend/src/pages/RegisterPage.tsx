@@ -105,7 +105,7 @@ export function RegisterPage() {
           <span className="brand-icon-badge">
             <CarIcon className="brand-icon" aria-hidden />
           </span>
-          <h1 id="register-title">AutoLog</h1>
+          <h1 id="register-title">Vehicle History</h1>
           <p>Create your account to manage your fleet.</p>
         </header>
 

@@ -30,7 +30,7 @@ export function AppSidebar() {
   return (
     <aside className="app-sidebar" aria-label="Main navigation">
       <a className="sidebar-brand" href="/vehicles">
-        AutoLog
+        Vehicle History
       </a>
 
       <div className="sidebar-user">

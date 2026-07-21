@@ -17,7 +17,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<name>Vehicle Maintenance Backend</name>
-	<description>Backend for the AutoLog application.</description>
+	<description>Backend for the Vehicle History application.</description>
 
 	<properties>
 		<java.version>21</java.version>

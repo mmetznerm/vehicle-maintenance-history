@@ -31,7 +31,7 @@ describe("authStorage", () => {
   });
 
   it("returns null when stored tokens are incomplete", () => {
-    localStorage.setItem("autolog.accessToken", "access-token");
+    localStorage.setItem("vehicle-history.accessToken", "access-token");
 
     expect(hasAuthTokens()).toBe(false);
     expect(getStoredTokens()).toBeNull();

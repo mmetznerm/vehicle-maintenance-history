@@ -1,6 +1,6 @@
 # Project Structure
 
-AutoLog is organized as a Spring Boot backend with a Vite frontend in the same
+Vehicle History is organized as a Spring Boot backend with a Vite frontend in the same
 repository.
 
 ## Root Folders

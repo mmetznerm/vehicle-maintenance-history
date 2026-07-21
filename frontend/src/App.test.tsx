@@ -16,7 +16,7 @@ describe("App", () => {
   it("shows the login page by default", () => {
     render(<App />);
 
-    expect(screen.getByRole("heading", { name: "AutoLog" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Vehicle History" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
   });
 

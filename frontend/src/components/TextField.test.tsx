@@ -32,9 +32,9 @@ describe("TextField", () => {
 
     render(<TextField id="name" label="Name" value="" onChange={onChange} />);
 
-    await user.type(screen.getByLabelText("Name"), "AutoLog");
+    await user.type(screen.getByLabelText("Name"), "Vehicle History");
 
-    expect(onChange).toHaveBeenCalledTimes(7);
-    expect(onChange).toHaveBeenLastCalledWith("g");
+    expect(onChange).toHaveBeenCalledTimes(15);
+    expect(onChange).toHaveBeenLastCalledWith("y");
   });
 });

@@ -63,7 +63,7 @@ function VehicleSidebar() {
   return (
     <aside className="app-sidebar" aria-label="Main navigation">
       <a className="sidebar-brand" href="/vehicles">
-        AutoLog
+        Vehicle History
       </a>
 
       <div className="sidebar-user">
@@ -311,7 +311,7 @@ export function VehiclesPage() {
           <section className="vehicles-list-section">
             <header className="vehicles-page-header">
               <div>
-                <p className="section-eyebrow">AutoLog</p>
+                <p className="section-eyebrow">Vehicle History</p>
                 <h1 id="vehicles-page-title">Vehicles</h1>
                 <p>
                   {vehicles.length} registered vehicle{vehicles.length === 1 ? "" : "s"}.
