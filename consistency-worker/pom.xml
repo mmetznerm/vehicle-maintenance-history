@@ -18,7 +18,7 @@
 
     <properties>
         <java.version>21</java.version>
-        <lombok.version>1.18.38</lombok.version>
+        <lombok.version>1.18.46</lombok.version>
         <jacoco.version>0.8.13</jacoco.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <spring-kafka.version>3.3.16</spring-kafka.version>
