@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autolog.local/contracts/vehicle-maintenance-events/v1/vehicle-maintenance-event.schema.json",
+  "title": "Vehicle Maintenance Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "eventType",
+    "eventVersion",
+    "aggregateId",
+    "vehicleId",
+    "occurredAt",
+    "correlationId",
+    "payload"
+  ],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "VehicleCreated",
+        "VehicleUpdated",
+        "VehicleDeleted",
+        "VehicleHistorySharingChanged",
+        "MaintenanceCreated",
+        "MaintenanceUpdated",
+        "MaintenanceDeleted"
+      ]
+    },
+    "eventVersion": { "const": 1 },
+    "aggregateId": { "type": "string", "format": "uuid" },
+    "vehicleId": { "type": "string", "format": "uuid" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "payload": { "type": "object" }
+  }
+}

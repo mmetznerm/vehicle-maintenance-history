@@ -1,0 +1,95 @@
+{
+  "VehicleCreated": {
+    "eventId": "3fdff68e-e878-45dc-97bd-fd3c10c1a3cf",
+    "eventType": "VehicleCreated",
+    "eventVersion": 1,
+    "aggregateId": "98f7e1aa-0a42-45d7-af99-0f0754891a94",
+    "vehicleId": "98f7e1aa-0a42-45d7-af99-0f0754891a94",
+    "occurredAt": "2026-07-21T18:00:00Z",
+    "correlationId": "request-001",
+    "payload": {
+      "brand": "Honda",
+      "model": "Civic",
+      "manufactureYear": 2020,
+      "color": "Black"
+    }
+  },
+  "VehicleUpdated": {
+    "eventId": "a80d8d16-159d-4327-bdb6-33ea2f488ef3",
+    "eventType": "VehicleUpdated",
+    "eventVersion": 1,
+    "aggregateId": "98f7e1aa-0a42-45d7-af99-0f0754891a94",
+    "vehicleId": "98f7e1aa-0a42-45d7-af99-0f0754891a94",
+    "occurredAt": "2026-07-21T18:05:00Z",
+    "correlationId": "request-002",
+    "payload": {
+      "brand": "Honda",
+      "model": "Civic Touring",
+      "manufactureYear": 2020,
+      "color": "Black"
+    }
+  },
+  "VehicleDeleted": {
+    "eventId": "d14323a5-9740-4472-ae2c-da0943de1f2d",
+    "eventType": "VehicleDeleted",
+    "eventVersion": 1,
+    "aggregateId": "98f7e1aa-0a42-45d7-af99-0f0754891a94",
+    "vehicleId": "98f7e1aa-0a42-45d7-af99-0f0754891a94",
+    "occurredAt": "2026-07-21T18:10:00Z",
+    "correlationId": "request-003",
+    "payload": {}
+  },
+  "VehicleHistorySharingChanged": {
+    "eventId": "23b56d48-400a-44ba-a59f-af24520497ae",
+    "eventType": "VehicleHistorySharingChanged",
+    "eventVersion": 1,
+    "aggregateId": "98f7e1aa-0a42-45d7-af99-0f0754891a94",
+    "vehicleId": "98f7e1aa-0a42-45d7-af99-0f0754891a94",
+    "occurredAt": "2026-07-21T18:15:00Z",
+    "correlationId": "request-004",
+    "payload": {
+      "enabled": true,
+      "publicId": "720485ba-87de-4f6f-a621-f0b16e92ac7d"
+    }
+  },
+  "MaintenanceCreated": {
+    "eventId": "4de0bb33-f41a-4109-8b33-41cb9f355587",
+    "eventType": "MaintenanceCreated",
+    "eventVersion": 1,
+    "aggregateId": "7976c4b8-a3f0-4f0e-9bd3-72ab86bba750",
+    "vehicleId": "98f7e1aa-0a42-45d7-af99-0f0754891a94",
+    "occurredAt": "2026-07-21T18:20:00Z",
+    "correlationId": "request-005",
+    "payload": {
+      "maintenanceDate": "2026-07-21",
+      "odometer": 45000,
+      "description": "Oil change",
+      "cost": 350.00
+    }
+  },
+  "MaintenanceUpdated": {
+    "eventId": "e111d5e2-bfb3-45c5-8e40-d66ceba835eb",
+    "eventType": "MaintenanceUpdated",
+    "eventVersion": 1,
+    "aggregateId": "7976c4b8-a3f0-4f0e-9bd3-72ab86bba750",
+    "vehicleId": "98f7e1aa-0a42-45d7-af99-0f0754891a94",
+    "occurredAt": "2026-07-21T18:25:00Z",
+    "correlationId": "request-006",
+    "payload": {
+      "maintenanceDate": "2026-07-20",
+      "odometer": 45000,
+      "description": "Oil and filter change",
+      "cost": 410.00
+    }
+  },
+  "MaintenanceDeleted": {
+    "eventId": "7397c8e8-7ae8-4fb9-8ab1-c08f3c3194bd",
+    "eventType": "MaintenanceDeleted",
+    "eventVersion": 1,
+    "aggregateId": "7976c4b8-a3f0-4f0e-9bd3-72ab86bba750",
+    "vehicleId": "98f7e1aa-0a42-45d7-af99-0f0754891a94",
+    "occurredAt": "2026-07-21T18:30:00Z",
+    "correlationId": "request-007",
+    "payload": {}
+  }
+}
