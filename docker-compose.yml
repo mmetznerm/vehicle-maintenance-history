@@ -29,6 +29,35 @@ services:
       retries: 5
       start_period: 30s
 
+  event-worker:
+    build:
+      context: .
+      dockerfile: event-worker/Dockerfile
+    container_name: vehicle-maintenance-history-event-worker
+    profiles:
+      - app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://history-postgres:5432/vehicle-history
+      SPRING_DATASOURCE_USERNAME: vehicle-history
+      SPRING_DATASOURCE_PASSWORD: vehicle-history
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080
+    ports:
+      - "8081:8081"
+    depends_on:
+      history-postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://localhost:8081/actuator/health/readiness > /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   postgres:
     image: postgres:16-alpine
     container_name: vehicle-maintenance-history-postgres
@@ -44,6 +73,25 @@ services:
       test:
         - CMD-SHELL
         - pg_isready -U vehicle-maintenance-history -d vehicle-maintenance-history
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  history-postgres:
+    image: postgres:16-alpine
+    container_name: vehicle-maintenance-history-projection-postgres
+    environment:
+      POSTGRES_DB: vehicle-history
+      POSTGRES_USER: vehicle-history
+      POSTGRES_PASSWORD: vehicle-history
+    ports:
+      - "5433:5432"
+    volumes:
+      - history_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U vehicle-history -d vehicle-history
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,4 +129,5 @@ services:
 
 volumes:
   postgres_data:
+  history_postgres_data:
   kafka_data:
