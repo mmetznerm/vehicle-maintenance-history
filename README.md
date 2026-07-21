@@ -35,6 +35,7 @@ revocable digital history for each vehicle.
 vehicle-maintenance-history/
   backend/       Transactional API, source database and Kafka outbox producer.
   event-worker/  Kafka consumer and public-history read model.
+  consistency-worker/ Kafka consumer, rule engine and alert outbox producer.
   frontend/      React + TypeScript + Vite source code.
   contracts/     Versioned event schemas and examples.
   docs/          Project documentation.
@@ -70,6 +71,8 @@ presentation
 - Versioned vehicle and maintenance events on Kafka
 - Transactional outbox with at-least-once delivery
 - Idempotent public-history projection in an independent database
+- Asynchronous detection of odometer rollback, duplicate records and impossible dates
+- Alert lifecycle events and an authenticated inconsistency projection
 - Public history without owner, license plate or maintenance cost
 - Standard error responses
 - Database migrations with Flyway
@@ -94,6 +97,12 @@ Public-history worker API:
 http://localhost:8081
 ```
 
+Consistency-worker health endpoint:
+
+```text
+http://localhost:8082/actuator/health
+```
+
 Swagger:
 
 ```text
@@ -112,10 +121,10 @@ For day-to-day development, prefer running PostgreSQL and Kafka in Docker and ru
 the Spring Boot application locally from the IDE. This keeps Java debugging,
 breakpoints, hot reload and logs easier to use.
 
-Start the local infrastructure (the two PostgreSQL databases and Kafka):
+Start the local infrastructure (the three PostgreSQL databases and Kafka):
 
 ```bash
-docker compose up -d postgres history-postgres kafka
+docker compose up -d postgres history-postgres consistency-postgres kafka
 ```
 
 Build the frontend into Spring Boot static resources:
@@ -134,6 +143,10 @@ http://localhost:8080
 
 Start `VehicleHistoryWorkerApplication` from the IDE as well when exercising
 public history. The worker listens on `http://localhost:8081`.
+
+Start `MaintenanceConsistencyWorkerApplication` to exercise inconsistency
+detection. It listens on `http://localhost:8082` and consumes the same source
+topic with an independent consumer group.
 
 Useful frontend routes:
 
@@ -195,6 +208,14 @@ cd backend
 .\mvnw.cmd -f ..\event-worker\pom.xml verify -Pintegration-tests
 ```
 
+Consistency-worker unit and Kafka/PostgreSQL integration tests:
+
+```bash
+cd backend
+.\mvnw.cmd -f ..\consistency-worker\pom.xml verify
+.\mvnw.cmd -f ..\consistency-worker\pom.xml verify -Pintegration-tests
+```
+
 ## CI Quality Gates
 
 Pull requests are checked with:
@@ -202,6 +223,7 @@ Pull requests are checked with:
 - Backend unit, controller and coverage checks with Maven and JaCoCo.
 - Backend integration tests with Testcontainers and PostgreSQL.
 - Event-worker unit tests and Kafka/PostgreSQL integration tests.
+- Consistency-worker rule, reconciliation and Kafka/PostgreSQL integration tests.
 - Frontend lint, Vitest coverage and production build.
 - OpenAPI contract export as a workflow artifact.
 - CodeQL, Dependency Review and Trivy security scans.
@@ -249,6 +271,11 @@ Basic flow:
 | GET | `/v1/vehicles/{vehicleId}/history-sharing` | Read sharing status |
 | POST | `/v1/vehicles/{vehicleId}/history-sharing` | Enable public history |
 | DELETE | `/v1/vehicles/{vehicleId}/history-sharing` | Revoke public history |
+| GET | `/v1/vehicles/{vehicleId}/inconsistencies` | List active consistency alerts |
+
+Set `includeResolved=true` on the inconsistency endpoint to include the complete
+alert lifecycle. The endpoint applies the same ownership check as the vehicle
+and maintenance APIs.
 
 ### Maintenances
 
@@ -284,6 +311,7 @@ SPRING_DATASOURCE_PASSWORD
 SPRING_KAFKA_BOOTSTRAP_SERVERS
 SPRING_KAFKA_CONSUMER_GROUP_ID
 KAFKA_VEHICLE_MAINTENANCE_TOPIC
+KAFKA_MAINTENANCE_ALERT_TOPIC
 KAFKA_OUTBOX_POLL_INTERVAL
 KAFKA_OUTBOX_BATCH_SIZE
 VITE_HISTORY_API_BASE_URL
@@ -307,6 +335,7 @@ Flyway migrations are located at:
 ```text
 backend/src/main/resources/db/migration
 event-worker/src/main/resources/db/migration
+consistency-worker/src/main/resources/db/migration
 ```
 
 ## Observability
@@ -324,6 +353,8 @@ a new one.
 
 See [`docs/event-driven-architecture.md`](docs/event-driven-architecture.md) for
 the delivery guarantees, privacy boundary, replay procedure and demo flow.
+See [`docs/maintenance-inconsistency-detection.md`](docs/maintenance-inconsistency-detection.md)
+for rule semantics, alert lifecycle and a focused portfolio demonstration.
 
 The following topics were intentionally left out for now:
 

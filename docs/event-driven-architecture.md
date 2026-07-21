@@ -1,4 +1,4 @@
-# Event-Driven Public Vehicle History
+# Event-Driven Vehicle History and Consistency Analysis
 
 ## Purpose
 
@@ -14,16 +14,27 @@ Browser -> Backend API -> PostgreSQL
                     outbox_events
                          |
                          v
-                       Kafka
-                         |
-                         v
-                Public History Worker -> Projection PostgreSQL -> Public API
+                       Kafka: vehicle-maintenance-events.v1
+                         |                         |
+                         v                         v
+                Public History Worker     Consistency Worker
+                         |                 | rule engine + alert outbox
+                         v                         v
+                History PostgreSQL        Kafka: maintenance-inconsistency-alerts.v1
+                                                   |
+                                                   v
+                                      Backend private alert projection
 ```
 
 Both applications live in this repository because they form one portfolio use
 case and share a deliberately versioned contract. They still have separate
 builds, processes, databases and deployment units, so the service boundary is
 visible without making local setup unnecessarily fragmented.
+
+Kafka fan-out is explicit: both workers consume `vehicle-maintenance-events.v1`,
+but each uses its own consumer group and database. Adding consistency analysis
+does not couple it to the public-history projection or change the source API's
+write path.
 
 ## Event contract
 
@@ -38,6 +49,11 @@ Supported event types:
 - `MaintenanceCreated`, `MaintenanceUpdated`, `MaintenanceDeleted`
 - `VehicleHistorySharingChanged`
 
+The consistency worker publishes `MaintenanceInconsistencyDetected` and
+`MaintenanceInconsistencyResolved` to `maintenance-inconsistency-alerts.v1`.
+The alert contract is versioned independently under
+`contracts/maintenance-inconsistency-alerts/v1`.
+
 ## Delivery and consistency
 
 The domain change and its outbox record are committed in the same database
@@ -49,6 +65,11 @@ The worker stores `(event_id, consumer_name)` in `processed_events` in the same
 transaction that updates the projection. Duplicate deliveries are ignored.
 The public view is eventually consistent and can briefly lag behind a successful
 write to the backend.
+
+The consistency path repeats the same reliability pattern at both boundaries.
+Its source consumer is idempotent, and detected/resolved alerts are written to a
+transactional outbox before publication. The backend consumes those alerts into
+an owner-protected read model and also deduplicates by event and consumer name.
 
 ## Sharing and privacy
 
@@ -76,6 +97,10 @@ Then:
 4. Open or copy the generated `/history/{publicId}` URL.
 5. Update a maintenance and refresh the public page after the event is consumed.
 6. Revoke sharing and verify that the URL no longer returns the history.
+7. Add a later maintenance with a lower odometer reading and wait for the active
+   inconsistency to appear on the vehicle details page.
+8. Correct the reading and verify that the alert disappears; enable resolved
+   alerts to inspect its lifecycle.
 
 Useful inspection commands:
 
@@ -83,6 +108,8 @@ Useful inspection commands:
 docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --describe --topic vehicle-maintenance-events.v1
 docker compose exec postgres psql -U vehicle-maintenance-history -d vehicle-maintenance-history -c "select event_type, attempts, published_at from outbox_events order by sequence_id desc;"
 docker compose exec history-postgres psql -U vehicle-history -d vehicle-history -c "select event_id, consumer_name, processed_at from processed_events order by processed_at desc;"
+docker compose exec consistency-postgres psql -U maintenance-consistency -d maintenance-consistency -c "select rule_code, severity, detected_at from active_inconsistencies order by detected_at desc;"
+docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --describe --topic maintenance-inconsistency-alerts.v1
 ```
 
 ## Rebuilding the projection

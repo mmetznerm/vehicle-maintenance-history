@@ -206,6 +206,34 @@ The `GET` and `POST` responses use:
 Disabling sharing returns `204`. Enabling after a revocation generates a new
 identifier instead of restoring the old public URL.
 
+### List maintenance inconsistencies
+
+```http
+GET /v1/vehicles/{vehicleId}/inconsistencies
+GET /v1/vehicles/{vehicleId}/inconsistencies?includeResolved=true
+```
+
+Active alerts are returned by default. Both variants require authentication and
+return `404` when the vehicle does not belong to the authenticated user.
+
+Response `200`:
+
+```json
+[
+  {
+    "alertId": "alert-id",
+    "rule": "ODOMETER_ROLLBACK",
+    "severity": "CRITICAL",
+    "maintenanceIds": ["earlier-maintenance-id", "later-maintenance-id"],
+    "summary": "Odometer reading decreased between maintenance records",
+    "details": "Reading changed from 50000 km to 40000 km in chronological order.",
+    "status": "ACTIVE",
+    "detectedAt": "2026-07-21T18:02:00Z",
+    "resolvedAt": null
+  }
+]
+```
+
 ## Maintenances
 
 ### Create maintenance
