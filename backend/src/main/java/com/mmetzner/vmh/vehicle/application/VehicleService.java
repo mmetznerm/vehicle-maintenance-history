@@ -112,6 +112,7 @@ public class VehicleService {
 
         if (enabledVehicle != currentVehicle) {
             enabledVehicle = vehicleRepository.save(enabledVehicle);
+            writeVehicleEvent(EventType.VEHICLE_UPDATED, enabledVehicle);
             writeHistorySharingEvent(enabledVehicle);
         }
 
