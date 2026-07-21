@@ -10,6 +10,7 @@ public class SpaController {
             "/",
             "/login",
             "/register",
+            "/history/{publicId}",
             "/vehicles",
             "/vehicles/new",
             "/vehicles/{vehicleId}",

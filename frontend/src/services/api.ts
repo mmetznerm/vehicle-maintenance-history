@@ -9,12 +9,18 @@ import type {
   UpdateVehicleRequest,
   Vehicle,
   VehicleSummary,
+  VehicleHistorySharing,
+  PublicVehicleHistory,
 } from "../types/vehicle";
 import { clearAuthTokens, getAccessToken } from "./authStorage";
 
 const DEFAULT_API_BASE_URL = "";
 const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL;
 const API_BASE_URL = configuredBaseUrl.replace(/\/$/, "");
+const DEFAULT_HISTORY_API_BASE_URL = "http://localhost:8081";
+const configuredHistoryBaseUrl =
+  import.meta.env.VITE_HISTORY_API_BASE_URL ?? DEFAULT_HISTORY_API_BASE_URL;
+const HISTORY_API_BASE_URL = configuredHistoryBaseUrl.replace(/\/$/, "");
 
 type FieldErrorResponse = {
   field: string;
@@ -142,6 +148,44 @@ export function deleteVehicle(vehicleId: string) {
   return request<void>(`/v1/vehicles/${vehicleId}`, {
     method: "DELETE",
   });
+}
+
+export function getVehicleHistorySharing(vehicleId: string) {
+  return request<VehicleHistorySharing>(`/v1/vehicles/${vehicleId}/history-sharing`);
+}
+
+export function enableVehicleHistorySharing(vehicleId: string) {
+  return request<VehicleHistorySharing>(`/v1/vehicles/${vehicleId}/history-sharing`, {
+    method: "POST",
+  });
+}
+
+export function disableVehicleHistorySharing(vehicleId: string) {
+  return request<void>(`/v1/vehicles/${vehicleId}/history-sharing`, {
+    method: "DELETE",
+  });
+}
+
+export async function getPublicVehicleHistory(publicId: string) {
+  let response: Response;
+
+  try {
+    response = await fetch(`${HISTORY_API_BASE_URL}/v1/public/vehicle-histories/${publicId}`);
+  } catch {
+    throw new ApiError("Não foi possível conectar ao serviço de histórico.", 503);
+  }
+
+  const body = await parseJsonSafely<ApiErrorResponse | PublicVehicleHistory>(response);
+
+  if (!response.ok) {
+    const apiError = body as ApiErrorResponse | null;
+    throw new ApiError(
+      apiError?.message || "Histórico público não encontrado.",
+      response.status,
+    );
+  }
+
+  return body as PublicVehicleHistory;
 }
 
 export function listMaintenances(vehicleId: string) {

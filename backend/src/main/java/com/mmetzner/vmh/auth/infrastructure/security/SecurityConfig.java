@@ -66,6 +66,7 @@ public class SecurityConfig {
                                 "/index.html",
                                 "/login",
                                 "/register",
+                                "/history/*",
                                 "/vehicles",
                                 "/vehicles/new",
                                 "/vehicles/*",
