@@ -17,6 +17,7 @@ REST API and frontend to manage vehicles and their maintenance history.
 - Spring Security
 - Spring Data JPA
 - PostgreSQL
+- Apache Kafka
 - Flyway
 - JWT
 - Docker
@@ -93,14 +94,14 @@ http://localhost:8080/actuator/health
 
 ## Recommended Local Development Workflow
 
-For day-to-day development, prefer running only PostgreSQL in Docker and running
+For day-to-day development, prefer running PostgreSQL and Kafka in Docker and running
 the Spring Boot application locally from the IDE. This keeps Java debugging,
 breakpoints, hot reload and logs easier to use.
 
-Start only the database:
+Start the local infrastructure:
 
 ```bash
-docker compose up -d postgres
+docker compose up -d postgres kafka
 ```
 
 Build the frontend into Spring Boot static resources:
@@ -244,7 +245,12 @@ JWT_SECRET
 SPRING_DATASOURCE_URL
 SPRING_DATASOURCE_USERNAME
 SPRING_DATASOURCE_PASSWORD
+SPRING_KAFKA_BOOTSTRAP_SERVERS
+SPRING_KAFKA_CONSUMER_GROUP_ID
 ```
+
+The default Kafka bootstrap server is `localhost:29092` when the backend runs
+locally and `kafka:9092` when it runs with the Docker Compose `app` profile.
 
 Default local database:
 
@@ -278,6 +284,5 @@ a new one.
 The following topics were intentionally left out for now:
 
 - Outbox
-- Kafka
 - Kubernetes
 - Advanced CI/CD
