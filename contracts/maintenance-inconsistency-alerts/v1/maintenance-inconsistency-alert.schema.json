@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://autolog.example/contracts/maintenance-inconsistency-alerts/v1/maintenance-inconsistency-alert.schema.json",
+  "title": "Maintenance Inconsistency Alert v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId", "eventType", "eventVersion", "alertId", "vehicleId",
+    "occurredAt", "correlationId", "payload"
+  ],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "eventType": {
+      "enum": ["MaintenanceInconsistencyDetected", "MaintenanceInconsistencyResolved"]
+    },
+    "eventVersion": { "const": 1 },
+    "alertId": { "type": "string", "format": "uuid" },
+    "vehicleId": { "type": "string", "format": "uuid" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule", "severity", "maintenanceIds", "summary", "details"],
+      "properties": {
+        "rule": {
+          "enum": ["ODOMETER_ROLLBACK", "POSSIBLE_DUPLICATE", "DATE_BEFORE_MANUFACTURE"]
+        },
+        "severity": { "enum": ["WARNING", "CRITICAL"] },
+        "maintenanceIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "format": "uuid" }
+        },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "details": { "type": "string", "minLength": 1, "maxLength": 1000 }
+      }
+    }
+  }
+}
