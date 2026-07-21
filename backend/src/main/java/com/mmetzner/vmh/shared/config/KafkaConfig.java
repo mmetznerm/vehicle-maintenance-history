@@ -28,4 +28,16 @@ public class KafkaConfig {
                 .replicas(replicationFactor)
                 .build();
     }
+
+    @Bean
+    NewTopic maintenanceInconsistencyAlertsTopic(
+            @Value("${app.kafka.alert-topic.name:maintenance-inconsistency-alerts.v1}") String name,
+            @Value("${app.kafka.alert-topic.partitions:3}") int partitions,
+            @Value("${app.kafka.alert-topic.replication-factor:1}") short replicationFactor
+    ) {
+        return TopicBuilder.name(name)
+                .partitions(partitions)
+                .replicas(replicationFactor)
+                .build();
+    }
 }
