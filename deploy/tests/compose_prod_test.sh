@@ -3,6 +3,8 @@ set -euo pipefail
 
 TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$TEST_DIR/../.." && pwd)"
+# testlib is resolved from the test script's runtime directory.
+# shellcheck disable=SC1091
 source "$TEST_DIR/testlib.sh"
 
 export IMAGE_URI="registry.example.invalid/mmetznerm/vehicle-maintenance-history"

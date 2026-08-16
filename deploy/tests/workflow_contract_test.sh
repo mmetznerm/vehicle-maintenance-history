@@ -5,7 +5,8 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="${WORKFLOW_CONTRACT_ROOT:-$(cd "$script_dir/../.." && pwd)}"
 
-# shellcheck source=testlib.sh
+# testlib is resolved from the test script's runtime directory.
+# shellcheck disable=SC1091
 source "$script_dir/testlib.sh"
 
 assert_count() {
@@ -103,6 +104,8 @@ assert_contains "$publish_ecr_login" "uses: aws-actions/amazon-ecr-login@v2"
 
 metadata_step="$(require_step "$publish_job" "Generate Docker metadata")"
 assert_contains "$metadata_step" "mmetznerm/vehicle-maintenance-history"
+# GitHub expressions are asserted literally, not expanded by this shell test.
+# shellcheck disable=SC2016
 assert_contains "$metadata_step" '${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}'
 assert_contains "$metadata_step" "type=sha,prefix=sha-,format=short"
 
@@ -126,13 +129,21 @@ assert_contains "$deploy_aws_credentials" "aws-region: \${{ vars.AWS_REGION }}"
 
 image_step="$(require_step "$deploy_job" "Set image reference")"
 assert_contains "$image_step" "id: image"
+# GitHub expressions are asserted literally, not expanded by this shell test.
+# shellcheck disable=SC2016
 assert_contains "$image_step" 'image_uri=${{ needs.publish-docker-image.outputs.ecr_registry }}/${{ vars.ECR_REPOSITORY }}'
+# GitHub expressions are asserted literally, not expanded by this shell test.
+# shellcheck disable=SC2016
 assert_contains "$image_step" 'image_tag=sha-${GITHUB_SHA::7}'
 
 send_command_step="$(require_step "$deploy_job" "Send deployment command")"
 assert_contains "$send_command_step" "id: send-command"
 assert_contains "$send_command_step" "AWS-RunShellScript"
+# GitHub expressions and shell snippets are asserted literally, not expanded here.
+# shellcheck disable=SC2016
 assert_contains "$send_command_step" '${{ vars.EC2_INSTANCE_ID }}'
+# GitHub expressions and shell snippets are asserted literally, not expanded here.
+# shellcheck disable=SC2016
 assert_contains "$send_command_step" 'jq -cn --arg command "$command"'
 assert_contains "$send_command_step" "aws ssm send-command"
 
@@ -140,15 +151,21 @@ wait_step="$(require_step "$deploy_job" "Wait for deployment command")"
 assert_contains "$wait_step" "id: wait-for-command"
 assert_contains "$wait_step" "continue-on-error: true"
 assert_contains "$wait_step" "wait_exit_code=\$?"
+# GitHub expressions and shell snippets are asserted literally, not expanded here.
+# shellcheck disable=SC2016
 assert_contains "$wait_step" 'echo "exit_code=$wait_exit_code" >> "$GITHUB_OUTPUT"'
 
 diagnostic_step="$(require_step "$deploy_job" "Show deployment command invocation")"
 assert_contains "$diagnostic_step" "if: always()"
 assert_contains "$diagnostic_step" "aws ssm get-command-invocation"
+# GitHub expressions are asserted literally, not expanded by this shell test.
+# shellcheck disable=SC2016
 assert_contains "$diagnostic_step" '${{ steps.send-command.outputs.command_id }}'
 
 failure_step="$(require_step "$deploy_job" "Fail when deployment command did not complete")"
 assert_contains "$failure_step" "if: always()"
+# GitHub expressions are asserted literally, not expanded by this shell test.
+# shellcheck disable=SC2016
 assert_contains "$failure_step" '${{ steps.wait-for-command.outputs.exit_code }}'
 assert_contains "$failure_step" "[[ '\${{ steps.wait-for-command.outputs.exit_code }}' == '0' ]]"
 

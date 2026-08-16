@@ -5,7 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 DEPLOY_SCRIPT="$PROJECT_DIR/deploy/deploy.sh"
 
-# shellcheck source=testlib.sh
+# testlib is resolved from the test script's runtime directory.
+# shellcheck disable=SC1091
 source "$SCRIPT_DIR/testlib.sh"
 
 APP_ENV='SPRING_DATASOURCE_URL=jdbc:postgresql://db.internal:5432/vehicle_maintenance_history?sslmode=require

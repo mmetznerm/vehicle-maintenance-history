@@ -5,7 +5,8 @@ TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$TEST_DIR/../.." && pwd)"
 SETUP_SCRIPT="$REPO_ROOT/deploy/setup-ec2.sh"
 
-# shellcheck source=testlib.sh
+# testlib is resolved from the test script's runtime directory.
+# shellcheck disable=SC1091
 source "$TEST_DIR/testlib.sh"
 
 IMAGE_URI='123456789012.dkr.ecr.us-east-2.amazonaws.com/vmh'
