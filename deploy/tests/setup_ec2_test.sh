@@ -341,6 +341,14 @@ case_invalid_inactive_swap_is_repaired_atomically() (
   assert_contains "$log" 'mkswap '
   assert_contains "$log" "mv -f $CASE_DIR/swapfile."
   assert_contains "$log" "swapon $CASE_DIR/swapfile"
+  mv_command="$(awk -v destination="$CASE_DIR/swapfile" '$1 == "mv" && $2 == "-f" && $NF == destination { print; exit }' "$LOG_FILE")"
+  [[ -n "$mv_command" ]] || fail 'invalid swap must be promoted from a temporary file'
+  swap_tmp="${mv_command#mv -f }"
+  swap_tmp="${swap_tmp% *}"
+  mkswap_line="$(awk -v command="mkswap $swap_tmp" '$0 == command { print NR; exit }' "$LOG_FILE")"
+  mv_line="$(awk -v command="$mv_command" '$0 == command { print NR; exit }' "$LOG_FILE")"
+  [[ -n "$mkswap_line" && -n "$mv_line" ]] || fail 'temporary swap format and promotion must be logged'
+  (( mkswap_line < mv_line )) || fail 'temporary swap must be formatted before promotion'
   printf 'PASS: invalid inactive swap is repaired atomically\n'
 )
 
@@ -370,6 +378,7 @@ case_active_swap_is_left_untouched() (
   assert_not_contains "$log" 'blkid '
   assert_not_contains "$log" 'dd if=/dev/zero'
   assert_not_contains "$log" 'mkswap '
+  assert_not_contains "$log" "swapon $CASE_DIR/swapfile"
   printf 'PASS: active swap is left untouched\n'
 )
 
