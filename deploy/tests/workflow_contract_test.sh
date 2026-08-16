@@ -104,6 +104,7 @@ assert_contains "$deployment_contract_tests_step" "bash deploy/tests/ssm_wait_te
 assert_contains "$deployment_contract_tests_step" "bash deploy/tests/workflow_contract_test.sh"
 
 shellcheck_step="$(require_step "$deployment_contracts_job" "Run ShellCheck")"
+# shellcheck disable=SC2016
 assert_contains "$shellcheck_step" 'docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable'
 assert_contains "$shellcheck_step" "/mnt/deploy/deploy.sh"
 assert_contains "$shellcheck_step" "/mnt/deploy/setup-ec2.sh"
@@ -116,6 +117,7 @@ assert_contains "$shellcheck_step" "/mnt/deploy/tests/ssm_wait_test.sh"
 assert_contains "$shellcheck_step" "/mnt/deploy/tests/workflow_contract_test.sh"
 
 actionlint_step="$(require_step "$deployment_contracts_job" "Run actionlint")"
+# shellcheck disable=SC2016
 assert_contains "$actionlint_step" 'docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest'
 
 compose_render_step="$(require_step "$deployment_contracts_job" "Render production Compose")"
@@ -265,6 +267,7 @@ assert_workflow_mutation_fails() {
       sed -i 's/^      cancel-in-progress: false$/      cancel-in-progress: true/' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
     missing-ssm-poller)
+# shellcheck disable=SC2016
       sed -i 's#bash deploy/wait-for-ssm-command.sh "$COMMAND_ID" "$EC2_INSTANCE_ID"#true#' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
     *) fail "unknown workflow mutation: $mutation" ;;
