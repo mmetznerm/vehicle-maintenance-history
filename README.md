@@ -1,6 +1,6 @@
 # Vehicle Maintenance History
 
-[![PR Checks](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/pr-checks.yml)
+[![CI/CD](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/ci-cd.yml)
 [![CodeQL](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/codeql.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/codeql.yml)
 ![Java](https://img.shields.io/badge/Java-21-blue)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)
@@ -90,6 +90,23 @@ Health:
 http://localhost:8080/actuator/health
 ```
 
+## Docker Hub
+
+Successful pushes to `main` publish the application image to Docker Hub after
+all CI checks pass. This delivery step does not deploy the application to a
+server.
+
+Pull the latest successful build:
+
+```bash
+docker pull mmetznerm/vehicle-maintenance-history:latest
+```
+
+Published tags:
+
+- `latest` points to the newest successful build from `main`.
+- `sha-<commit>` identifies the exact source commit used for the image.
+
 ## Recommended Local Development Workflow
 
 For day-to-day development, prefer running only PostgreSQL in Docker and running
@@ -175,6 +192,9 @@ Pull requests are checked with:
 - Backend integration tests with Testcontainers and PostgreSQL.
 - Frontend lint, Vitest coverage and production build.
 - CodeQL security analysis.
+
+After these checks pass on a push to `main`, GitHub Actions builds the production
+image and publishes it to Docker Hub with `latest` and `sha-<commit>` tags.
 
 ## Authentication
 
