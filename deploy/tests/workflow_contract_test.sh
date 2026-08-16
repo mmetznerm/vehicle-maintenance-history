@@ -144,9 +144,13 @@ assert_contains "$image_step" "env:"
 assert_contains "$image_step" "ECR_REGISTRY: \${{ needs.publish-docker-image.outputs.ecr_registry }}"
 assert_contains "$image_step" "ECR_REPOSITORY: \${{ vars.ECR_REPOSITORY }}"
 assert_contains "$image_step" "AWS_REGION: \${{ vars.AWS_REGION }}"
+# shellcheck disable=SC2016
 assert_contains "$image_step" '[[ "$AWS_REGION" == us-east-2 ]]'
+# shellcheck disable=SC2016
 assert_contains "$image_step" '[[ "$ECR_REPOSITORY" == mmetznerm/vehicle-maintenance-history ]]'
+# shellcheck disable=SC2016
 assert_contains "$image_step" 'echo "image_uri=$ECR_REGISTRY/$ECR_REPOSITORY" >> "$GITHUB_OUTPUT"'
+# shellcheck disable=SC2016
 assert_contains "$image_step" 'echo "image_tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"'
 
 send_command_step="$(require_step "$deploy_job" "Send deployment command")"
@@ -157,8 +161,11 @@ assert_contains "$send_command_step" "AWS_REGION: \${{ vars.AWS_REGION }}"
 assert_contains "$send_command_step" "EC2_INSTANCE_ID: \${{ vars.EC2_INSTANCE_ID }}"
 assert_contains "$send_command_step" "IMAGE_URI: \${{ steps.image.outputs.image_uri }}"
 assert_contains "$send_command_step" "IMAGE_TAG: \${{ steps.image.outputs.image_tag }}"
+# shellcheck disable=SC2016
 assert_contains "$send_command_step" '[[ "$EC2_INSTANCE_ID" =~ ^i-[0-9a-f]{8,17}$ ]]'
+# shellcheck disable=SC2016
 assert_contains "$send_command_step" 'printf -v command '\''%s %s %s'\'' /opt/vehicle-maintenance-history/deploy.sh "$IMAGE_URI" "$IMAGE_TAG"'
+# shellcheck disable=SC2016
 assert_contains "$send_command_step" 'jq -cn --arg command "$command"'
 assert_contains "$send_command_step" "aws ssm send-command"
 
@@ -167,8 +174,10 @@ assert_contains "$poll_step" "id: poll-command"
 assert_contains "$poll_step" "continue-on-error: true"
 assert_contains "$poll_step" "COMMAND_ID: \${{ steps.send-command.outputs.command_id }}"
 assert_contains "$poll_step" "EC2_INSTANCE_ID: \${{ vars.EC2_INSTANCE_ID }}"
+# shellcheck disable=SC2016
 assert_contains "$poll_step" 'bash deploy/wait-for-ssm-command.sh "$COMMAND_ID" "$EC2_INSTANCE_ID"'
 assert_contains "$poll_step" "poll_exit_code=\$?"
+# shellcheck disable=SC2016
 assert_contains "$poll_step" 'echo "exit_code=$poll_exit_code" >> "$GITHUB_OUTPUT"'
 assert_not_contains "$ci_workflow" "aws ssm wait"
 
@@ -188,6 +197,7 @@ failure_step="$(require_step "$deploy_job" "Fail when deployment command did not
 assert_contains "$failure_step" "if: always()"
 assert_contains "$failure_step" "env:"
 assert_contains "$failure_step" "POLL_EXIT_CODE: \${{ steps.poll-command.outputs.exit_code }}"
+# shellcheck disable=SC2016
 assert_contains "$failure_step" '[[ "$POLL_EXIT_CODE" == 0 ]]'
 
 printf 'PASS: workflow contract\n'
