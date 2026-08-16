@@ -9,7 +9,7 @@ SETUP_SCRIPT="$REPO_ROOT/deploy/setup-ec2.sh"
 # shellcheck disable=SC1091
 source "$TEST_DIR/testlib.sh"
 
-IMAGE_URI='123456789012.dkr.ecr.us-east-2.amazonaws.com/vmh'
+IMAGE_URI='675244612319.dkr.ecr.us-east-2.amazonaws.com/mmetznerm/vehicle-maintenance-history'
 IMAGE_TAG='sha-0123abc'
 MASTER_PASSWORD='fedcba9876543210fedcba9876543210'
 APP_PASSWORD='0123456789abcdef0123456789abcdef'
@@ -111,6 +111,13 @@ destination="${@: -1}"
 : >"$VMH_TEST_COMPOSE_READY"
 STUB
 
+  cat >"$BIN_DIR/flock" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'flock %s\n' "$*" >>"$VMH_TEST_LOG"
+[[ "${VMH_TEST_FLOCK_FAIL:-0}" != 1 ]]
+STUB
+
   for command in dnf systemctl mkswap swapon dd chmod; do
     cat >"$BIN_DIR/$command" <<STUB
 #!/usr/bin/env bash
@@ -158,6 +165,8 @@ run_setup() {
     VMH_FSTAB_FILE="$CASE_DIR/fstab" \
     VMH_COMPOSE_PLUGIN_DIR="$CASE_DIR/cli-plugins" \
     VMH_TMPDIR="$CASE_DIR/tmp" \
+    VMH_DEPLOY_LOCK_FILE="$CASE_DIR/deploy.lock" \
+    VMH_DEPLOY_LOCK_TIMEOUT_SECONDS=0 \
     AWS_REGION=us-east-2 \
     PATH="$BIN_DIR:$PATH" \
     "$SETUP_SCRIPT" "$@"
@@ -191,6 +200,21 @@ case_non_root_fails_before_external_commands() (
   assert_contains "$output" 'must run as root'
   [[ ! -e "$LOG_FILE" ]] || fail 'root check must precede external commands'
   printf 'PASS: non-root execution is rejected before external commands\n'
+)
+
+case_invalid_image_uri_stops_setup_before_external_commands() (
+  setup_case
+  trap 'rm -rf "$CASE_DIR"' EXIT
+
+  set +e
+  output="$(VMH_SKIP_HOST_SETUP=1 run_setup '999999999999.dkr.ecr.us-east-2.amazonaws.com/other/repository' "$IMAGE_TAG" 2>&1)"
+  status=$?
+  set -e
+
+  [[ $status -ne 0 ]] || fail 'invalid setup image URI must fail'
+  assert_contains "$output" 'IMAGE_URI must equal the configured production ECR repository'
+  [[ ! -e "$LOG_FILE" ]] || fail 'image validation must precede setup external commands'
+  printf 'PASS: invalid image URI stops setup before external commands\n'
 )
 
 case_success_bootstraps_database_and_deploys() (
@@ -297,6 +321,7 @@ case_missing_compose_checksum_entry_reports_diagnostic() (
 
 case_missing_arguments_print_usage
 case_non_root_fails_before_external_commands
+case_invalid_image_uri_stops_setup_before_external_commands
 case_success_bootstraps_database_and_deploys
 case_database_client_failure_prevents_deploy
 case_host_preparation_is_repeat_safe_and_verifies_compose

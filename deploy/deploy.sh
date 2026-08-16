@@ -13,14 +13,32 @@ IMAGE_TAG="$2"
   exit 2
 }
 
+REGION="${AWS_REGION:-us-east-2}"
+EXPECTED_IMAGE_URI="675244612319.dkr.ecr.us-east-2.amazonaws.com/mmetznerm/vehicle-maintenance-history"
+if [[ "$REGION" != us-east-2 || "$IMAGE_URI" != "$EXPECTED_IMAGE_URI" ]]; then
+  printf 'IMAGE_URI must equal the configured production ECR repository\n' >&2
+  exit 2
+fi
+
 APP_DIR="${VMH_APP_DIR:-/opt/vehicle-maintenance-history}"
 ENV_PARAMETER="${VMH_ENV_PARAMETER:-/vmh/prod/app-env}"
-REGION="${AWS_REGION:-us-east-2}"
 HEALTH_ATTEMPTS="${VMH_HEALTH_ATTEMPTS:-12}"
 HEALTH_DELAY_SECONDS="${VMH_HEALTH_DELAY_SECONDS:-5}"
+LOCK_FILE="${VMH_DEPLOY_LOCK_FILE:-/var/lock/vehicle-maintenance-history-deploy.lock}"
+LOCK_TIMEOUT_SECONDS="${VMH_DEPLOY_LOCK_TIMEOUT_SECONDS:-900}"
+[[ "$LOCK_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] || {
+  printf 'VMH_DEPLOY_LOCK_TIMEOUT_SECONDS must be a non-negative integer\n' >&2
+  exit 2
+}
 REGISTRY="${IMAGE_URI%%/*}"
 
-mkdir -p "$APP_DIR"
+mkdir -p "$APP_DIR" "$(dirname "$LOCK_FILE")"
+exec 9>"$LOCK_FILE"
+if ! flock -w "$LOCK_TIMEOUT_SECONDS" 9; then
+  printf 'Deployment lock was not acquired within %s seconds\n' "$LOCK_TIMEOUT_SECONDS" >&2
+  exit 75
+fi
+
 temporary_env="$(mktemp "$APP_DIR/.env.XXXXXX")"
 trap 'rm -f "$temporary_env"' EXIT
 

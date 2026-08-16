@@ -13,6 +13,13 @@ IMAGE_TAG="$2"
   exit 2
 }
 
+REGION="${AWS_REGION:-us-east-2}"
+EXPECTED_IMAGE_URI="675244612319.dkr.ecr.us-east-2.amazonaws.com/mmetznerm/vehicle-maintenance-history"
+if [[ "$REGION" != us-east-2 || "$IMAGE_URI" != "$EXPECTED_IMAGE_URI" ]]; then
+  printf 'IMAGE_URI must equal the configured production ECR repository\n' >&2
+  exit 2
+fi
+
 if [[ "$(id -u)" -ne 0 ]]; then
   printf 'setup-ec2.sh must run as root\n' >&2
   exit 1
@@ -22,7 +29,6 @@ APP_DIR="${VMH_APP_DIR:-/opt/vehicle-maintenance-history}"
 SOURCE_DIR="${VMH_SOURCE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 ENV_PARAMETER="${VMH_ENV_PARAMETER:-/vmh/prod/app-env}"
 MASTER_PARAMETER="${VMH_MASTER_PARAMETER:-/vmh/prod/rds-master-password}"
-REGION="${AWS_REGION:-us-east-2}"
 SWAP_FILE="${VMH_SWAP_FILE:-/swapfile}"
 FSTAB_FILE="${VMH_FSTAB_FILE:-/etc/fstab}"
 COMPOSE_PLUGIN_DIR="${VMH_COMPOSE_PLUGIN_DIR:-/usr/local/lib/docker/cli-plugins}"
