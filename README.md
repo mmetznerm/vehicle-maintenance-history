@@ -107,6 +107,23 @@ Published tags:
 - `latest` points to the newest successful build from `main`.
 - `sha-<commit>` identifies the exact source commit used for the image.
 
+## AWS Deployment
+
+The [AWS deployment guide](docs/aws-deployment.md) describes the console setup,
+the first bootstrap and day-to-day operations. Docker Hub remains the public
+portfolio registry, while Amazon ECR is the private runtime registry read by
+EC2. GitHub Actions authenticates to AWS through GitHub OIDC instead of keeping
+persistent AWS keys in the repository. After CI passes, the workflow publishes
+one immutable `sha-<commit>` image and SSM deploys that tag to EC2, which reaches
+the private PostgreSQL RDS instance through its security-group reference.
+
+```text
+GitHub -> Actions -> Docker Hub + ECR -> SSM -> EC2 -> RDS
+```
+
+The public demonstration uses HTTP and test data only; HTTPS and production
+data are outside this portfolio deployment.
+
 ## Recommended Local Development Workflow
 
 For day-to-day development, prefer running only PostgreSQL in Docker and running
@@ -290,9 +307,15 @@ a new one.
 
 ## Out Of Scope
 
-The following topics were intentionally left out for now:
+The following topics remain outside the current portfolio scope:
 
 - Outbox
 - Kafka
-- Kubernetes
-- Advanced CI/CD
+- Terraform or CloudFormation
+- ECS, EKS, Kubernetes or multiple EC2 instances
+- Application Load Balancer or Auto Scaling
+- Route 53, custom domain or HTTPS
+- RDS Multi-AZ, Aurora or RDS Proxy
+- SSH access
+- Automatic rollback
+- GitHub Environments and deployment approvals
