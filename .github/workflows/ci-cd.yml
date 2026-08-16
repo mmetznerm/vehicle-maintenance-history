@@ -95,12 +95,51 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+  deployment-contracts:
+    name: Deployment Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Run deployment contract tests
+        run: |
+          bash deploy/tests/compose_prod_test.sh
+          bash deploy/tests/deploy_test.sh
+          bash deploy/tests/setup_ec2_test.sh
+          bash deploy/tests/ssm_wait_test.sh
+          bash deploy/tests/workflow_contract_test.sh
+      - name: Run ShellCheck
+        run: |
+          docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable \
+            /mnt/deploy/deploy.sh \
+            /mnt/deploy/setup-ec2.sh \
+            /mnt/deploy/wait-for-ssm-command.sh \
+            /mnt/deploy/tests/testlib.sh \
+            /mnt/deploy/tests/compose_prod_test.sh \
+            /mnt/deploy/tests/deploy_test.sh \
+            /mnt/deploy/tests/setup_ec2_test.sh \
+            /mnt/deploy/tests/ssm_wait_test.sh \
+            /mnt/deploy/tests/workflow_contract_test.sh
+      - name: Run actionlint
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest
+      - name: Render production Compose
+        env:
+          IMAGE_URI: registry.example.invalid/mmetznerm/vehicle-maintenance-history
+          IMAGE_TAG: sha-0123abc
+          SPRING_DATASOURCE_URL: jdbc:postgresql://db.internal:5432/vehicle_maintenance_history?sslmode=require
+          SPRING_DATASOURCE_USERNAME: vmh_app
+          SPRING_DATASOURCE_PASSWORD: 0123456789abcdef0123456789abcdef
+          JWT_SECRET: abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789
+          JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70.0
+        run: docker compose -f deploy/compose.prod.yml config --quiet
+
   publish-docker-image:
     name: Publish Docker Image to Docker Hub and ECR
     needs:
       - backend-unit-tests
       - backend-integration-tests
       - frontend-quality
+      - deployment-contracts
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
