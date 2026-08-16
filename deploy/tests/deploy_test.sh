@@ -89,6 +89,7 @@ run_deploy() {
     VMH_APP_DIR="$APP_DIR" \
     VMH_DEPLOY_LOCK_FILE="$CASE_DIR/deploy.lock" \
     VMH_DEPLOY_LOCK_TIMEOUT_SECONDS=0 \
+    AWS_REGION="${VMH_TEST_AWS_REGION:-us-east-2}" \
     PATH="$BIN_DIR:$PATH" \
     "$DEPLOY_SCRIPT" "${@:2}"
 }
@@ -149,6 +150,21 @@ case_cross_region_ecr_uri_is_rejected() (
   [[ $status -ne 0 ]] || fail 'cross-region URI must fail'
   assert_contains "$output" 'IMAGE_URI must equal the configured production ECR repository'
   printf 'PASS: cross-region ECR URI is rejected\n'
+)
+
+case_canonical_ecr_uri_is_rejected_outside_production_region_before_external_commands() (
+  setup_case
+  trap 'rm -rf "$CASE_DIR"' EXIT
+
+  set +e
+  output="$(VMH_TEST_AWS_REGION=us-east-1 run_deploy success '675244612319.dkr.ecr.us-east-2.amazonaws.com/mmetznerm/vehicle-maintenance-history' sha-0123abc 2>&1)"
+  status=$?
+  set -e
+
+  [[ $status -ne 0 ]] || fail 'canonical ECR URI must fail outside the production region'
+  assert_contains "$output" 'IMAGE_URI must equal the configured production ECR repository'
+  [[ ! -e "$LOG_FILE" ]] || fail 'invalid region must not call external commands'
+  printf 'PASS: canonical ECR URI is rejected outside the production region before external commands\n'
 )
 
 case_foreign_ecr_repository_is_rejected() (
@@ -243,6 +259,7 @@ case_without_arguments_prints_usage
 case_latest_tag_is_rejected_before_external_commands
 case_non_ecr_uri_is_rejected_before_external_commands
 case_cross_region_ecr_uri_is_rejected
+case_canonical_ecr_uri_is_rejected_outside_production_region_before_external_commands
 case_foreign_ecr_repository_is_rejected
 case_lock_failure_stops_before_secret_retrieval
 case_deploys_sha_tag_with_environment_and_compose_rollout
