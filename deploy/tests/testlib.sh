@@ -24,3 +24,13 @@ assert_file_mode() {
   actual="$(stat -c '%a' "$path")"
   [[ "$actual" == "$expected" ]] || fail "expected $path mode $expected, got $actual"
 }
+
+assert_file_exists() {
+  local path="$1"
+  [[ -f "$path" ]] || fail "expected file to exist: $path"
+}
+
+assert_executable() {
+  local path="$1"
+  [[ -x "$path" ]] || fail "expected executable file: $path"
+}
