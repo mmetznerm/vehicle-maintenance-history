@@ -66,8 +66,8 @@ all_workflows="$ci_workflow"
 all_workflows+=$'\n'
 all_workflows+="$codeql_workflow"
 
-assert_count "$all_workflows" "actions/checkout@v7" 5
-assert_count "$all_workflows" "uses: actions/checkout@" 5
+assert_count "$all_workflows" "actions/checkout@v7" 6
+assert_count "$all_workflows" "uses: actions/checkout@" 6
 assert_not_contains "$all_workflows" "actions/checkout@v4"
 assert_count "$all_workflows" "actions/setup-java@v5" 3
 assert_count "$all_workflows" "uses: actions/setup-java@" 3
@@ -82,6 +82,8 @@ assert_contains "$codeql_workflow" "language: javascript-typescript"
 assert_contains "$codeql_workflow" "security-events: write"
 assert_not_contains "$all_workflows" "AWS_ACCESS_KEY_ID"
 assert_not_contains "$all_workflows" "AWS_SECRET_ACCESS_KEY"
+assert_contains "$ci_workflow" "group: ci-cd-\${{ github.ref }}"
+assert_contains "$ci_workflow" "cancel-in-progress: \${{ github.event_name == 'pull_request' }}"
 
 publish_job="$(require_job "$ci_path" "publish-docker-image")"
 deploy_job="$(require_job "$ci_path" "deploy-to-ec2")"
@@ -95,8 +97,9 @@ assert_contains "$publish_job" "ecr_registry: \${{ steps.login-ecr.outputs.regis
 
 publish_aws_credentials="$(require_step "$publish_job" "Configure AWS credentials")"
 assert_contains "$publish_aws_credentials" "uses: aws-actions/configure-aws-credentials@v6"
-assert_contains "$publish_aws_credentials" "role-to-assume: \${{ vars.AWS_ROLE_ARN }}"
+assert_contains "$publish_aws_credentials" "role-to-assume: \${{ vars.AWS_PUBLISH_ROLE_ARN }}"
 assert_contains "$publish_aws_credentials" "aws-region: \${{ vars.AWS_REGION }}"
+assert_not_contains "$publish_job" "AWS_DEPLOY_ROLE_ARN"
 
 publish_ecr_login="$(require_step "$publish_job" "Log in to Amazon ECR")"
 assert_contains "$publish_ecr_login" "id: login-ecr"
@@ -121,52 +124,70 @@ assert_contains "$deploy_job" "permissions:"
 assert_contains "$deploy_job" "contents: read"
 assert_contains "$deploy_job" "id-token: write"
 assert_not_contains "$deploy_job" "environment:"
+assert_contains "$deploy_job" "concurrency:"
+assert_contains "$deploy_job" "group: vehicle-maintenance-history-production"
+assert_contains "$deploy_job" "cancel-in-progress: false"
+
+deploy_checkout_step="$(require_step "$deploy_job" "Checkout repository")"
+assert_contains "$deploy_checkout_step" "uses: actions/checkout@v7"
 
 deploy_aws_credentials="$(require_step "$deploy_job" "Configure AWS credentials")"
 assert_contains "$deploy_aws_credentials" "uses: aws-actions/configure-aws-credentials@v6"
-assert_contains "$deploy_aws_credentials" "role-to-assume: \${{ vars.AWS_ROLE_ARN }}"
+assert_contains "$deploy_aws_credentials" "role-to-assume: \${{ vars.AWS_DEPLOY_ROLE_ARN }}"
 assert_contains "$deploy_aws_credentials" "aws-region: \${{ vars.AWS_REGION }}"
+assert_not_contains "$deploy_job" "AWS_PUBLISH_ROLE_ARN"
+assert_not_contains "$ci_workflow" "AWS_ROLE_ARN"
 
 image_step="$(require_step "$deploy_job" "Set image reference")"
 assert_contains "$image_step" "id: image"
-# GitHub expressions are asserted literally, not expanded by this shell test.
-# shellcheck disable=SC2016
-assert_contains "$image_step" 'image_uri=${{ needs.publish-docker-image.outputs.ecr_registry }}/${{ vars.ECR_REPOSITORY }}'
-# GitHub expressions are asserted literally, not expanded by this shell test.
-# shellcheck disable=SC2016
-assert_contains "$image_step" 'image_tag=sha-${GITHUB_SHA::7}'
+assert_contains "$image_step" "env:"
+assert_contains "$image_step" "ECR_REGISTRY: \${{ needs.publish-docker-image.outputs.ecr_registry }}"
+assert_contains "$image_step" "ECR_REPOSITORY: \${{ vars.ECR_REPOSITORY }}"
+assert_contains "$image_step" "AWS_REGION: \${{ vars.AWS_REGION }}"
+assert_contains "$image_step" '[[ "$AWS_REGION" == us-east-2 ]]'
+assert_contains "$image_step" '[[ "$ECR_REPOSITORY" == mmetznerm/vehicle-maintenance-history ]]'
+assert_contains "$image_step" 'echo "image_uri=$ECR_REGISTRY/$ECR_REPOSITORY" >> "$GITHUB_OUTPUT"'
+assert_contains "$image_step" 'echo "image_tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"'
 
 send_command_step="$(require_step "$deploy_job" "Send deployment command")"
 assert_contains "$send_command_step" "id: send-command"
 assert_contains "$send_command_step" "AWS-RunShellScript"
-# GitHub expressions and shell snippets are asserted literally, not expanded here.
-# shellcheck disable=SC2016
-assert_contains "$send_command_step" '${{ vars.EC2_INSTANCE_ID }}'
-# GitHub expressions and shell snippets are asserted literally, not expanded here.
-# shellcheck disable=SC2016
+assert_contains "$send_command_step" "env:"
+assert_contains "$send_command_step" "AWS_REGION: \${{ vars.AWS_REGION }}"
+assert_contains "$send_command_step" "EC2_INSTANCE_ID: \${{ vars.EC2_INSTANCE_ID }}"
+assert_contains "$send_command_step" "IMAGE_URI: \${{ steps.image.outputs.image_uri }}"
+assert_contains "$send_command_step" "IMAGE_TAG: \${{ steps.image.outputs.image_tag }}"
+assert_contains "$send_command_step" '[[ "$EC2_INSTANCE_ID" =~ ^i-[0-9a-f]{8,17}$ ]]'
+assert_contains "$send_command_step" 'printf -v command '\''%s %s %s'\'' /opt/vehicle-maintenance-history/deploy.sh "$IMAGE_URI" "$IMAGE_TAG"'
 assert_contains "$send_command_step" 'jq -cn --arg command "$command"'
 assert_contains "$send_command_step" "aws ssm send-command"
 
-wait_step="$(require_step "$deploy_job" "Wait for deployment command")"
-assert_contains "$wait_step" "id: wait-for-command"
-assert_contains "$wait_step" "continue-on-error: true"
-assert_contains "$wait_step" "wait_exit_code=\$?"
-# GitHub expressions and shell snippets are asserted literally, not expanded here.
-# shellcheck disable=SC2016
-assert_contains "$wait_step" 'echo "exit_code=$wait_exit_code" >> "$GITHUB_OUTPUT"'
+poll_step="$(require_step "$deploy_job" "Poll deployment command")"
+assert_contains "$poll_step" "id: poll-command"
+assert_contains "$poll_step" "continue-on-error: true"
+assert_contains "$poll_step" "COMMAND_ID: \${{ steps.send-command.outputs.command_id }}"
+assert_contains "$poll_step" "EC2_INSTANCE_ID: \${{ vars.EC2_INSTANCE_ID }}"
+assert_contains "$poll_step" 'bash deploy/wait-for-ssm-command.sh "$COMMAND_ID" "$EC2_INSTANCE_ID"'
+assert_contains "$poll_step" "poll_exit_code=\$?"
+assert_contains "$poll_step" 'echo "exit_code=$poll_exit_code" >> "$GITHUB_OUTPUT"'
+assert_not_contains "$ci_workflow" "aws ssm wait"
+
+checkout_line="$(grep -n -m 1 -- 'name: Checkout repository' <<<"$deploy_job" | cut -d: -f1)"
+poll_line="$(grep -n -m 1 -- 'name: Poll deployment command' <<<"$deploy_job" | cut -d: -f1)"
+((checkout_line < poll_line)) || fail 'deploy checkout must precede polling'
 
 diagnostic_step="$(require_step "$deploy_job" "Show deployment command invocation")"
 assert_contains "$diagnostic_step" "if: always()"
+assert_contains "$diagnostic_step" "env:"
+assert_contains "$diagnostic_step" "AWS_REGION: \${{ vars.AWS_REGION }}"
+assert_contains "$diagnostic_step" "COMMAND_ID: \${{ steps.send-command.outputs.command_id }}"
+assert_contains "$diagnostic_step" "EC2_INSTANCE_ID: \${{ vars.EC2_INSTANCE_ID }}"
 assert_contains "$diagnostic_step" "aws ssm get-command-invocation"
-# GitHub expressions are asserted literally, not expanded by this shell test.
-# shellcheck disable=SC2016
-assert_contains "$diagnostic_step" '${{ steps.send-command.outputs.command_id }}'
 
 failure_step="$(require_step "$deploy_job" "Fail when deployment command did not complete")"
 assert_contains "$failure_step" "if: always()"
-# GitHub expressions are asserted literally, not expanded by this shell test.
-# shellcheck disable=SC2016
-assert_contains "$failure_step" '${{ steps.wait-for-command.outputs.exit_code }}'
-assert_contains "$failure_step" "[[ '\${{ steps.wait-for-command.outputs.exit_code }}' == '0' ]]"
+assert_contains "$failure_step" "env:"
+assert_contains "$failure_step" "POLL_EXIT_CODE: \${{ steps.poll-command.outputs.exit_code }}"
+assert_contains "$failure_step" '[[ "$POLL_EXIT_CODE" == 0 ]]'
 
 printf 'PASS: workflow contract\n'

@@ -18,6 +18,12 @@ assert_not_contains() {
   [[ "$haystack" != *"$needle"* ]] || fail "expected output not to contain: $needle"
 }
 
+assert_equals() {
+  local expected="$1"
+  local actual="$2"
+  [[ "$actual" == "$expected" ]] || fail "expected '$expected', got '$actual'"
+}
+
 assert_file_mode() {
   local expected="$1"
   local path="$2"
