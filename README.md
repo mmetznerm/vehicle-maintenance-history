@@ -113,9 +113,11 @@ The [AWS deployment guide](docs/aws-deployment.md) describes the console setup,
 the first bootstrap and day-to-day operations. Docker Hub remains the public
 portfolio registry, while Amazon ECR is the private runtime registry read by
 EC2. GitHub Actions authenticates to AWS through GitHub OIDC instead of keeping
-persistent AWS keys in the repository. After CI passes, the workflow publishes
-one immutable `sha-<commit>` image and SSM deploys that tag to EC2, which reaches
-the private PostgreSQL RDS instance through its security-group reference.
+persistent AWS keys in the repository: publishing and deployment assume
+different OIDC roles. After CI passes, the workflow publishes an immutable ECR
+`sha-<commit>` image and SSM deploys that tag to EC2, which uses encrypted EBS
+and reaches the private PostgreSQL RDS instance through its security-group
+reference.
 
 ```text
 GitHub -> Actions -> Docker Hub + ECR -> SSM -> EC2 -> RDS
@@ -209,9 +211,12 @@ Pull requests are checked with:
 - Backend integration tests with Testcontainers and PostgreSQL.
 - Frontend lint, Vitest coverage and production build.
 - CodeQL security analysis.
+- `deployment-contracts`, ShellCheck, actionlint and Compose rendering.
 
 After these checks pass on a push to `main`, GitHub Actions builds the production
-image and publishes it to Docker Hub with `latest` and `sha-<commit>` tags.
+image and publishes it to Docker Hub and ECR with `latest` and `sha-<commit>`
+tags. The publish job assumes the ECR-only OIDC role, while the deploy job
+assumes the SSM-only OIDC role; ECR SHA tags are immutable.
 
 ## Authentication
 

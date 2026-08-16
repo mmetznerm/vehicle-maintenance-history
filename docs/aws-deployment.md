@@ -32,9 +32,29 @@ como preservar os dados de teste.
 3. Não altere o repositório para público e não crie outro nome. O workflow
    publica o mesmo build no Docker Hub e neste ECR; o EC2 usa somente o ECR
    privado em tempo de execução.
-4. Confirme que os tags `latest` e `sha-<commit>` aparecem depois de um push
-   bem-sucedido para `main`. O tag `sha-` é a referência imutável usada no
-   primeiro deploy e nos rollbacks.
+4. Em **Tag immutability**, selecione **Immutable with exclusion** e configure
+   a única exclusão com tipo **Wildcard** e valor `latest`. O tag `latest` é
+   apenas um ponteiro de conveniência; os deploys e rollbacks usam somente
+   `sha-<commit>`.
+5. Como alternativa ao console, aplique e verifique a configuração com:
+
+   ```bash
+   aws ecr put-image-tag-mutability \
+     --region us-east-2 \
+     --repository-name mmetznerm/vehicle-maintenance-history \
+     --image-tag-mutability IMMUTABLE_WITH_EXCLUSION \
+     --image-tag-mutability-exclusion-filters filterType=WILDCARD,filter=latest
+
+   aws ecr describe-repositories \
+     --region us-east-2 \
+     --repository-names mmetznerm/vehicle-maintenance-history \
+     --query 'repositories[0].{mutability:imageTagMutability,exclusions:imageTagMutabilityExclusionFilters}' \
+     --output json
+   ```
+
+   A saída precisa mostrar `IMMUTABLE_WITH_EXCLUSION` e somente a exclusão
+   `latest`. Uma repetição do workflow não pode republicar uma tag SHA que já
+   exista; use a imagem SHA existente para deploy ou rollback.
 
 ## 3. Rede e grupos de segurança
 
@@ -73,12 +93,16 @@ Se esse provedor já existir, reutilize-o depois de confirmar exatamente esses
 dois valores. O workflow recebe credenciais temporárias por OIDC; não crie nem
 grave credenciais AWS de longa duração no GitHub.
 
-## 5. Role do GitHub Actions
+## 5. Roles do GitHub Actions
 
-Em **IAM > Roles > Create role**, crie a role
-`github-actions-vehicle-maintenance-history`. Escolha o provedor OIDC do GitHub
-e restrinja a confiança ao repositório e à branch `main`. A política de
-confiança equivalente é:
+Em **IAM > Roles > Create role**, crie as duas roles abaixo usando o provedor
+OIDC do GitHub e a mesma política de confiança, restrita ao repositório e à
+branch `main`:
+
+- `github-actions-vehicle-maintenance-history-publish`;
+- `github-actions-vehicle-maintenance-history-deploy`.
+
+A política de confiança equivalente, aplicada a ambas, é:
 
 ```json
 {
@@ -101,10 +125,8 @@ confiança equivalente é:
 }
 ```
 
-Adicione uma política inline mínima para publicar no ECR e enviar/comprovar o
-comando SSM. O ARN da instância será completado com o ID real obtido na etapa
-8; `<EC2_INSTANCE_ID>` é um campo obrigatório a substituir, não um valor de
-exemplo:
+Para `github-actions-vehicle-maintenance-history-publish`, adicione uma
+política inline com apenas as permissões de login e publicação no ECR:
 
 ```json
 {
@@ -127,7 +149,20 @@ exemplo:
         "ecr:UploadLayerPart"
       ],
       "Resource": "arn:aws:ecr:us-east-2:675244612319:repository/mmetznerm/vehicle-maintenance-history"
-    },
+    }
+  ]
+}
+```
+
+Para `github-actions-vehicle-maintenance-history-deploy`, adicione uma política
+inline com apenas as permissões SSM abaixo. O ARN da instância será completado
+com o ID real obtido na etapa 8; `<EC2_INSTANCE_ID>` é um campo obrigatório a
+substituir, não um valor de exemplo:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
     {
       "Sid": "SsmSendToSelectedInstance",
       "Effect": "Allow",
@@ -151,7 +186,9 @@ exemplo:
 }
 ```
 
-O `id-token: write` fica restrito aos jobs que assumem esta role. Não adicione
+O `id-token: write` fica restrito aos jobs que assumem cada role. A role de
+publicação não pode receber permissões SSM, e a role de deploy não pode receber
+permissões ECR; nenhuma delas pode receber permissões da outra. Não adicione
 `sts:AssumeRole` genérico, acesso a outros repositórios, outras branches ou
 outros repositórios ECR.
 
@@ -174,7 +211,10 @@ descriptografar SecureStrings através do Systems Manager em Ohio:
       "Sid": "ReadApplicationParameters",
       "Effect": "Allow",
       "Action": "ssm:GetParameter",
-      "Resource": "arn:aws:ssm:us-east-2:675244612319:parameter/vmh/prod/*"
+      "Resource": [
+        "arn:aws:ssm:us-east-2:675244612319:parameter/vmh/prod/app-env",
+        "arn:aws:ssm:us-east-2:675244612319:parameter/vmh/prod/rds-master-password"
+      ]
     },
     {
       "Sid": "DecryptOnlyThroughSsmOhio",
@@ -194,6 +234,10 @@ descriptografar SecureStrings através do Systems Manager em Ohio:
 O script usa `ssm:GetParameter` com `--with-decryption`; não dê à instância
 permissão para apagar ou alterar parâmetros. Acesso ao parâmetro do master
 existe apenas para o bootstrap e será removido na etapa 10.
+
+A condição KMS permite somente `kms:Decrypt` invocado pelo Systems Manager em
+`us-east-2`. Use as chaves padrão da conta para SSM e EBS; uma chave gerenciada
+pelo cliente é opcional e só deve ser escolhida deliberadamente.
 
 ## 7. Parâmetros SecureString
 
@@ -247,7 +291,9 @@ Em **EC2 > Launch instance**, configure:
 
 - AMI: **Amazon Linux 2023**, arquitetura **x86_64**;
 - tipo: `t3.micro`;
-- armazenamento raiz: **10 GiB**, `gp3`;
+- armazenamento raiz: **10 GiB**, `gp3`, **Encrypted: Yes**, usando a chave
+  EBS padrão da conta;
+- metadados da instância: **Metadata version: V2 only** (IMDSv2);
 - rede: a mesma VPC do RDS e uma subnet pública com saída para a internet;
 - atribuição automática de IPv4 público: habilitada;
 - security group: `vehicle-maintenance-history-app-sg`;
@@ -333,7 +379,8 @@ Variables**, crie:
 | Nome | Valor |
 |---|---|
 | `AWS_REGION` | `us-east-2` |
-| `AWS_ROLE_ARN` | `arn:aws:iam::675244612319:role/github-actions-vehicle-maintenance-history` |
+| `AWS_PUBLISH_ROLE_ARN` | `arn:aws:iam::675244612319:role/github-actions-vehicle-maintenance-history-publish` |
+| `AWS_DEPLOY_ROLE_ARN` | `arn:aws:iam::675244612319:role/github-actions-vehicle-maintenance-history-deploy` |
 | `ECR_REPOSITORY` | `mmetznerm/vehicle-maintenance-history` |
 | `EC2_INSTANCE_ID` | saída real do comando `describe-instances` da etapa 8 |
 
@@ -345,7 +392,14 @@ ela está exatamente como `true`.
 Em **Secrets**, mantenha os secrets existentes `DOCKER_USERNAME` e
 `DOCKER_ACCESS_TOKEN`, usados apenas para publicar no Docker Hub. Não adicione
 segredos AWS persistentes: a role OIDC fornece credenciais temporárias aos
-jobs de publicação e deploy.
+jobs de publicação e deploy. A publicação assume `AWS_PUBLISH_ROLE_ARN` e o
+deploy assume `AWS_DEPLOY_ROLE_ARN`.
+
+Deploys de produção são serializados no GitHub Actions e novamente no EC2 por
+`/var/lock/vehicle-maintenance-history-deploy.lock`. O workflow pode consultar
+o estado SSM por até 15 minutos antes de concluir. A varredura de
+vulnerabilidades do ECR e uma política de ciclo de vida são melhorias opcionais
+e não são pré-requisitos para o aceite desta demonstração.
 
 ## 12. Verificações de aceite
 
@@ -358,6 +412,8 @@ verdadeiros:
 - `http://<IPv4-público>/actuator/health` responde com status `UP`;
 - registro e login funcionam somente com dados de teste;
 - um dado criado continua presente depois de reiniciar o container;
+- o volume raiz EBS de 10 GiB `gp3` está com **Encrypted: Yes** antes da
+  instalação de segredos da aplicação;
 - o security group da aplicação não tem entrada TCP 22;
 - o RDS permanece com **Public access: No** e a porta 5432 aceita somente o
   grupo da aplicação;
