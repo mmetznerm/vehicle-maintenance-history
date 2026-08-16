@@ -13,7 +13,7 @@ IMAGE_TAG="$2"
   exit 2
 }
 
-if [[ "$(id -u)" -ne 0 && "${VMH_ALLOW_NON_ROOT:-}" != 1 ]]; then
+if [[ "$(id -u)" -ne 0 ]]; then
   printf 'setup-ec2.sh must run as root\n' >&2
   exit 1
 fi
@@ -59,11 +59,10 @@ prepare_host() {
     curl -fsSL "https://github.com/docker/compose/releases/download/v5.4.0/checksums.txt" -o "$compose_tmp/checksums.txt"
     curl -fsSL "https://github.com/docker/compose/releases/download/v5.4.0/docker-compose-linux-x86_64" -o "$compose_tmp/docker-compose-linux-x86_64"
     checksum_file="$compose_tmp/docker-compose-linux-x86_64.checksum"
-    grep -E '^[[:xdigit:]]{64}  docker-compose-linux-x86_64$' "$compose_tmp/checksums.txt" >"$checksum_file"
-    [[ -s "$checksum_file" ]] || {
+    if ! grep -E '^[[:xdigit:]]{64}  docker-compose-linux-x86_64$' "$compose_tmp/checksums.txt" >"$checksum_file"; then
       printf 'Docker Compose checksum entry is missing\n' >&2
       exit 1
-    }
+    fi
     (
       cd "$compose_tmp"
       sha256sum -c "$(basename "$checksum_file")"

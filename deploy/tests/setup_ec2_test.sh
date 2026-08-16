@@ -75,7 +75,13 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 case "$url" in
-  *checksums.txt) printf 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  docker-compose-linux-x86_64\n' >"$output" ;;
+  *checksums.txt)
+    if [[ "${VMH_TEST_MISSING_CHECKSUM_ENTRY:-0}" == 1 ]]; then
+      printf 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  docker-compose-linux-aarch64\n' >"$output"
+    else
+      printf 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  docker-compose-linux-x86_64\n' >"$output"
+    fi
+    ;;
   *docker-compose-linux-x86_64) printf '#!/usr/bin/env bash\nexit 0\n' >"$output" ;;
   http://localhost/actuator/health) exit 0 ;;
   *) exit 64 ;;
@@ -161,7 +167,7 @@ case_missing_arguments_print_usage() (
   trap 'rm -rf "$CASE_DIR"' EXIT
 
   set +e
-  output="$(VMH_ALLOW_NON_ROOT=1 VMH_SKIP_HOST_SETUP=1 run_setup 2>&1)"
+  output="$(VMH_SKIP_HOST_SETUP=1 run_setup 2>&1)"
   status=$?
   set -e
 
@@ -176,7 +182,7 @@ case_non_root_fails_before_external_commands() (
   trap 'rm -rf "$CASE_DIR"' EXIT
 
   set +e
-  output="$(VMH_TEST_EUID=1000 VMH_SKIP_HOST_SETUP=1 run_setup "$IMAGE_URI" "$IMAGE_TAG" 2>&1)"
+  output="$(VMH_TEST_EUID=1000 VMH_ALLOW_NON_ROOT=1 VMH_SKIP_HOST_SETUP=1 run_setup "$IMAGE_URI" "$IMAGE_TAG" 2>&1)"
   status=$?
   set -e
 
@@ -190,7 +196,7 @@ case_success_bootstraps_database_and_deploys() (
   setup_case
   trap 'rm -rf "$CASE_DIR"' EXIT
 
-  VMH_ALLOW_NON_ROOT=1 VMH_SKIP_HOST_SETUP=1 run_setup "$IMAGE_URI" "$IMAGE_TAG"
+  VMH_SKIP_HOST_SETUP=1 run_setup "$IMAGE_URI" "$IMAGE_TAG"
 
   log="$(<"$LOG_FILE")"
   sql="$(<"$SQL_FILE")"
@@ -220,7 +226,7 @@ case_database_client_failure_prevents_deploy() (
   trap 'rm -rf "$CASE_DIR"' EXIT
 
   set +e
-  VMH_ALLOW_NON_ROOT=1 VMH_SKIP_HOST_SETUP=1 VMH_TEST_DB_FAIL=1 run_setup "$IMAGE_URI" "$IMAGE_TAG"
+  VMH_SKIP_HOST_SETUP=1 VMH_TEST_DB_FAIL=1 run_setup "$IMAGE_URI" "$IMAGE_TAG"
   status=$?
   set -e
 
@@ -235,8 +241,8 @@ case_host_preparation_is_repeat_safe_and_verifies_compose() (
   setup_case
   trap 'rm -rf "$CASE_DIR"' EXIT
 
-  VMH_ALLOW_NON_ROOT=1 run_setup "$IMAGE_URI" "$IMAGE_TAG"
-  VMH_ALLOW_NON_ROOT=1 run_setup "$IMAGE_URI" "$IMAGE_TAG"
+  run_setup "$IMAGE_URI" "$IMAGE_TAG"
+  run_setup "$IMAGE_URI" "$IMAGE_TAG"
 
   log="$(<"$LOG_FILE")"
   assert_contains "$log" 'dnf install -y docker'
@@ -260,7 +266,7 @@ case_invalid_compose_checksum_prevents_installation() (
   trap 'rm -rf "$CASE_DIR"' EXIT
 
   set +e
-  VMH_ALLOW_NON_ROOT=1 VMH_TEST_BAD_CHECKSUM=1 run_setup "$IMAGE_URI" "$IMAGE_TAG"
+  VMH_TEST_BAD_CHECKSUM=1 run_setup "$IMAGE_URI" "$IMAGE_TAG"
   status=$?
   set -e
 
@@ -271,9 +277,27 @@ case_invalid_compose_checksum_prevents_installation() (
   printf 'PASS: invalid Compose checksum prevents installation\n'
 )
 
+case_missing_compose_checksum_entry_reports_diagnostic() (
+  setup_case
+  trap 'rm -rf "$CASE_DIR"' EXIT
+
+  set +e
+  output="$(VMH_TEST_MISSING_CHECKSUM_ENTRY=1 run_setup "$IMAGE_URI" "$IMAGE_TAG" 2>&1)"
+  status=$?
+  set -e
+
+  [[ $status -ne 0 ]] || fail 'missing Compose checksum entry must fail setup'
+  assert_contains "$output" 'Docker Compose checksum entry is missing'
+  log="$(<"$LOG_FILE")"
+  assert_not_contains "$log" 'sha256sum -c'
+  assert_not_contains "$log" 'install -m 0755'
+  printf 'PASS: missing Compose checksum entry reports a diagnostic\n'
+)
+
 case_missing_arguments_print_usage
 case_non_root_fails_before_external_commands
 case_success_bootstraps_database_and_deploys
 case_database_client_failure_prevents_deploy
 case_host_preparation_is_repeat_safe_and_verifies_compose
 case_invalid_compose_checksum_prevents_installation
+case_missing_compose_checksum_entry_reports_diagnostic
