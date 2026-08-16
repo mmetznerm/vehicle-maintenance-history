@@ -1,7 +1,7 @@
 # AWS EC2 Deployment Hardening Design
 
 **Date:** 2026-08-16
-**Status:** Approved for specification review
+**Status:** Approved
 **Extends:** `docs/superpowers/specs/2026-08-16-aws-ec2-deployment-design.md`
 
 ## Context
@@ -63,13 +63,13 @@ Tests will cover an invalid pre-existing file, a valid inactive file, an already
 
 ## Deployment Script Input Safety
 
-`deploy/deploy.sh` will continue rejecting mutable tags. It will additionally accept only an Amazon ECR image URI whose region matches `AWS_REGION`; malformed or non-ECR registries fail before AWS or Docker calls. This prevents an ECR authorization token from being sent to an arbitrary registry during manual operation.
+`deploy/deploy.sh` will continue rejecting mutable tags. It will additionally accept only `675244612319.dkr.ecr.us-east-2.amazonaws.com/mmetznerm/vehicle-maintenance-history`; every other account, region, repository, malformed URI, or non-ECR registry fails before AWS or Docker calls. This prevents an ECR authorization token from being sent to an arbitrary registry during manual operation.
 
 ## Contracts in CI
 
 A new `deployment-contracts` job will run for pull requests and `main` before image publication. It will execute:
 
-- all four deployment contract suites;
+- all deployment contract suites, including the new focused SSM polling suite;
 - ShellCheck over every deployment script;
 - actionlint over the repository workflows;
 - a quiet render of the production Compose file with deterministic test values.
