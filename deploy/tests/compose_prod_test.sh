@@ -14,6 +14,8 @@ export JWT_SECRET="abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456
 export JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=70.0"
 
 rendered="$(docker compose -f "$REPO_ROOT/deploy/compose.prod.yml" config)"
+services="$(docker compose -f "$REPO_ROOT/deploy/compose.prod.yml" config --services)"
+[[ "$services" == "app" ]] || fail "expected exactly one service named app, got: $services"
 assert_contains "$rendered" "registry.example.invalid/mmetznerm/vehicle-maintenance-history:sha-0123abc"
 assert_contains "$rendered" "target: 8080"
 assert_contains "$rendered" "published: \"80\""
