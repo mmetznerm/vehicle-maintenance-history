@@ -42,3 +42,6 @@ coverage/
 
 ### VS Code ###
 .vscode/
+
+### Git worktrees ###
+.worktrees/
