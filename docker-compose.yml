@@ -4,8 +4,6 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     container_name: vehicle-maintenance-history-api
-    profiles:
-      - app
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/vehicle-maintenance-history
       SPRING_DATASOURCE_USERNAME: vehicle-maintenance-history
