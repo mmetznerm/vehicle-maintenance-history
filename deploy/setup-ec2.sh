@@ -44,19 +44,40 @@ cleanup() {
 }
 trap cleanup EXIT
 
+prepare_swap() {
+  local swap_type swap_tmp
+
+  if swapon --show=NAME --noheadings | grep -Fxq "$SWAP_FILE"; then
+    return
+  fi
+
+  swap_type=''
+  if [[ -f "$SWAP_FILE" ]]; then
+    swap_type="$(blkid -p -s TYPE -o value "$SWAP_FILE" 2>/dev/null || true)"
+  fi
+
+  if [[ "$swap_type" != swap ]]; then
+    mkdir -p "$(dirname "$SWAP_FILE")"
+    swap_tmp="$(mktemp "${SWAP_FILE}.XXXXXX")"
+    TEMP_FILES+=("$swap_tmp" "$swap_tmp.vmh-valid-swap")
+    dd if=/dev/zero of="$swap_tmp" bs=1M count=1024 status=none
+    chmod 600 "$swap_tmp"
+    mkswap "$swap_tmp"
+    mv -f "$swap_tmp" "$SWAP_FILE"
+  fi
+
+  swapon "$SWAP_FILE"
+  grep -Fqx "$SWAP_FILE none swap sw 0 0" "$FSTAB_FILE" ||
+    printf '%s none swap sw 0 0\n' "$SWAP_FILE" >>"$FSTAB_FILE"
+}
+
 prepare_host() {
   local compose_tmp checksum_file
 
   dnf install -y docker
   systemctl enable --now docker
 
-  if [[ ! -f "$SWAP_FILE" ]]; then
-    dd if=/dev/zero of="$SWAP_FILE" bs=1M count=1024 status=none
-    chmod 600 "$SWAP_FILE"
-    mkswap "$SWAP_FILE"
-  fi
-  swapon --show=NAME --noheadings | grep -Fxq "$SWAP_FILE" || swapon "$SWAP_FILE"
-  grep -Fqx "$SWAP_FILE none swap sw 0 0" "$FSTAB_FILE" || printf '%s none swap sw 0 0\n' "$SWAP_FILE" >>"$FSTAB_FILE"
+  prepare_swap
 
   if ! docker compose version >/dev/null 2>&1; then
     mkdir -p "$TMP_DIR" "$COMPOSE_PLUGIN_DIR"

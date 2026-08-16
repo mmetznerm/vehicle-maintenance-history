@@ -118,7 +118,7 @@ printf 'flock %s\n' "$*" >>"$VMH_TEST_LOG"
 [[ "${VMH_TEST_FLOCK_FAIL:-0}" != 1 ]]
 STUB
 
-  for command in dnf systemctl mkswap swapon dd chmod; do
+  for command in dnf systemctl swapon dd chmod; do
     cat >"$BIN_DIR/$command" <<STUB
 #!/usr/bin/env bash
 set -euo pipefail
@@ -136,6 +136,34 @@ STUB
 
   cat >>"$BIN_DIR/chmod" <<'STUB'
 exec /usr/bin/chmod "$@"
+STUB
+
+  cat >"$BIN_DIR/blkid" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'blkid %s\n' "$*" >>"$VMH_TEST_LOG"
+path="${@: -1}"
+[[ -f "$path.vmh-valid-swap" ]] || exit 2
+printf 'swap\n'
+STUB
+
+  cat >"$BIN_DIR/mkswap" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'mkswap %s\n' "$*" >>"$VMH_TEST_LOG"
+: >"$1.vmh-valid-swap"
+STUB
+
+  cat >"$BIN_DIR/mv" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'mv %s\n' "$*" >>"$VMH_TEST_LOG"
+source="${@: -2:1}"
+destination="${@: -1}"
+/usr/bin/mv -f "$source" "$destination"
+if [[ -f "$source.vmh-valid-swap" ]]; then
+  /usr/bin/mv -f "$source.vmh-valid-swap" "$destination.vmh-valid-swap"
+fi
 STUB
 
   cat >"$BIN_DIR/swapon" <<'STUB'
@@ -301,6 +329,50 @@ case_host_preparation_is_repeat_safe_and_verifies_compose() (
   printf 'PASS: host preparation installs Docker, verified Compose, and swap\n'
 )
 
+case_invalid_inactive_swap_is_repaired_atomically() (
+  setup_case
+  trap 'rm -rf "$CASE_DIR"' EXIT
+
+  printf 'partial' >"$CASE_DIR/swapfile"
+  run_setup "$IMAGE_URI" "$IMAGE_TAG"
+
+  log="$(<"$LOG_FILE")"
+  assert_contains "$log" 'blkid -p -s TYPE -o value'
+  assert_contains "$log" 'mkswap '
+  assert_contains "$log" "mv -f $CASE_DIR/swapfile."
+  assert_contains "$log" "swapon $CASE_DIR/swapfile"
+  printf 'PASS: invalid inactive swap is repaired atomically\n'
+)
+
+case_valid_inactive_swap_is_reused() (
+  setup_case
+  trap 'rm -rf "$CASE_DIR"' EXIT
+
+  : >"$CASE_DIR/swapfile"
+  : >"$CASE_DIR/swapfile.vmh-valid-swap"
+  run_setup "$IMAGE_URI" "$IMAGE_TAG"
+
+  log="$(<"$LOG_FILE")"
+  assert_not_contains "$log" 'dd if=/dev/zero'
+  assert_not_contains "$log" 'mkswap '
+  assert_contains "$log" "swapon $CASE_DIR/swapfile"
+  printf 'PASS: valid inactive swap is reused\n'
+)
+
+case_active_swap_is_left_untouched() (
+  setup_case
+  trap 'rm -rf "$CASE_DIR"' EXIT
+
+  : >"$CASE_DIR/swap-active"
+  run_setup "$IMAGE_URI" "$IMAGE_TAG"
+
+  log="$(<"$LOG_FILE")"
+  assert_not_contains "$log" 'blkid '
+  assert_not_contains "$log" 'dd if=/dev/zero'
+  assert_not_contains "$log" 'mkswap '
+  printf 'PASS: active swap is left untouched\n'
+)
+
 case_invalid_compose_checksum_prevents_installation() (
   setup_case
   trap 'rm -rf "$CASE_DIR"' EXIT
@@ -341,5 +413,8 @@ case_canonical_image_uri_stops_setup_outside_production_region_before_external_c
 case_success_bootstraps_database_and_deploys
 case_database_client_failure_prevents_deploy
 case_host_preparation_is_repeat_safe_and_verifies_compose
+case_invalid_inactive_swap_is_repaired_atomically
+case_valid_inactive_swap_is_reused
+case_active_swap_is_left_untouched
 case_invalid_compose_checksum_prevents_installation
 case_missing_compose_checksum_entry_reports_diagnostic
