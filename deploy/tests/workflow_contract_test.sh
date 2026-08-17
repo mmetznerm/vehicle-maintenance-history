@@ -82,6 +82,7 @@ assert_not_contains "$all_workflows" "AWS_ACCESS_KEY_ID"
 assert_not_contains "$all_workflows" "AWS_SECRET_ACCESS_KEY"
 assert_contains "$ci_workflow" "group: ci-cd-\${{ github.ref }}"
 assert_contains "$ci_workflow" "cancel-in-progress: \${{ github.event_name == 'pull_request' }}"
+assert_contains "$ci_workflow" 'VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1200"'
 
 publish_job="$(require_job "$ci_workflow" "publish-docker-image")"
 deploy_job="$(require_job "$ci_workflow" "deploy-to-ec2")"
@@ -215,6 +216,10 @@ assert_contains "$send_command_step" 'printf -v command '\''%s %s %s'\'' /opt/ve
 # shellcheck disable=SC2016
 assert_contains "$send_command_step" 'jq -cn --arg command "$command"'
 assert_contains "$send_command_step" "aws ssm send-command"
+# shellcheck disable=SC2016
+assert_contains "$send_command_step" 'executionTimeout: [$execution_timeout]'
+# shellcheck disable=SC2016
+assert_contains "$send_command_step" 'VMH_SSM_EXECUTION_TIMEOUT_SECONDS'
 
 poll_step="$(require_step "$deploy_job" "Poll deployment command")"
 assert_contains "$poll_step" "id: poll-command"
@@ -270,6 +275,12 @@ assert_workflow_mutation_fails() {
 # shellcheck disable=SC2016
       sed -i 's#bash deploy/wait-for-ssm-command.sh "$COMMAND_ID" "$EC2_INSTANCE_ID"#true#' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
+    missing-execution-timeout)
+      sed -i 's/executionTimeout: \[$execution_timeout\]/executionTimeoutRemoved: [$execution_timeout]/' "$mutation_root/.github/workflows/ci-cd.yml"
+      ;;
+    weakened-execution-timeout)
+      sed -i 's/VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1200"/VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1199"/' "$mutation_root/.github/workflows/ci-cd.yml"
+      ;;
     *) fail "unknown workflow mutation: $mutation" ;;
   esac
   set +e
@@ -288,6 +299,8 @@ if [[ "${VMH_SKIP_WORKFLOW_MUTATIONS:-0}" != 1 ]]; then
   assert_workflow_mutation_fails shared-aws-role
   assert_workflow_mutation_fails cancel-running-deploy
   assert_workflow_mutation_fails missing-ssm-poller
+  assert_workflow_mutation_fails missing-execution-timeout
+  assert_workflow_mutation_fails weakened-execution-timeout
 fi
 
 printf 'PASS: workflow contract\n'

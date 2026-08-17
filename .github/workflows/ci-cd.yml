@@ -11,6 +11,9 @@ on:
 permissions:
   contents: read
 
+env:
+  VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1200"
+
 concurrency:
   group: ci-cd-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -246,7 +249,7 @@ jobs:
           [[ "$IMAGE_URI" =~ ^[0-9]{12}\.dkr\.ecr\.us-east-2\.amazonaws\.com/mmetznerm/vehicle-maintenance-history$ ]]
           [[ "$IMAGE_TAG" =~ ^sha-[0-9a-f]{7}$ ]]
           printf -v command '%s %s %s' /opt/vehicle-maintenance-history/deploy.sh "$IMAGE_URI" "$IMAGE_TAG"
-          parameters="$(jq -cn --arg command "$command" '{commands: [$command]}')"
+          parameters="$(jq -cn --arg command "$command" --arg execution_timeout "$VMH_SSM_EXECUTION_TIMEOUT_SECONDS" '{commands: [$command], executionTimeout: [$execution_timeout]}')"
           command_id="$(aws ssm send-command \
             --region "$AWS_REGION" \
             --instance-ids "$EC2_INSTANCE_ID" \

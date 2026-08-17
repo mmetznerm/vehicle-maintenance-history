@@ -42,6 +42,7 @@ run_wait_with_instance() {
     VMH_TEST_OUTCOMES_FILE="$OUTCOMES_FILE" \
     VMH_SSM_POLL_ATTEMPTS="${VMH_SSM_POLL_ATTEMPTS:-4}" \
     VMH_SSM_POLL_DELAY_SECONDS=0 \
+    VMH_SSM_EXECUTION_TIMEOUT_SECONDS="${VMH_SSM_EXECUTION_TIMEOUT_SECONDS:-0}" \
     AWS_REGION=us-east-2 \
     PATH="$BIN_DIR:$PATH" \
     "$WAIT_SCRIPT" 11111111-2222-3333-4444-555555555555 "$instance_id"
@@ -91,10 +92,31 @@ case_invalid_instance_id_fails_before_aws() (
   [[ ! -s "$LOG_FILE" ]] || fail 'validation must precede AWS'
 )
 
+case_undersized_poll_budget_fails_before_aws() (
+  setup_case
+  trap 'rm -rf "$CASE_DIR"' EXIT
+  VMH_SSM_POLL_ATTEMPTS=2 \
+    VMH_SSM_POLL_DELAY_SECONDS=10 \
+    VMH_SSM_EXECUTION_TIMEOUT_SECONDS=1200 \
+    run_wait 'Success'
+  [[ "$WAIT_STATUS" -ne 0 ]] || fail 'undersized poll budget must fail'
+  [[ ! -s "$LOG_FILE" ]] || fail 'poll budget validation must precede AWS'
+)
+
+case_invalid_remote_execution_timeout_fails_before_aws() (
+  setup_case
+  trap 'rm -rf "$CASE_DIR"' EXIT
+  VMH_SSM_EXECUTION_TIMEOUT_SECONDS=invalid run_wait 'Success'
+  [[ "$WAIT_STATUS" -ne 0 ]] || fail 'invalid remote execution timeout must fail'
+  [[ ! -s "$LOG_FILE" ]] || fail 'remote timeout validation must precede AWS'
+)
+
 case_eventual_consistency_then_success
 case_failed_status_is_failure
 case_unknown_status_is_failure
 case_deadline_is_failure
 case_invalid_instance_id_fails_before_aws
+case_undersized_poll_budget_fails_before_aws
+case_invalid_remote_execution_timeout_fails_before_aws
 
 printf 'PASS: SSM command polling\n'
