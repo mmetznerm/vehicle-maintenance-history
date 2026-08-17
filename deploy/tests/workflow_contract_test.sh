@@ -79,6 +79,7 @@ assert_not_contains "$all_workflows" "AWS_SECRET_ACCESS_KEY"
 assert_contains "$ci_workflow" "group: ci-cd-\${{ github.ref }}"
 assert_contains "$ci_workflow" "cancel-in-progress: \${{ github.event_name == 'pull_request' }}"
 assert_contains "$ci_workflow" 'VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1200"'
+assert_contains "$ci_workflow" 'VMH_SSM_DELIVERY_TIMEOUT_SECONDS: "60"'
 
 publish_job="$(require_job "$ci_workflow" "publish-docker-image")"
 deploy_job="$(require_job "$ci_workflow" "deploy-to-ec2")"
@@ -233,6 +234,10 @@ assert_contains "$send_command_step" "aws ssm send-command"
 assert_contains "$send_command_step" 'executionTimeout: [$execution_timeout]'
 # shellcheck disable=SC2016
 assert_contains "$send_command_step" 'VMH_SSM_EXECUTION_TIMEOUT_SECONDS'
+# shellcheck disable=SC2016
+assert_contains "$send_command_step" 'VMH_SSM_DELIVERY_TIMEOUT_SECONDS'
+# shellcheck disable=SC2016
+assert_contains "$send_command_step" '--timeout-seconds "$VMH_SSM_DELIVERY_TIMEOUT_SECONDS"'
 
 poll_step="$(require_step "$deploy_job" "Poll deployment command")"
 assert_contains "$poll_step" "id: poll-command"
@@ -298,6 +303,9 @@ assert_workflow_mutation_fails() {
     weakened-execution-timeout)
       sed -i 's/VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1200"/VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1199"/' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
+    missing-delivery-timeout)
+      sed -i '/VMH_SSM_DELIVERY_TIMEOUT_SECONDS: "60"/d' "$mutation_root/.github/workflows/ci-cd.yml"
+      ;;
     weakened-ecr-registry)
       sed -i 's/675244612319.dkr.ecr.us-east-2.amazonaws.com/999999999999.dkr.ecr.us-east-2.amazonaws.com/g' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
@@ -322,6 +330,7 @@ if [[ "${VMH_SKIP_WORKFLOW_MUTATIONS:-0}" != 1 ]]; then
   assert_workflow_mutation_fails missing-ssm-poller
   assert_workflow_mutation_fails missing-execution-timeout
   assert_workflow_mutation_fails weakened-execution-timeout
+  assert_workflow_mutation_fails missing-delivery-timeout
   assert_workflow_mutation_fails weakened-ecr-registry
 fi
 

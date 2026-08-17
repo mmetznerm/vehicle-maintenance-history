@@ -8,13 +8,15 @@ REGION="${AWS_REGION:-us-east-2}"
 POLL_ATTEMPTS="${VMH_SSM_POLL_ATTEMPTS:-130}"
 POLL_DELAY_SECONDS="${VMH_SSM_POLL_DELAY_SECONDS:-10}"
 EXECUTION_TIMEOUT_SECONDS="${VMH_SSM_EXECUTION_TIMEOUT_SECONDS:-1200}"
+DELIVERY_TIMEOUT_SECONDS="${VMH_SSM_DELIVERY_TIMEOUT_SECONDS:-60}"
+POLL_MARGIN_SECONDS="${VMH_SSM_POLL_MARGIN_SECONDS:-30}"
 
 [[ "$COMMAND_ID" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] || { printf 'Invalid SSM command ID\n' >&2; exit 2; }
 [[ "$INSTANCE_ID" =~ ^i-[0-9a-f]{8,17}$ ]] || { printf 'Invalid EC2 instance ID\n' >&2; exit 2; }
-[[ "$POLL_ATTEMPTS" =~ ^[1-9][0-9]*$ && "$POLL_DELAY_SECONDS" =~ ^[0-9]+$ && "$EXECUTION_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] || { printf 'Invalid SSM polling configuration\n' >&2; exit 2; }
-(( (POLL_ATTEMPTS - 1) * POLL_DELAY_SECONDS >= EXECUTION_TIMEOUT_SECONDS )) || {
-  printf 'SSM polling budget of %s seconds must cover remote execution timeout of %s seconds\n' \
-    "$(( (POLL_ATTEMPTS - 1) * POLL_DELAY_SECONDS ))" "$EXECUTION_TIMEOUT_SECONDS" >&2
+[[ "$POLL_ATTEMPTS" =~ ^[1-9][0-9]*$ && "$POLL_DELAY_SECONDS" =~ ^[0-9]+$ && "$EXECUTION_TIMEOUT_SECONDS" =~ ^[0-9]+$ && "$DELIVERY_TIMEOUT_SECONDS" =~ ^[0-9]+$ && "$POLL_MARGIN_SECONDS" =~ ^[0-9]+$ ]] || { printf 'Invalid SSM polling configuration\n' >&2; exit 2; }
+(( (POLL_ATTEMPTS - 1) * POLL_DELAY_SECONDS >= DELIVERY_TIMEOUT_SECONDS + EXECUTION_TIMEOUT_SECONDS + POLL_MARGIN_SECONDS )) || {
+  printf 'SSM polling budget of %s seconds must cover delivery timeout of %s seconds, remote execution timeout of %s seconds, and poll margin of %s seconds\n' \
+    "$(( (POLL_ATTEMPTS - 1) * POLL_DELAY_SECONDS ))" "$DELIVERY_TIMEOUT_SECONDS" "$EXECUTION_TIMEOUT_SECONDS" "$POLL_MARGIN_SECONDS" >&2
   exit 2
 }
 
