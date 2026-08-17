@@ -44,10 +44,16 @@ cleanup() {
 }
 trap cleanup EXIT
 
+ensure_swap_persistence() {
+  grep -Fqx "$SWAP_FILE none swap sw 0 0" "$FSTAB_FILE" ||
+    printf '%s none swap sw 0 0\n' "$SWAP_FILE" >>"$FSTAB_FILE"
+}
+
 prepare_swap() {
   local swap_type swap_tmp
 
   if swapon --show=NAME --noheadings | grep -Fxq "$SWAP_FILE"; then
+    ensure_swap_persistence
     return
   fi
 
@@ -67,8 +73,7 @@ prepare_swap() {
   fi
 
   swapon "$SWAP_FILE"
-  grep -Fqx "$SWAP_FILE none swap sw 0 0" "$FSTAB_FILE" ||
-    printf '%s none swap sw 0 0\n' "$SWAP_FILE" >>"$FSTAB_FILE"
+  ensure_swap_persistence
 }
 
 prepare_host() {

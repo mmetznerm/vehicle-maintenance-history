@@ -367,19 +367,22 @@ case_valid_inactive_swap_is_reused() (
   printf 'PASS: valid inactive swap is reused\n'
 )
 
-case_active_swap_is_left_untouched() (
+case_active_swap_is_persisted_without_reactivation() (
   setup_case
   trap 'rm -rf "$CASE_DIR"' EXIT
 
   : >"$CASE_DIR/swap-active"
+  run_setup "$IMAGE_URI" "$IMAGE_TAG"
   run_setup "$IMAGE_URI" "$IMAGE_TAG"
 
   log="$(<"$LOG_FILE")"
   assert_not_contains "$log" 'blkid '
   assert_not_contains "$log" 'dd if=/dev/zero'
   assert_not_contains "$log" 'mkswap '
+  assert_not_contains "$log" 'mv -f '
   assert_not_contains "$log" "swapon $CASE_DIR/swapfile"
-  printf 'PASS: active swap is left untouched\n'
+  [[ "$(grep -Fc "$CASE_DIR/swapfile none swap sw 0 0" "$CASE_DIR/fstab")" == 1 ]] || fail 'active swap must have one persistent fstab entry'
+  printf 'PASS: active swap is persisted without recreation or reactivation\n'
 )
 
 case_invalid_compose_checksum_prevents_installation() (
@@ -424,6 +427,6 @@ case_database_client_failure_prevents_deploy
 case_host_preparation_is_repeat_safe_and_verifies_compose
 case_invalid_inactive_swap_is_repaired_atomically
 case_valid_inactive_swap_is_reused
-case_active_swap_is_left_untouched
+case_active_swap_is_persisted_without_reactivation
 case_invalid_compose_checksum_prevents_installation
 case_missing_compose_checksum_entry_reports_diagnostic
