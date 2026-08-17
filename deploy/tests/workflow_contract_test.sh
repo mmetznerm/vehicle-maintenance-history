@@ -61,10 +61,9 @@ require_step() {
 ci_path="$repo_root/.github/workflows/ci-cd.yml"
 codeql_path="$repo_root/.github/workflows/codeql.yml"
 ci_workflow="$(grep -Ev '^[[:space:]]*#' "$ci_path")"
-codeql_workflow="$(grep -Ev '^[[:space:]]*#' "$codeql_path")"
 all_workflows="$ci_workflow"
-all_workflows+=$'\n'
-all_workflows+="$codeql_workflow"
+
+[[ ! -e "$codeql_path" ]] || fail 'CodeQL must be part of the CI/CD workflow, not a separate workflow'
 
 assert_not_contains "$all_workflows" "actions/checkout@v4"
 assert_count "$all_workflows" "actions/setup-java@v5" 3
@@ -73,11 +72,8 @@ assert_not_contains "$all_workflows" "actions/setup-java@v4"
 assert_count "$ci_workflow" "actions/setup-node@v7" 1
 assert_count "$ci_workflow" "uses: actions/setup-node@" 1
 assert_not_contains "$ci_workflow" "actions/setup-node@v4"
-assert_contains "$codeql_workflow" "github/codeql-action/init@v4"
-assert_contains "$codeql_workflow" "github/codeql-action/analyze@v4"
-assert_contains "$codeql_workflow" "language: java-kotlin"
-assert_contains "$codeql_workflow" "language: javascript-typescript"
-assert_contains "$codeql_workflow" "security-events: write"
+assert_contains "$ci_workflow" "schedule:"
+assert_contains "$ci_workflow" 'cron: "24 8 * * 1"'
 assert_not_contains "$all_workflows" "AWS_ACCESS_KEY_ID"
 assert_not_contains "$all_workflows" "AWS_SECRET_ACCESS_KEY"
 assert_contains "$ci_workflow" "group: ci-cd-\${{ github.ref }}"
@@ -87,6 +83,18 @@ assert_contains "$ci_workflow" 'VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1200"'
 publish_job="$(require_job "$ci_workflow" "publish-docker-image")"
 deploy_job="$(require_job "$ci_workflow" "deploy-to-ec2")"
 deployment_contracts_job="$(require_job "$ci_workflow" "deployment-contracts")"
+codeql_job="$(require_job "$ci_workflow" "codeql")"
+
+assert_contains "$codeql_job" "github/codeql-action/init@v4"
+assert_contains "$codeql_job" "github/codeql-action/analyze@v4"
+assert_contains "$codeql_job" "language: java-kotlin"
+assert_contains "$codeql_job" "language: javascript-typescript"
+assert_contains "$codeql_job" "permissions:"
+assert_contains "$codeql_job" "contents: read"
+assert_contains "$codeql_job" "security-events: write"
+assert_contains "$codeql_job" "build-mode: manual"
+assert_contains "$codeql_job" "build-mode: none"
+assert_contains "$codeql_job" "./mvnw -B -DskipTests package"
 
 assert_count "$all_workflows" "actions/checkout@v7" 7
 assert_count "$all_workflows" "uses: actions/checkout@" 7
@@ -138,6 +146,7 @@ assert_contains "$publish_job" "id-token: write"
 assert_contains "$publish_job" "outputs:"
 assert_contains "$publish_job" "ecr_registry: \${{ steps.login-ecr.outputs.registry }}"
 assert_contains "$publish_job" "deployment-contracts"
+assert_contains "$publish_job" "codeql"
 assert_contains "$publish_job" "if: github.event_name == 'push' && github.ref == 'refs/heads/main'"
 
 publish_aws_credentials="$(require_step "$publish_job" "Configure AWS credentials")"
@@ -262,6 +271,9 @@ assert_workflow_mutation_fails() {
     missing-contract-need)
       sed -i '/^      - deployment-contracts$/d' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
+    missing-codeql-need)
+      sed -i '/^      - codeql$/d' "$mutation_root/.github/workflows/ci-cd.yml"
+      ;;
     push-disabled)
       sed -i 's/^          push: true$/          push: false/' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
@@ -295,6 +307,7 @@ assert_workflow_mutation_fails() {
 
 if [[ "${VMH_SKIP_WORKFLOW_MUTATIONS:-0}" != 1 ]]; then
   assert_workflow_mutation_fails missing-contract-need
+  assert_workflow_mutation_fails missing-codeql-need
   assert_workflow_mutation_fails push-disabled
   assert_workflow_mutation_fails shared-aws-role
   assert_workflow_mutation_fails cancel-running-deploy

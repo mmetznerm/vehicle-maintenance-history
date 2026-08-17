@@ -1,7 +1,7 @@
 # Vehicle Maintenance History
 
 [![CI/CD](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/ci-cd.yml)
-[![CodeQL](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/codeql.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/codeql.yml)
+[![CodeQL](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/ci-cd.yml)
 ![Java](https://img.shields.io/badge/Java-21-blue)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
@@ -210,7 +210,7 @@ Pull requests are checked with:
 - Backend unit, controller and coverage checks with Maven and JaCoCo.
 - Backend integration tests with Testcontainers and PostgreSQL.
 - Frontend lint, Vitest coverage and production build.
-- CodeQL security analysis.
+- CodeQL security analysis, a direct publication gate.
 - `deployment-contracts`, ShellCheck, actionlint and Compose rendering.
 
 After these checks pass on a push to `main`, GitHub Actions builds the production
