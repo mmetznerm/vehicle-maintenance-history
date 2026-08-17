@@ -131,6 +131,21 @@ case_undersized_delivery_execution_budget_fails_before_aws() (
   assert_contains "$WAIT_OUTPUT" 'SSM polling budget of 10 seconds must cover delivery timeout of 60 seconds, remote execution timeout of 0 seconds, and poll margin of 30 seconds'
 )
 
+case_poll_budget_requires_delivery_execution_and_margin() (
+  setup_case
+  trap 'rm -rf "$CASE_DIR"' EXIT
+  VMH_SSM_POLL_ATTEMPTS=129 \
+    VMH_SSM_POLL_DELAY_SECONDS=10 \
+    VMH_SSM_DELIVERY_TIMEOUT_SECONDS=60 \
+    VMH_SSM_EXECUTION_TIMEOUT_SECONDS=1200 \
+    VMH_SSM_POLL_MARGIN_SECONDS=30 \
+    run_wait 'Success'
+  [[ "$WAIT_STATUS" -ne 0 ]] || fail '1280-second poll budget must not omit delivery, execution, or margin'
+  [[ ! -s "$LOG_FILE" ]] || fail 'full poll budget validation must precede AWS'
+  [[ ! -s "$SLEEP_LOG" ]] || fail 'full poll budget validation must precede sleep'
+  assert_contains "$WAIT_OUTPUT" 'SSM polling budget of 1280 seconds must cover delivery timeout of 60 seconds, remote execution timeout of 1200 seconds, and poll margin of 30 seconds'
+)
+
 case_invalid_remote_execution_timeout_fails_before_aws() (
   setup_case
   trap 'rm -rf "$CASE_DIR"' EXIT
@@ -164,6 +179,7 @@ case_deadline_is_failure
 case_invalid_instance_id_fails_before_aws
 case_undersized_poll_budget_fails_before_aws
 case_undersized_delivery_execution_budget_fails_before_aws
+case_poll_budget_requires_delivery_execution_and_margin
 case_invalid_remote_execution_timeout_fails_before_aws
 case_invalid_delivery_timeout_fails_before_aws
 case_invalid_poll_margin_fails_before_aws

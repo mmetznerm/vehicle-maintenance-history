@@ -392,12 +392,15 @@ jobs de publicação e deploy. A publicação assume `AWS_PUBLISH_ROLE_ARN` e o
 deploy assume `AWS_DEPLOY_ROLE_ARN`.
 
 Deploys de produção são serializados no GitHub Actions e novamente no EC2 por
-`/var/lock/vehicle-maintenance-history-deploy.lock`. O workflow consulta o
-estado SSM por até 130 tentativas com intervalo de 10 segundos (cerca de 21
-minutos e 30 segundos). Essa janela cobre o `executionTimeout` remoto de 1200
-segundos (20 minutos) enviado ao `AWS-RunShellScript`. A varredura de
-vulnerabilidades do ECR e uma política de ciclo de vida são melhorias opcionais
-e não são pré-requisitos para o aceite desta demonstração.
+`/var/lock/vehicle-maintenance-history-deploy.lock`. O workflow limita a
+entrega/início de 60 segundos pelo `--timeout-seconds` do `send-command` e
+envia um `executionTimeout` de execução remota de 1200 segundos (20 minutos)
+ao `AWS-RunShellScript`. Depois, consulta o estado SSM por até 130 tentativas
+com intervalo de 10 segundos: há 129 intervalos, totalizando cerca de 21 minutos e 30 segundos. Essa janela de 1290 segundos exige e cobre os 60
+segundos de entrega, os 1200 segundos de execução remota e a margem de polling
+de 30 segundos. A varredura de vulnerabilidades do ECR e uma política de ciclo
+de vida são melhorias opcionais e não são pré-requisitos para o aceite desta
+demonstração.
 
 ## 12. Verificações de aceite
 
