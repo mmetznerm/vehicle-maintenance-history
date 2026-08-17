@@ -1,7 +1,6 @@
 # Vehicle Maintenance History
 
 [![CI/CD](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/ci-cd.yml)
-[![CodeQL](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/codeql.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/codeql.yml)
 ![Java](https://img.shields.io/badge/Java-21-blue)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
@@ -107,6 +106,26 @@ Published tags:
 - `latest` points to the newest successful build from `main`.
 - `sha-<commit>` identifies the exact source commit used for the image.
 
+## AWS Deployment
+
+The [AWS deployment guide](docs/aws-deployment.md) describes the console setup,
+the first bootstrap and day-to-day operations. Docker Hub remains the public
+portfolio registry, while Amazon ECR is the private runtime registry read by
+EC2. GitHub Actions authenticates to AWS through GitHub OIDC instead of keeping
+persistent AWS keys in the repository: publishing and deployment assume
+different OIDC roles. After CI passes, the workflow publishes an immutable ECR
+`sha-<commit>` image and SSM deploys that tag to EC2, which uses encrypted EBS
+and reaches the private PostgreSQL RDS instance through its security-group
+reference. For audit, operations record the ECR digest associated with each
+deployed SHA tag, while deployment continues to use the immutable SHA tag.
+
+```text
+GitHub -> Actions -> Docker Hub + ECR -> SSM -> EC2 -> RDS
+```
+
+The public demonstration uses HTTP and test data only; HTTPS and production
+data are outside this portfolio deployment.
+
 ## Recommended Local Development Workflow
 
 For day-to-day development, prefer running only PostgreSQL in Docker and running
@@ -191,10 +210,13 @@ Pull requests are checked with:
 - Backend unit, controller and coverage checks with Maven and JaCoCo.
 - Backend integration tests with Testcontainers and PostgreSQL.
 - Frontend lint, Vitest coverage and production build.
-- CodeQL security analysis.
+- CodeQL security analysis, a direct publication gate.
+- `deployment-contracts`, ShellCheck, actionlint and Compose rendering.
 
 After these checks pass on a push to `main`, GitHub Actions builds the production
-image and publishes it to Docker Hub with `latest` and `sha-<commit>` tags.
+image and publishes it to Docker Hub and ECR with `latest` and `sha-<commit>`
+tags. The publish job assumes the ECR-only OIDC role, while the deploy job
+assumes the SSM-only OIDC role; ECR SHA tags are immutable.
 
 ## Authentication
 
@@ -290,9 +312,15 @@ a new one.
 
 ## Out Of Scope
 
-The following topics were intentionally left out for now:
+The following topics remain outside the current portfolio scope:
 
 - Outbox
 - Kafka
-- Kubernetes
-- Advanced CI/CD
+- Terraform or CloudFormation
+- ECS, EKS, Kubernetes or multiple EC2 instances
+- Application Load Balancer or Auto Scaling
+- Route 53, custom domain or HTTPS
+- RDS Multi-AZ, Aurora or RDS Proxy
+- SSH access
+- Automatic rollback
+- GitHub Environments and deployment approvals

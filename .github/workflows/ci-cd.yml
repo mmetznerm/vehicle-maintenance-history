@@ -7,25 +7,32 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: "24 8 * * 1"
 
 permissions:
   contents: read
 
+env:
+  VMH_SSM_DELIVERY_TIMEOUT_SECONDS: "60"
+  VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1200"
+
 concurrency:
-  group: ci-cd-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-cd-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   backend-unit-tests:
     name: Backend Unit Tests
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -42,14 +49,15 @@ jobs:
 
   backend-integration-tests:
     name: Backend Integration Tests
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -66,14 +74,15 @@ jobs:
 
   frontend-quality:
     name: Frontend Quality
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -95,18 +104,125 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: java-kotlin
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: Make Maven wrapper executable
+        if: matrix.language == 'java-kotlin'
+        working-directory: backend
+        run: chmod +x mvnw
+
+      - name: Build backend for CodeQL
+        if: matrix.language == 'java-kotlin'
+        working-directory: backend
+        run: ./mvnw -B -DskipTests package
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
+
+  deployment-contracts:
+    name: Deployment Contracts
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Run deployment contract tests
+        run: |
+          bash deploy/tests/compose_prod_test.sh
+          bash deploy/tests/deploy_test.sh
+          bash deploy/tests/setup_ec2_test.sh
+          bash deploy/tests/ssm_wait_test.sh
+          bash deploy/tests/workflow_contract_test.sh
+      - name: Run ShellCheck
+        run: |
+          docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable \
+            /mnt/deploy/deploy.sh \
+            /mnt/deploy/setup-ec2.sh \
+            /mnt/deploy/wait-for-ssm-command.sh \
+            /mnt/deploy/tests/testlib.sh \
+            /mnt/deploy/tests/compose_prod_test.sh \
+            /mnt/deploy/tests/deploy_test.sh \
+            /mnt/deploy/tests/setup_ec2_test.sh \
+            /mnt/deploy/tests/ssm_wait_test.sh \
+            /mnt/deploy/tests/workflow_contract_test.sh
+      - name: Run actionlint
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest
+      - name: Render production Compose
+        env:
+          IMAGE_URI: registry.example.invalid/mmetznerm/vehicle-maintenance-history
+          IMAGE_TAG: sha-0123abc
+          SPRING_DATASOURCE_URL: jdbc:postgresql://db.internal:5432/vehicle_maintenance_history?sslmode=require
+          SPRING_DATASOURCE_USERNAME: vmh_app
+          SPRING_DATASOURCE_PASSWORD: 0123456789abcdef0123456789abcdef
+          JWT_SECRET: abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789
+          JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70.0
+        run: docker compose -f deploy/compose.prod.yml config --quiet
+
   publish-docker-image:
-    name: Publish Docker Image
+    name: Publish Docker Image to Docker Hub and ECR
     needs:
       - backend-unit-tests
       - backend-integration-tests
       - frontend-quality
+      - deployment-contracts
+      - codeql
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      ecr_registry: ${{ steps.login-ecr.outputs.registry }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_PUBLISH_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: github-actions-publish-${{ github.run_id }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -121,7 +237,9 @@ jobs:
         id: metadata
         uses: docker/metadata-action@v6
         with:
-          images: mmetznerm/vehicle-maintenance-history
+          images: |
+            mmetznerm/vehicle-maintenance-history
+            ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}
           tags: |
             type=raw,value=latest
             type=sha,prefix=sha-,format=short
@@ -137,3 +255,107 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy-to-ec2:
+    name: Deploy to EC2 through SSM
+    needs: publish-docker-image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: vehicle-maintenance-history-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: github-actions-deploy-${{ github.run_id }}
+
+      - name: Set image reference
+        id: image
+        shell: bash
+        env:
+          ECR_REGISTRY: ${{ needs.publish-docker-image.outputs.ecr_registry }}
+          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          [[ "$AWS_REGION" == us-east-2 ]]
+          [[ "$ECR_REPOSITORY" == mmetznerm/vehicle-maintenance-history ]]
+          [[ "$ECR_REGISTRY" == 675244612319.dkr.ecr.us-east-2.amazonaws.com ]]
+          [[ "$ECR_REGISTRY" =~ ^[0-9]{12}\.dkr\.ecr\.us-east-2\.amazonaws\.com$ ]]
+          echo "image_uri=$ECR_REGISTRY/$ECR_REPOSITORY" >> "$GITHUB_OUTPUT"
+          echo "image_tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Send deployment command
+        id: send-command
+        shell: bash
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+          IMAGE_URI: ${{ steps.image.outputs.image_uri }}
+          IMAGE_TAG: ${{ steps.image.outputs.image_tag }}
+        run: |
+          [[ "$AWS_REGION" == us-east-2 ]]
+          [[ "$EC2_INSTANCE_ID" =~ ^i-[0-9a-f]{8,17}$ ]]
+          [[ "$IMAGE_URI" == 675244612319.dkr.ecr.us-east-2.amazonaws.com/mmetznerm/vehicle-maintenance-history ]]
+          [[ "$IMAGE_URI" =~ ^[0-9]{12}\.dkr\.ecr\.us-east-2\.amazonaws\.com/mmetznerm/vehicle-maintenance-history$ ]]
+          [[ "$IMAGE_TAG" =~ ^sha-[0-9a-f]{7}$ ]]
+          [[ "$VMH_SSM_DELIVERY_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]
+          printf -v command '%s %s %s' /opt/vehicle-maintenance-history/deploy.sh "$IMAGE_URI" "$IMAGE_TAG"
+          parameters="$(jq -cn --arg command "$command" --arg execution_timeout "$VMH_SSM_EXECUTION_TIMEOUT_SECONDS" '{commands: [$command], executionTimeout: [$execution_timeout]}')"
+          command_id="$(aws ssm send-command \
+            --region "$AWS_REGION" \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --document-name AWS-RunShellScript \
+            --timeout-seconds "$VMH_SSM_DELIVERY_TIMEOUT_SECONDS" \
+            --comment "Deploy $IMAGE_TAG" \
+            --parameters "$parameters" \
+            --query Command.CommandId \
+            --output text)"
+          echo "command_id=$command_id" >> "$GITHUB_OUTPUT"
+
+      - name: Poll deployment command
+        id: poll-command
+        continue-on-error: true
+        shell: bash
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          COMMAND_ID: ${{ steps.send-command.outputs.command_id }}
+          EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+        run: |
+          set +e
+          bash deploy/wait-for-ssm-command.sh "$COMMAND_ID" "$EC2_INSTANCE_ID"
+          poll_exit_code=$?
+          set -e
+          echo "exit_code=$poll_exit_code" >> "$GITHUB_OUTPUT"
+          exit "$poll_exit_code"
+
+      - name: Show deployment command invocation
+        if: always()
+        shell: bash
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          COMMAND_ID: ${{ steps.send-command.outputs.command_id }}
+          EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+        run: |
+          aws ssm get-command-invocation \
+            --region "$AWS_REGION" \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$EC2_INSTANCE_ID" \
+            --output json || true
+
+      - name: Fail when deployment command did not complete
+        if: always()
+        shell: bash
+        env:
+          POLL_EXIT_CODE: ${{ steps.poll-command.outputs.exit_code }}
+        run: |
+          [[ "$POLL_EXIT_CODE" == 0 ]]
