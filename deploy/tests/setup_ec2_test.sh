@@ -49,7 +49,12 @@ STUB
   cat >"$BIN_DIR/docker" <<'STUB'
 #!/usr/bin/env bash
 set -euo pipefail
-printf 'docker %s\n' "$*" >>"$VMH_TEST_LOG"
+if [[ "$1" == 'login' ]]; then
+  password="$(cat)"
+  printf 'docker %s password=%s\n' "$*" "$password" >>"$VMH_TEST_LOG"
+else
+  printf 'docker %s\n' "$*" >>"$VMH_TEST_LOG"
+fi
 if [[ "$1 ${2:-}" == 'compose version' ]]; then
   [[ -f "$VMH_TEST_COMPOSE_READY" ]] && exit 0
   exit 1
@@ -272,6 +277,7 @@ case_success_bootstraps_database_and_deploys() (
   assert_contains "$log" 'aws ssm get-parameter --name /vmh/prod/rds-master-password --with-decryption --query Parameter.Value --output text --region us-east-2'
   assert_contains "$log" 'docker run --rm -i --network host -e PGPASSWORD -e APP_DB_PASSWORD -e RDS_HOST -e PGSSLMODE postgres:16-alpine'
   assert_contains "$log" 'docker run pgsslmode=require'
+  assert_contains "$log" 'docker login --username AWS --password-stdin 675244612319.dkr.ecr.us-east-2.amazonaws.com password=mock-ecr-password'
   assert_file_exists "$CASE_DIR/app/compose.prod.yml"
   assert_file_exists "$CASE_DIR/app/deploy.sh"
   assert_executable "$CASE_DIR/app/deploy.sh"
