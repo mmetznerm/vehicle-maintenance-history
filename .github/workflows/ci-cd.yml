@@ -18,12 +18,13 @@ env:
   VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1200"
 
 concurrency:
-  group: ci-cd-${{ github.ref }}
+  group: ci-cd-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   backend-unit-tests:
     name: Backend Unit Tests
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
     steps:
@@ -48,6 +49,7 @@ jobs:
 
   backend-integration-tests:
     name: Backend Integration Tests
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
     steps:
@@ -72,6 +74,7 @@ jobs:
 
   frontend-quality:
     name: Frontend Quality
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
     steps:
@@ -153,6 +156,7 @@ jobs:
 
   deployment-contracts:
     name: Deployment Contracts
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

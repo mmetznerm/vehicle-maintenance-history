@@ -81,7 +81,7 @@ assert_not_contains "$all_workflows" "AWS_SECRET_ACCESS_KEY"
 assert_contains "$aws_deployment_runbook" "ssm:GetCommandInvocation"
 assert_not_contains "$aws_deployment_runbook" "ssm:ListCommandInvocations"
 assert_not_contains "$aws_deployment_runbook" "ssm:ListCommands"
-assert_contains "$ci_workflow" "group: ci-cd-\${{ github.ref }}"
+assert_contains "$ci_workflow" "group: ci-cd-\${{ github.event_name }}-\${{ github.ref }}"
 assert_contains "$ci_workflow" "cancel-in-progress: \${{ github.event_name == 'pull_request' }}"
 assert_contains "$ci_workflow" 'VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1200"'
 assert_contains "$ci_workflow" 'VMH_SSM_DELIVERY_TIMEOUT_SECONDS: "60"'
@@ -90,6 +90,15 @@ publish_job="$(require_job "$ci_workflow" "publish-docker-image")"
 deploy_job="$(require_job "$ci_workflow" "deploy-to-ec2")"
 deployment_contracts_job="$(require_job "$ci_workflow" "deployment-contracts")"
 codeql_job="$(require_job "$ci_workflow" "codeql")"
+backend_unit_tests_job="$(require_job "$ci_workflow" "backend-unit-tests")"
+backend_integration_tests_job="$(require_job "$ci_workflow" "backend-integration-tests")"
+frontend_quality_job="$(require_job "$ci_workflow" "frontend-quality")"
+
+assert_contains "$backend_unit_tests_job" "if: github.event_name != 'schedule'"
+assert_contains "$backend_integration_tests_job" "if: github.event_name != 'schedule'"
+assert_contains "$frontend_quality_job" "if: github.event_name != 'schedule'"
+assert_contains "$deployment_contracts_job" "if: github.event_name != 'schedule'"
+assert_not_contains "$codeql_job" "if: github.event_name != 'schedule'"
 
 assert_contains "$codeql_job" "github/codeql-action/init@v4"
 assert_contains "$codeql_job" "github/codeql-action/analyze@v4"
@@ -313,6 +322,12 @@ assert_workflow_mutation_fails() {
     missing-delivery-timeout)
       sed -i '/VMH_SSM_DELIVERY_TIMEOUT_SECONDS: "60"/d' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
+    missing-schedule-guards)
+      sed -i "s/^    if: github.event_name != 'schedule'$/    if: true/" "$mutation_root/.github/workflows/ci-cd.yml"
+      ;;
+    shared-schedule-concurrency)
+      sed -i 's/group: ci-cd-${{ github.event_name }}-${{ github.ref }}/group: ci-cd-${{ github.ref }}/' "$mutation_root/.github/workflows/ci-cd.yml"
+      ;;
     weakened-ecr-registry)
       sed -i 's/675244612319.dkr.ecr.us-east-2.amazonaws.com/999999999999.dkr.ecr.us-east-2.amazonaws.com/g' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
@@ -338,6 +353,8 @@ if [[ "${VMH_SKIP_WORKFLOW_MUTATIONS:-0}" != 1 ]]; then
   assert_workflow_mutation_fails missing-execution-timeout
   assert_workflow_mutation_fails weakened-execution-timeout
   assert_workflow_mutation_fails missing-delivery-timeout
+  assert_workflow_mutation_fails missing-schedule-guards
+  assert_workflow_mutation_fails shared-schedule-concurrency
   assert_workflow_mutation_fails weakened-ecr-registry
 fi
 
