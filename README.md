@@ -117,7 +117,8 @@ persistent AWS keys in the repository: publishing and deployment assume
 different OIDC roles. After CI passes, the workflow publishes an immutable ECR
 `sha-<commit>` image and SSM deploys that tag to EC2, which uses encrypted EBS
 and reaches the private PostgreSQL RDS instance through its security-group
-reference.
+reference. For audit, operations record the ECR digest associated with each
+deployed SHA tag, while deployment continues to use the immutable SHA tag.
 
 ```text
 GitHub -> Actions -> Docker Hub + ECR -> SSM -> EC2 -> RDS

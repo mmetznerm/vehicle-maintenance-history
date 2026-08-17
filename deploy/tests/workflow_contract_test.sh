@@ -206,6 +206,8 @@ assert_contains "$image_step" '[[ "$AWS_REGION" == us-east-2 ]]'
 # shellcheck disable=SC2016
 assert_contains "$image_step" '[[ "$ECR_REPOSITORY" == mmetznerm/vehicle-maintenance-history ]]'
 # shellcheck disable=SC2016
+assert_contains "$image_step" '[[ "$ECR_REGISTRY" == 675244612319.dkr.ecr.us-east-2.amazonaws.com ]]'
+# shellcheck disable=SC2016
 assert_contains "$image_step" 'echo "image_uri=$ECR_REGISTRY/$ECR_REPOSITORY" >> "$GITHUB_OUTPUT"'
 # shellcheck disable=SC2016
 assert_contains "$image_step" 'echo "image_tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"'
@@ -220,6 +222,8 @@ assert_contains "$send_command_step" "IMAGE_URI: \${{ steps.image.outputs.image_
 assert_contains "$send_command_step" "IMAGE_TAG: \${{ steps.image.outputs.image_tag }}"
 # shellcheck disable=SC2016
 assert_contains "$send_command_step" '[[ "$EC2_INSTANCE_ID" =~ ^i-[0-9a-f]{8,17}$ ]]'
+# shellcheck disable=SC2016
+assert_contains "$send_command_step" '[[ "$IMAGE_URI" == 675244612319.dkr.ecr.us-east-2.amazonaws.com/mmetznerm/vehicle-maintenance-history ]]'
 # shellcheck disable=SC2016
 assert_contains "$send_command_step" 'printf -v command '\''%s %s %s'\'' /opt/vehicle-maintenance-history/deploy.sh "$IMAGE_URI" "$IMAGE_TAG"'
 # shellcheck disable=SC2016
@@ -288,10 +292,14 @@ assert_workflow_mutation_fails() {
       sed -i 's#bash deploy/wait-for-ssm-command.sh "$COMMAND_ID" "$EC2_INSTANCE_ID"#true#' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
     missing-execution-timeout)
+      # shellcheck disable=SC2016
       sed -i 's/executionTimeout: \[$execution_timeout\]/executionTimeoutRemoved: [$execution_timeout]/' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
     weakened-execution-timeout)
       sed -i 's/VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1200"/VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1199"/' "$mutation_root/.github/workflows/ci-cd.yml"
+      ;;
+    weakened-ecr-registry)
+      sed -i 's/675244612319.dkr.ecr.us-east-2.amazonaws.com/999999999999.dkr.ecr.us-east-2.amazonaws.com/g' "$mutation_root/.github/workflows/ci-cd.yml"
       ;;
     *) fail "unknown workflow mutation: $mutation" ;;
   esac
@@ -314,6 +322,7 @@ if [[ "${VMH_SKIP_WORKFLOW_MUTATIONS:-0}" != 1 ]]; then
   assert_workflow_mutation_fails missing-ssm-poller
   assert_workflow_mutation_fails missing-execution-timeout
   assert_workflow_mutation_fails weakened-execution-timeout
+  assert_workflow_mutation_fails weakened-ecr-registry
 fi
 
 printf 'PASS: workflow contract\n'

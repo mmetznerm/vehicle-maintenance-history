@@ -284,6 +284,7 @@ jobs:
         run: |
           [[ "$AWS_REGION" == us-east-2 ]]
           [[ "$ECR_REPOSITORY" == mmetznerm/vehicle-maintenance-history ]]
+          [[ "$ECR_REGISTRY" == 675244612319.dkr.ecr.us-east-2.amazonaws.com ]]
           [[ "$ECR_REGISTRY" =~ ^[0-9]{12}\.dkr\.ecr\.us-east-2\.amazonaws\.com$ ]]
           echo "image_uri=$ECR_REGISTRY/$ECR_REPOSITORY" >> "$GITHUB_OUTPUT"
           echo "image_tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
@@ -299,6 +300,7 @@ jobs:
         run: |
           [[ "$AWS_REGION" == us-east-2 ]]
           [[ "$EC2_INSTANCE_ID" =~ ^i-[0-9a-f]{8,17}$ ]]
+          [[ "$IMAGE_URI" == 675244612319.dkr.ecr.us-east-2.amazonaws.com/mmetznerm/vehicle-maintenance-history ]]
           [[ "$IMAGE_URI" =~ ^[0-9]{12}\.dkr\.ecr\.us-east-2\.amazonaws\.com/mmetznerm/vehicle-maintenance-history$ ]]
           [[ "$IMAGE_TAG" =~ ^sha-[0-9a-f]{7}$ ]]
           printf -v command '%s %s %s' /opt/vehicle-maintenance-history/deploy.sh "$IMAGE_URI" "$IMAGE_TAG"

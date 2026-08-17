@@ -426,8 +426,8 @@ Use uma sessão do **Session Manager**, não SSH, para consultar o serviço:
 
 ```bash
 cd /opt/vehicle-maintenance-history
-docker compose --env-file .env -f compose.prod.yml ps
-docker compose --env-file .env -f compose.prod.yml logs --tail=200 app
+sudo docker compose --env-file .env -f compose.prod.yml ps
+sudo docker compose --env-file .env -f compose.prod.yml logs --tail=200 app
 curl -fsS http://localhost/actuator/health
 ```
 
@@ -435,6 +435,14 @@ Para listar tags disponíveis no ECR pelo CloudShell:
 
 ```bash
 aws ecr describe-images --region us-east-2 --repository-name mmetznerm/vehicle-maintenance-history --query 'sort_by(imageDetails,&imagePushedAt)[].imageTags' --output table
+```
+
+Para auditoria, registre o digest associado ao tag SHA que está em produção.
+Este comando é somente leitura; mantenha o tag no deploy, sem trocá-lo pelo
+digest:
+
+```bash
+aws ecr describe-images --region us-east-2 --repository-name mmetznerm/vehicle-maintenance-history --image-ids imageTag=<sha-tag-implantado> --query 'imageDetails[0].imageDigest' --output text
 ```
 
 Escolha um `sha-` de uma execução que foi aceita anteriormente e, na sessão do
