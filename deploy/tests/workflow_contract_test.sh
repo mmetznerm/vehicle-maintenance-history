@@ -60,8 +60,10 @@ require_step() {
 
 ci_path="$repo_root/.github/workflows/ci-cd.yml"
 codeql_path="$repo_root/.github/workflows/codeql.yml"
+aws_deployment_path="$repo_root/docs/aws-deployment.md"
 ci_workflow="$(grep -Ev '^[[:space:]]*#' "$ci_path")"
 all_workflows="$ci_workflow"
+aws_deployment_runbook="$(<"$aws_deployment_path")"
 
 [[ ! -e "$codeql_path" ]] || fail 'CodeQL must be part of the CI/CD workflow, not a separate workflow'
 
@@ -76,6 +78,9 @@ assert_contains "$ci_workflow" "schedule:"
 assert_contains "$ci_workflow" 'cron: "24 8 * * 1"'
 assert_not_contains "$all_workflows" "AWS_ACCESS_KEY_ID"
 assert_not_contains "$all_workflows" "AWS_SECRET_ACCESS_KEY"
+assert_contains "$aws_deployment_runbook" "ssm:GetCommandInvocation"
+assert_not_contains "$aws_deployment_runbook" "ssm:ListCommandInvocations"
+assert_not_contains "$aws_deployment_runbook" "ssm:ListCommands"
 assert_contains "$ci_workflow" "group: ci-cd-\${{ github.ref }}"
 assert_contains "$ci_workflow" "cancel-in-progress: \${{ github.event_name == 'pull_request' }}"
 assert_contains "$ci_workflow" 'VMH_SSM_EXECUTION_TIMEOUT_SECONDS: "1200"'
@@ -276,6 +281,8 @@ assert_workflow_mutation_fails() {
   mutation_root="$(mktemp -d)"
   mkdir -p "$mutation_root/.github"
   cp -R "$repo_root/.github/workflows" "$mutation_root/.github/workflows"
+  mkdir -p "$mutation_root/docs"
+  cp "$repo_root/docs/aws-deployment.md" "$mutation_root/docs/aws-deployment.md"
   case "$mutation" in
     missing-contract-need)
       sed -i '/^      - deployment-contracts$/d' "$mutation_root/.github/workflows/ci-cd.yml"

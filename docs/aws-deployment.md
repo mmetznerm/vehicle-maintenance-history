@@ -175,11 +175,7 @@ substituir, não um valor de exemplo:
     {
       "Sid": "SsmCommandRead",
       "Effect": "Allow",
-      "Action": [
-        "ssm:GetCommandInvocation",
-        "ssm:ListCommandInvocations",
-        "ssm:ListCommands"
-      ],
+      "Action": "ssm:GetCommandInvocation",
       "Resource": "*"
     }
   ]
