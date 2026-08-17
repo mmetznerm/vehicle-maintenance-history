@@ -12,6 +12,7 @@ setup_case() {
   BIN_DIR="$CASE_DIR/bin"
   LOG_FILE="$CASE_DIR/aws.log"
   OUTCOMES_FILE="$CASE_DIR/outcomes"
+  SLEEP_LOG="$CASE_DIR/sleep.log"
   mkdir -p "$BIN_DIR"
 
   cat >"$BIN_DIR/aws" <<'STUB'
@@ -30,6 +31,13 @@ fi
 printf '%s\n' "$outcome"
 STUB
   chmod +x "$BIN_DIR/aws"
+
+  cat >"$BIN_DIR/sleep" <<'STUB'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'sleep %s\n' "$*" >>"$VMH_TEST_SLEEP_LOG"
+STUB
+  chmod +x "$BIN_DIR/sleep"
 }
 
 run_wait_with_instance() {
@@ -38,14 +46,15 @@ run_wait_with_instance() {
   printf '%s' "$outcomes" >"$OUTCOMES_FILE"
   : >"$LOG_FILE"
   set +e
-  VMH_TEST_LOG="$LOG_FILE" \
+  WAIT_OUTPUT="$(VMH_TEST_LOG="$LOG_FILE" \
     VMH_TEST_OUTCOMES_FILE="$OUTCOMES_FILE" \
+    VMH_TEST_SLEEP_LOG="$SLEEP_LOG" \
     VMH_SSM_POLL_ATTEMPTS="${VMH_SSM_POLL_ATTEMPTS:-4}" \
-    VMH_SSM_POLL_DELAY_SECONDS=0 \
+    VMH_SSM_POLL_DELAY_SECONDS="${VMH_SSM_POLL_DELAY_SECONDS:-0}" \
     VMH_SSM_EXECUTION_TIMEOUT_SECONDS="${VMH_SSM_EXECUTION_TIMEOUT_SECONDS:-0}" \
     AWS_REGION=us-east-2 \
     PATH="$BIN_DIR:$PATH" \
-    "$WAIT_SCRIPT" 11111111-2222-3333-4444-555555555555 "$instance_id"
+    "$WAIT_SCRIPT" 11111111-2222-3333-4444-555555555555 "$instance_id" 2>&1)"
   WAIT_STATUS=$?
   set -e
 }
@@ -101,6 +110,8 @@ case_undersized_poll_budget_fails_before_aws() (
     run_wait 'Success'
   [[ "$WAIT_STATUS" -ne 0 ]] || fail 'undersized poll budget must fail'
   [[ ! -s "$LOG_FILE" ]] || fail 'poll budget validation must precede AWS'
+  [[ ! -s "$SLEEP_LOG" ]] || fail 'poll budget validation must precede sleep'
+  assert_contains "$WAIT_OUTPUT" 'SSM polling budget of 10 seconds must cover remote execution timeout of 1200 seconds'
 )
 
 case_invalid_remote_execution_timeout_fails_before_aws() (

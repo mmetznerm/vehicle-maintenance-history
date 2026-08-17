@@ -13,7 +13,8 @@ EXECUTION_TIMEOUT_SECONDS="${VMH_SSM_EXECUTION_TIMEOUT_SECONDS:-1200}"
 [[ "$INSTANCE_ID" =~ ^i-[0-9a-f]{8,17}$ ]] || { printf 'Invalid EC2 instance ID\n' >&2; exit 2; }
 [[ "$POLL_ATTEMPTS" =~ ^[1-9][0-9]*$ && "$POLL_DELAY_SECONDS" =~ ^[0-9]+$ && "$EXECUTION_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] || { printf 'Invalid SSM polling configuration\n' >&2; exit 2; }
 (( (POLL_ATTEMPTS - 1) * POLL_DELAY_SECONDS >= EXECUTION_TIMEOUT_SECONDS )) || {
-  printf 'SSM polling budget must cover the remote execution timeout\n' >&2
+  printf 'SSM polling budget of %s seconds must cover remote execution timeout of %s seconds\n' \
+    "$(( (POLL_ATTEMPTS - 1) * POLL_DELAY_SECONDS ))" "$EXECUTION_TIMEOUT_SECONDS" >&2
   exit 2
 }
 
