@@ -7,6 +7,13 @@ WAIT_SCRIPT="$REPO_ROOT/deploy/wait-for-ssm-command.sh"
 # shellcheck disable=SC1091
 source "$TEST_DIR/testlib.sh"
 
+# Keep ambient CI settings from changing this suite's controlled defaults.
+unset VMH_SSM_POLL_ATTEMPTS \
+  VMH_SSM_POLL_DELAY_SECONDS \
+  VMH_SSM_EXECUTION_TIMEOUT_SECONDS \
+  VMH_SSM_DELIVERY_TIMEOUT_SECONDS \
+  VMH_SSM_POLL_MARGIN_SECONDS
+
 setup_case() {
   CASE_DIR="$(mktemp -d)"
   BIN_DIR="$CASE_DIR/bin"
