@@ -91,7 +91,7 @@ prepare_host() {
     curl -fsSL "https://github.com/docker/compose/releases/download/v5.4.0/checksums.txt" -o "$compose_tmp/checksums.txt"
     curl -fsSL "https://github.com/docker/compose/releases/download/v5.4.0/docker-compose-linux-x86_64" -o "$compose_tmp/docker-compose-linux-x86_64"
     checksum_file="$compose_tmp/docker-compose-linux-x86_64.checksum"
-    if ! grep -E '^[[:xdigit:]]{64}  docker-compose-linux-x86_64$' "$compose_tmp/checksums.txt" >"$checksum_file"; then
+    if ! grep -E '^[[:xdigit:]]{64} [ *]docker-compose-linux-x86_64$' "$compose_tmp/checksums.txt" >"$checksum_file"; then
       printf 'Docker Compose checksum entry is missing\n' >&2
       exit 1
     fi

@@ -78,9 +78,9 @@ done
 case "$url" in
   *checksums.txt)
     if [[ "${VMH_TEST_MISSING_CHECKSUM_ENTRY:-0}" == 1 ]]; then
-      printf 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  docker-compose-linux-aarch64\n' >"$output"
+      printf 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa *docker-compose-linux-aarch64\n' >"$output"
     else
-      printf 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  docker-compose-linux-x86_64\n' >"$output"
+      printf 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa *docker-compose-linux-x86_64\n' >"$output"
     fi
     ;;
   *docker-compose-linux-x86_64) printf '#!/usr/bin/env bash\nexit 0\n' >"$output" ;;
