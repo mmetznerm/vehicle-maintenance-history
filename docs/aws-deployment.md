@@ -246,9 +246,9 @@ diretamente para o formulário do console e não publique a saída:
 
 ```bash
 APP_DB_PASSWORD="$(openssl rand -hex 32)"
-JWT_SECRET="$(openssl rand -hex 64)"
+APP_JWT_VALUE="$(openssl rand -hex 64)"
 printf '%s\n' "$APP_DB_PASSWORD"
-printf '%s\n' "$JWT_SECRET"
+printf '%s\n' "$APP_JWT_VALUE"
 ```
 
 Para obter o endpoint real, execute no CloudShell, na região correta:
@@ -258,18 +258,18 @@ aws rds describe-db-instances --region us-east-2 --db-instance-identifier vehicl
 ```
 
 Copie o texto retornado, sem espaços ou aspas, para o valor de `RDS_HOST` e
-para o host da URL JDBC abaixo. Crie `/vmh/prod/app-env` com exatamente estas
-seis linhas; substitua os três campos entre `<...>` pelas saídas/valores
-gerados, sem manter os marcadores:
+para o host da URL JDBC. Crie `/vmh/prod/app-env` com seis entradas separadas
+por quebra de linha. Em cada linha, una o nome e o valor com o caractere `=`;
+não inclua os marcadores descritivos abaixo:
 
-```text
-RDS_HOST=<endpoint retornado pelo comando do RDS>
-SPRING_DATASOURCE_URL=jdbc:postgresql://<endpoint retornado pelo comando do RDS>:5432/vehicle_maintenance_history?sslmode=require
-SPRING_DATASOURCE_USERNAME=vmh_app
-SPRING_DATASOURCE_PASSWORD=<saída de openssl rand -hex 32>
-JWT_SECRET=<saída de openssl rand -hex 64>
-JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70.0
-```
+| Nome | Valor |
+|---|---|
+| `RDS_HOST` | endpoint retornado pelo comando do RDS |
+| `SPRING_DATASOURCE_URL` | URL JDBC PostgreSQL para o endpoint, porta 5432, banco `vehicle_maintenance_history` e `sslmode=require` |
+| `SPRING_DATASOURCE_USERNAME` | `vmh_app` |
+| `SPRING_DATASOURCE_PASSWORD` | primeira saída aleatória gerada acima |
+| `JWT_SECRET` | segunda saída aleatória gerada acima |
+| `JAVA_TOOL_OPTIONS` | `-XX:MaxRAMPercentage=70.0` |
 
 O nome das variáveis precisa permanecer exatamente como acima: `RDS_HOST` é
 usado pelo bootstrap, e as variáveis `SPRING_DATASOURCE_*` e `JWT_SECRET` são
