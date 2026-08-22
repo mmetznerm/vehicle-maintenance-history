@@ -123,7 +123,7 @@ Expected: EC2 is `running`, `t3.micro`, encrypted gp3 10 GiB, `MetadataTokens` i
 Use the exact group IDs returned by Step 3:
 
 ```bash
-export VMH_APP_SG_ID=sg-037abedbb4edca29f
+export VMH_APP_SG_ID=sg-0cf10a28c87a5434f
 export VMH_DB_SG_ID="$(aws rds describe-db-instances \
   --region "$VMH_REGION" \
   --db-instance-identifier "$VMH_DB_ID" \
@@ -137,7 +137,7 @@ aws ec2 describe-security-groups \
   --output json
 ```
 
-Expected: both groups are in the EC2/RDS VPC; application inbound is TCP 80 from `0.0.0.0/0` with no TCP 22; database inbound can be distinguished precisely before edits. Stop if `sg-037abedbb4edca29f` is not attached to the target EC2 instance.
+Expected: both groups are in the EC2/RDS VPC; application inbound is TCP 80 from `0.0.0.0/0` with no TCP 22; database inbound can be distinguished precisely before edits. Stop if `sg-0cf10a28c87a5434f` is not attached to the target EC2 instance. The currently observed database group is `sg-037abedbb4edca29f`; always confirm both live attachments before mutation.
 
 - [ ] **Step 5: Capture Parameter Store metadata and EC2 inline policy resources**
 
@@ -325,13 +325,13 @@ Expected: the policy names only `/vmh/prod/app-env`, contains no `rds-master-pas
 
 - [ ] **Step 1: Verify private-path preconditions**
 
-Compare the EC2 and RDS `VpcId` values from Task 1. Confirm they are identical. In **VPC > Security groups**, open the database security group and confirm an inbound PostgreSQL TCP 5432 rule can reference `sg-037abedbb4edca29f`.
+Compare the EC2 and RDS `VpcId` values from Task 1. Confirm they are identical. In **VPC > Security groups**, open the database security group and confirm an inbound PostgreSQL TCP 5432 rule can reference the application group `sg-0cf10a28c87a5434f`.
 
 Expected: same VPC and a valid security-group reference. Stop before mutation if the VPCs differ.
 
 - [ ] **Step 2: Obtain explicit security-group authorization**
 
-Present the exact database group ID and every current inbound rule. Ask permission to retain only TCP 5432 from `sg-037abedbb4edca29f` for this database group. Do not alter shared groups that protect unrelated resources.
+Present the exact database group ID and every current inbound rule. If the rule is not already compliant, ask permission to retain only TCP 5432 from `sg-0cf10a28c87a5434f` for this database group. Do not alter shared groups that protect unrelated resources. If it is already the sole inbound rule, record the pass and skip Steps 2-4 without saving any security-group change.
 
 - [ ] **Step 3: Restrict the database security group**
 
@@ -339,7 +339,7 @@ In **VPC > Security groups > database group > Edit inbound rules**, leave exactl
 
 | Type | Protocol | Port | Source |
 |---|---|---:|---|
-| PostgreSQL | TCP | 5432 | `sg-037abedbb4edca29f` |
+| PostgreSQL | TCP | 5432 | `sg-0cf10a28c87a5434f` |
 
 Remove IPv4 CIDR, IPv6 CIDR, self-reference, and other-group rules for TCP 5432 only after confirming the database group is dedicated to this project. Save.
 
@@ -357,7 +357,7 @@ Expected: `UP`. If it fails, restore the exact prior database ingress captured i
 
 - [ ] **Step 5: Obtain explicit RDS modification authorization**
 
-State the exact changes: public access `No`, allocated storage unchanged at 20 GiB, autoscaling maximum set to 30 GiB, attached database security group unchanged. Obtain explicit approval.
+If the live RDS state is not already compliant, state the exact changes: public access `No`, allocated storage unchanged at 20 GiB, autoscaling maximum set to 30 GiB, attached database security group unchanged. Obtain explicit approval. If all values already match, record the pass and skip Steps 5-7 without submitting the modify form.
 
 - [ ] **Step 6: Apply private-access and storage settings**
 
