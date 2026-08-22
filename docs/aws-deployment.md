@@ -246,9 +246,9 @@ diretamente para o formulário do console e não publique a saída:
 
 ```bash
 APP_DB_PASSWORD="$(openssl rand -hex 32)"
-JWT_SECRET="$(openssl rand -hex 64)"
+APP_JWT_VALUE="$(openssl rand -hex 64)"
 printf '%s\n' "$APP_DB_PASSWORD"
-printf '%s\n' "$JWT_SECRET"
+printf '%s\n' "$APP_JWT_VALUE"
 ```
 
 Para obter o endpoint real, execute no CloudShell, na região correta:
@@ -258,18 +258,18 @@ aws rds describe-db-instances --region us-east-2 --db-instance-identifier vehicl
 ```
 
 Copie o texto retornado, sem espaços ou aspas, para o valor de `RDS_HOST` e
-para o host da URL JDBC abaixo. Crie `/vmh/prod/app-env` com exatamente estas
-seis linhas; substitua os três campos entre `<...>` pelas saídas/valores
-gerados, sem manter os marcadores:
+para o host da URL JDBC. Crie `/vmh/prod/app-env` com seis entradas separadas
+por quebra de linha. Em cada linha, una o nome e o valor com o caractere `=`;
+não inclua os marcadores descritivos abaixo:
 
-```text
-RDS_HOST=<endpoint retornado pelo comando do RDS>
-SPRING_DATASOURCE_URL=jdbc:postgresql://<endpoint retornado pelo comando do RDS>:5432/vehicle_maintenance_history?sslmode=require
-SPRING_DATASOURCE_USERNAME=vmh_app
-SPRING_DATASOURCE_PASSWORD=<saída de openssl rand -hex 32>
-JWT_SECRET=<saída de openssl rand -hex 64>
-JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70.0
-```
+| Nome | Valor |
+|---|---|
+| `RDS_HOST` | endpoint retornado pelo comando do RDS |
+| `SPRING_DATASOURCE_URL` | URL JDBC PostgreSQL para o endpoint, porta 5432, banco `vehicle_maintenance_history` e `sslmode=require` |
+| `SPRING_DATASOURCE_USERNAME` | `vmh_app` |
+| `SPRING_DATASOURCE_PASSWORD` | primeira saída aleatória gerada acima |
+| `JWT_SECRET` | segunda saída aleatória gerada acima |
+| `JAVA_TOOL_OPTIONS` | `-XX:MaxRAMPercentage=70.0` |
 
 O nome das variáveis precisa permanecer exatamente como acima: `RDS_HOST` é
 usado pelo bootstrap, e as variáveis `SPRING_DATASOURCE_*` e `JWT_SECRET` são
@@ -357,15 +357,52 @@ tenta enviar SSM para uma instância ainda não preparada.
 
 ## 10. Remover a credencial de bootstrap
 
-Somente depois de confirmar a mensagem de saúde e a aplicação funcionando,
-abra **Systems Manager > Parameter Store**, selecione
-`/vmh/prod/rds-master-password` e escolha **Delete**. Um administrador também
-pode executar a exclusão pelo CloudShell com `ssm:DeleteParameter`. Não dê essa
-permissão à role da instância.
+Remova a credencial de bootstrap somente nesta ordem:
 
-Mantenha `/vmh/prod/app-env`. Deploys posteriores precisam dele, enquanto o
-aplicativo nunca recebe a senha master. Se o bootstrap ainda não foi validado,
-preserve o parâmetro para permitir uma nova execução segura.
+1. Confirme `UP` no Actuator interno e público.
+2. Confirme que `SPRING_DATASOURCE_USERNAME` no ambiente efetivo é `vmh_app`.
+3. Obtenha aprovação explícita para excluir somente
+   `/vmh/prod/rds-master-password`.
+4. Em **Systems Manager > Parameter Store**, exclua esse parâmetro. Um
+   administrador também pode executar a exclusão pelo CloudShell com
+   `ssm:DeleteParameter`; não dê essa permissão à role da instância.
+5. Remova o ARN desse parâmetro da política inline da role EC2 e mantenha
+   `/vmh/prod/app-env`.
+6. Confirme novamente o Actuator interno e público.
+
+A política inline final da EC2 deve permitir a leitura de um único parâmetro:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadApplicationParameters",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameter",
+      "Resource": "arn:aws:ssm:us-east-2:675244612319:parameter/vmh/prod/app-env"
+    },
+    {
+      "Sid": "DecryptOnlyThroughSsmOhio",
+      "Effect": "Allow",
+      "Action": "kms:Decrypt",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": "ssm.us-east-2.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
+```
+
+Se outro bootstrap for necessário, redefina temporariamente a credencial
+administrativa do RDS, crie um novo `SecureString` temporário com nome novo,
+conceda acesso somente durante a recuperação, execute o bootstrap e repita
+todo o encerramento acima. Nunca reutilize `/vmh/prod/app-env` para a
+credencial administrativa e nunca mantenha a permissão temporária depois da
+recuperação.
 
 ## 11. Variáveis e secrets do GitHub
 
@@ -411,15 +448,94 @@ verdadeiros:
 - o job de deploy do GitHub Actions termina com sucesso;
 - o frontend público abre por `http://<IPv4-público>/` (sem HTTPS nesta fase);
 - `http://<IPv4-público>/actuator/health` responde com status `UP`;
-- registro e login funcionam somente com dados de teste;
-- um dado criado continua presente depois de reiniciar o container;
+- registro, logout, login e a chamada de renovação funcionam somente com dados
+  fictícios;
+- CRUD de veículos e manutenções funciona;
+- os dados permanecem depois de reiniciar o container e depois de um deploy
+  posterior;
 - o volume raiz EBS de 10 GiB `gp3` está com **Encrypted: Yes** antes da
   instalação de segredos da aplicação;
-- o security group da aplicação não tem entrada TCP 22;
-- o RDS permanece com **Public access: No** e a porta 5432 aceita somente o
-  grupo da aplicação;
+- o security group `vehicle-maintenance-history-app-sg` expõe somente TCP 80 e
+  não tem entrada TCP 22;
+- o RDS registra `PubliclyAccessible=false` e tem somente o security group
+  dedicado do banco anexado;
+- o security group do banco permite PostgreSQL TCP 5432 somente com origem
+  `vehicle-maintenance-history-app-sg`;
 - o GitHub não contém credenciais AWS persistentes;
-- o limite de autoscaling do armazenamento RDS continua em 30 GiB.
+- o RDS mantém 20 GiB alocados e limite de autoscaling de 30 GiB;
+- `/vmh/prod/rds-master-password` não existe e a política inline da EC2 não
+  cita esse parâmetro, enquanto `/vmh/prod/app-env` continua disponível;
+- a evidência pública em [Portfolio Deployment Acceptance](portfolio-acceptance.md)
+  está atualizada com o commit, workflow e tag aceitos.
+
+Execute o aceite funcional com uma identidade descartável e valores
+fictícios. Não registre a identidade, a senha ou os tokens. Para registro,
+logout e login:
+
+1. Abra `/register`, crie a conta de teste e espere `/vehicles` carregar.
+2. Escolha **Sign out** e confirme o redirecionamento para `/login`.
+3. Entre novamente e confirme que `/vehicles` abre sem erro de autenticação.
+
+No console de desenvolvimento do navegador, valide a renovação sem imprimir
+tokens:
+
+```javascript
+void (async () => {
+  const currentRefreshValue = localStorage.getItem("vehicle-history.refreshToken");
+  if (!currentRefreshValue) throw new Error("refresh value is absent");
+  const response = await fetch("/v1/auth/refresh", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: currentRefreshValue }),
+  });
+  if (!response.ok) throw new Error(`refresh failed with ${response.status}`);
+  const nextValues = await response.json();
+  localStorage.setItem("vehicle-history.accessToken", nextValues.accessToken);
+  localStorage.setItem("vehicle-history.refreshToken", nextValues.refreshToken);
+  console.log("refresh accepted", response.status);
+})();
+```
+
+O resultado esperado é somente `refresh accepted 200`; nenhum valor deve ser
+impresso. Recarregue `/vehicles` e confirme que a sessão continua autenticada.
+
+Para o CRUD, crie um veículo fictício, abra os detalhes, altere marca, modelo,
+ano e cor, salve e confirme cada valor; depois exclua e confirme que ele saiu
+da lista. Em outro veículo fictício, repita criar, listar, editar e excluir uma
+manutenção, conferindo data, hodômetro, descrição e custo após cada gravação.
+
+Para comprovar persistência no reinício, retenha um veículo e uma manutenção e
+execute no Session Manager:
+
+```bash
+sudo docker restart vehicle-maintenance-history-app-1
+for attempt in $(seq 1 12); do
+  if curl -fsS http://localhost/actuator/health >/dev/null; then
+    printf 'Health check succeeded\n'
+    break
+  fi
+  if [ "$attempt" -eq 12 ]; then
+    printf 'Health check failed\n' >&2
+    exit 1
+  fi
+  sleep 5
+done
+```
+
+O resultado esperado é `Health check succeeded`. Reabra a interface e confirme
+que os dois registros continuam presentes.
+
+Depois de um deploy de `main`, execute:
+
+```bash
+sudo docker inspect --format '{{.Config.Image}}' vehicle-maintenance-history-app-1
+curl -fsS http://localhost/actuator/health
+```
+
+O tag da imagem deve ser `sha-` seguido dos sete primeiros caracteres do commit
+implantado, o Actuator deve responder `UP`, e os registros retidos devem
+continuar disponíveis na interface. Registre somente commit, tag, URL do
+workflow e resultado; nunca registre identidade ou credenciais.
 
 ## 13. Operação e rollback manual
 
@@ -461,3 +577,37 @@ Referências oficiais: [GitHub OIDC com AWS](https://docs.github.com/en/actions/
 [autenticação de registro privado do ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html),
 [política AmazonEC2ContainerRegistryPullOnly](https://docs.aws.amazon.com/AmazonECR/latest/userguide/security-iam-awsmanpol.html) e
 [conexão com RDS PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ConnectToPostgreSQLInstance.html).
+
+## 14. Operação contínua e custos
+
+Nas primeiras quatro semanas, revise semanalmente **Billing**, **Budgets**,
+**Free Tier**, créditos, EC2, RDS, EBS, snapshots, ECR, endereços IP elásticos,
+NAT Gateways e load balancers. Depois desse período, faça a mesma revisão
+mensalmente e também antes de habilitar qualquer novo serviço.
+
+O orçamento gera alertas; ele não bloqueia nem limita gastos. Se houver custo
+real ou previsto não compreendido, pare EC2 e RDS, marque a demonstração como
+indisponível e investigue **Billing** antes de retomar. Um RDS parado inicia
+automaticamente depois de sete dias, e armazenamento e backups podem continuar
+gerando cobrança mesmo com a instância parada. Portanto, parar recursos é uma
+resposta temporária, não um controle permanente de custo.
+
+O IPv4 público da EC2 é dinâmico. Depois de qualquer parada, início ou mudança
+de rede, obtenha o endereço atual com este comando somente leitura:
+
+```bash
+aws ec2 describe-instances \
+  --region us-east-2 \
+  --instance-ids i-0aac27aeabf6e94c3 \
+  --query 'Reservations[0].Instances[0].PublicIpAddress' \
+  --output text
+```
+
+Se o endereço mudar, atualize o link de demonstração no README e repita a
+abertura da interface pública e a verificação de
+`http://<IPv4-público>/actuator/health`.
+
+Os critérios comprovados estão em
+[Portfolio Deployment Acceptance](portfolio-acceptance.md). As próximas
+decisões de infraestrutura e seus gatilhos estão em
+[Portfolio Infrastructure Roadmap](portfolio-roadmap.md).

@@ -8,6 +8,23 @@
 
 REST API and frontend to manage vehicles and their maintenance history.
 
+## Live Demo
+
+[Open the live portfolio application](http://3.128.87.156/).
+
+The demo is HTTP-only. Use fictitious data and a unique password created only
+for this test; do not reuse personal or production credentials. Availability
+depends on AWS Free Tier eligibility, remaining credits, and the EC2 instance's
+dynamic public IPv4 address. See the current
+[deployment acceptance record](docs/portfolio-acceptance.md) for the exact
+release and checks verified.
+
+## Screenshots
+
+![Vehicle list in the live portfolio application](docs/images/portfolio/vehicles.png)
+
+![Vehicle maintenance history in the live portfolio application](docs/images/portfolio/maintenance-history.png)
+
 ## Stack
 
 - Java 21
@@ -109,22 +126,30 @@ Published tags:
 ## AWS Deployment
 
 The [AWS deployment guide](docs/aws-deployment.md) describes the console setup,
-the first bootstrap and day-to-day operations. Docker Hub remains the public
-portfolio registry, while Amazon ECR is the private runtime registry read by
-EC2. GitHub Actions authenticates to AWS through GitHub OIDC instead of keeping
-persistent AWS keys in the repository: publishing and deployment assume
-different OIDC roles. After CI passes, the workflow publishes an immutable ECR
-`sha-<commit>` image and SSM deploys that tag to EC2, which uses encrypted EBS
-and reaches the private PostgreSQL RDS instance through its security-group
-reference. For audit, operations record the ECR digest associated with each
-deployed SHA tag, while deployment continues to use the immutable SHA tag.
+the first bootstrap and day-to-day operations. A pull request runs CI without
+deploying. After it is merged to `main`, GitHub Actions publishes the same
+SHA-tagged image to Docker Hub and Amazon ECR, then deploys it through Systems
+Manager.
 
 ```text
-GitHub -> Actions -> Docker Hub + ECR -> SSM -> EC2 -> RDS
+Pull Request -> main -> GitHub Actions -> Docker Hub + ECR -> SSM -> EC2 -> private RDS
 ```
 
-The public demonstration uses HTTP and test data only; HTTPS and production
-data are outside this portfolio deployment.
+Docker Hub demonstrates public image delivery. Private ECR is the runtime image
+source for EC2. GitHub OIDC uses separate publishing and deployment roles, so
+the repository keeps no persistent AWS access keys. SSM replaces SSH, ECR SHA
+tags are immutable, the EC2 root EBS volume is encrypted, and RDS is private
+behind a security-group-to-security-group PostgreSQL rule. The application uses
+the limited `vmh_app` database role; the temporary master bootstrap parameter
+was removed after connectivity was proven.
+
+The [production acceptance record](docs/portfolio-acceptance.md) documents the
+verified SHA deployment, private RDS connectivity, login and refresh probes,
+vehicle and maintenance CRUD, and persistence after a container restart.
+
+Current trade-offs are deliberate: one EC2 instance, Single-AZ RDS, HTTP,
+dynamic IPv4, fictitious test data, manual rollback, and availability that
+depends on Free Tier eligibility and promotional credits.
 
 ## Recommended Local Development Workflow
 
@@ -310,17 +335,17 @@ X-Request-Id
 If the client sends this header, the API reuses it. Otherwise, the API generates
 a new one.
 
-## Out Of Scope
+## Roadmap and Deliberate Trade-offs
 
-The following topics remain outside the current portfolio scope:
+The [infrastructure roadmap](docs/portfolio-roadmap.md) defines explicit
+triggers and cost questions for future changes. These are decisions to revisit,
+not promised features:
 
-- Outbox
-- Kafka
-- Terraform or CloudFormation
-- ECS, EKS, Kubernetes or multiple EC2 instances
-- Application Load Balancer or Auto Scaling
-- Route 53, custom domain or HTTPS
-- RDS Multi-AZ, Aurora or RDS Proxy
-- SSH access
-- Automatic rollback
-- GitHub Environments and deployment approvals
+- HTTPS and a stable domain when the demo needs a durable URL or anything beyond fictitious credentials.
+- Observability and alerts when recurring traffic or an availability target requires centralized diagnostics.
+- Automatic rollback when multiple accepted SHA releases exist and recovery time matters more than manual simplicity.
+- Terraform when a second environment, recreation, or material console drift makes infrastructure as code useful.
+- A possible ECS migration only when scaling, managed scheduling, multiple instances, or higher availability becomes necessary.
+
+ECS is not automatically more current or more appropriate than one EC2
+instance for this small, Free Tier-conscious portfolio workload.
