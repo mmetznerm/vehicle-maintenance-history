@@ -357,15 +357,52 @@ tenta enviar SSM para uma instância ainda não preparada.
 
 ## 10. Remover a credencial de bootstrap
 
-Somente depois de confirmar a mensagem de saúde e a aplicação funcionando,
-abra **Systems Manager > Parameter Store**, selecione
-`/vmh/prod/rds-master-password` e escolha **Delete**. Um administrador também
-pode executar a exclusão pelo CloudShell com `ssm:DeleteParameter`. Não dê essa
-permissão à role da instância.
+Remova a credencial de bootstrap somente nesta ordem:
 
-Mantenha `/vmh/prod/app-env`. Deploys posteriores precisam dele, enquanto o
-aplicativo nunca recebe a senha master. Se o bootstrap ainda não foi validado,
-preserve o parâmetro para permitir uma nova execução segura.
+1. Confirme `UP` no Actuator interno e público.
+2. Confirme que `SPRING_DATASOURCE_USERNAME` no ambiente efetivo é `vmh_app`.
+3. Obtenha aprovação explícita para excluir somente
+   `/vmh/prod/rds-master-password`.
+4. Em **Systems Manager > Parameter Store**, exclua esse parâmetro. Um
+   administrador também pode executar a exclusão pelo CloudShell com
+   `ssm:DeleteParameter`; não dê essa permissão à role da instância.
+5. Remova o ARN desse parâmetro da política inline da role EC2 e mantenha
+   `/vmh/prod/app-env`.
+6. Confirme novamente o Actuator interno e público.
+
+A política inline final da EC2 deve permitir a leitura de um único parâmetro:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadApplicationParameters",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameter",
+      "Resource": "arn:aws:ssm:us-east-2:675244612319:parameter/vmh/prod/app-env"
+    },
+    {
+      "Sid": "DecryptOnlyThroughSsmOhio",
+      "Effect": "Allow",
+      "Action": "kms:Decrypt",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": "ssm.us-east-2.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
+```
+
+Se outro bootstrap for necessário, redefina temporariamente a credencial
+administrativa do RDS, crie um novo `SecureString` temporário com nome novo,
+conceda acesso somente durante a recuperação, execute o bootstrap e repita
+todo o encerramento acima. Nunca reutilize `/vmh/prod/app-env` para a
+credencial administrativa e nunca mantenha a permissão temporária depois da
+recuperação.
 
 ## 11. Variáveis e secrets do GitHub
 
@@ -411,15 +448,25 @@ verdadeiros:
 - o job de deploy do GitHub Actions termina com sucesso;
 - o frontend público abre por `http://<IPv4-público>/` (sem HTTPS nesta fase);
 - `http://<IPv4-público>/actuator/health` responde com status `UP`;
-- registro e login funcionam somente com dados de teste;
-- um dado criado continua presente depois de reiniciar o container;
+- registro, logout, login e a chamada de renovação funcionam somente com dados
+  fictícios;
+- CRUD de veículos e manutenções funciona;
+- os dados permanecem depois de reiniciar o container e depois de um deploy
+  posterior;
 - o volume raiz EBS de 10 GiB `gp3` está com **Encrypted: Yes** antes da
   instalação de segredos da aplicação;
-- o security group da aplicação não tem entrada TCP 22;
-- o RDS permanece com **Public access: No** e a porta 5432 aceita somente o
-  grupo da aplicação;
+- o security group `vehicle-maintenance-history-app-sg` expõe somente TCP 80 e
+  não tem entrada TCP 22;
+- o RDS registra `PubliclyAccessible=false` e tem somente o security group
+  dedicado do banco anexado;
+- o security group do banco permite PostgreSQL TCP 5432 somente com origem
+  `vehicle-maintenance-history-app-sg`;
 - o GitHub não contém credenciais AWS persistentes;
-- o limite de autoscaling do armazenamento RDS continua em 30 GiB.
+- o RDS mantém 20 GiB alocados e limite de autoscaling de 30 GiB;
+- `/vmh/prod/rds-master-password` não existe e a política inline da EC2 não
+  cita esse parâmetro, enquanto `/vmh/prod/app-env` continua disponível;
+- a evidência pública em [Portfolio Deployment Acceptance](portfolio-acceptance.md)
+  está atualizada com o commit, workflow e tag aceitos.
 
 ## 13. Operação e rollback manual
 
@@ -461,3 +508,37 @@ Referências oficiais: [GitHub OIDC com AWS](https://docs.github.com/en/actions/
 [autenticação de registro privado do ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html),
 [política AmazonEC2ContainerRegistryPullOnly](https://docs.aws.amazon.com/AmazonECR/latest/userguide/security-iam-awsmanpol.html) e
 [conexão com RDS PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ConnectToPostgreSQLInstance.html).
+
+## 14. Operação contínua e custos
+
+Nas primeiras quatro semanas, revise semanalmente **Billing**, **Budgets**,
+**Free Tier**, créditos, EC2, RDS, EBS, snapshots, ECR, endereços IP elásticos,
+NAT Gateways e load balancers. Depois desse período, faça a mesma revisão
+mensalmente e também antes de habilitar qualquer novo serviço.
+
+O orçamento gera alertas; ele não bloqueia nem limita gastos. Se houver custo
+real ou previsto não compreendido, pare EC2 e RDS, marque a demonstração como
+indisponível e investigue **Billing** antes de retomar. Um RDS parado inicia
+automaticamente depois de sete dias, e armazenamento e backups podem continuar
+gerando cobrança mesmo com a instância parada. Portanto, parar recursos é uma
+resposta temporária, não um controle permanente de custo.
+
+O IPv4 público da EC2 é dinâmico. Depois de qualquer parada, início ou mudança
+de rede, obtenha o endereço atual com este comando somente leitura:
+
+```bash
+aws ec2 describe-instances \
+  --region us-east-2 \
+  --instance-ids i-0aac27aeabf6e94c3 \
+  --query 'Reservations[0].Instances[0].PublicIpAddress' \
+  --output text
+```
+
+Se o endereço mudar, atualize o link de demonstração no README e repita a
+abertura da interface pública e a verificação de
+`http://<IPv4-público>/actuator/health`.
+
+Os critérios comprovados estão em
+[Portfolio Deployment Acceptance](portfolio-acceptance.md). As próximas
+decisões de infraestrutura e seus gatilhos estão em
+[Portfolio Infrastructure Roadmap](portfolio-roadmap.md).
