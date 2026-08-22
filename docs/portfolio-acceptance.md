@@ -1,5 +1,7 @@
 # Portfolio Deployment Acceptance
 
+Acceptance date: 2026-08-22 (`America/Sao_Paulo`).
+
 ## Scope and safety
 
 This acceptance covers the public portfolio deployment in AWS `us-east-2` and the delivery path from `main` through GitHub Actions, Docker Hub, ECR, Systems Manager, EC2, and a private RDS PostgreSQL instance. All functional checks used fictitious data and a disposable test identity. No credentials, token values, parameter contents, or database addresses were recorded.

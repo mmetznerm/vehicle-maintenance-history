@@ -468,6 +468,75 @@ verdadeiros:
 - a evidência pública em [Portfolio Deployment Acceptance](portfolio-acceptance.md)
   está atualizada com o commit, workflow e tag aceitos.
 
+Execute o aceite funcional com uma identidade descartável e valores
+fictícios. Não registre a identidade, a senha ou os tokens. Para registro,
+logout e login:
+
+1. Abra `/register`, crie a conta de teste e espere `/vehicles` carregar.
+2. Escolha **Sign out** e confirme o redirecionamento para `/login`.
+3. Entre novamente e confirme que `/vehicles` abre sem erro de autenticação.
+
+No console de desenvolvimento do navegador, valide a renovação sem imprimir
+tokens:
+
+```javascript
+void (async () => {
+  const currentRefreshValue = localStorage.getItem("vehicle-history.refreshToken");
+  if (!currentRefreshValue) throw new Error("refresh value is absent");
+  const response = await fetch("/v1/auth/refresh", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: currentRefreshValue }),
+  });
+  if (!response.ok) throw new Error(`refresh failed with ${response.status}`);
+  const nextValues = await response.json();
+  localStorage.setItem("vehicle-history.accessToken", nextValues.accessToken);
+  localStorage.setItem("vehicle-history.refreshToken", nextValues.refreshToken);
+  console.log("refresh accepted", response.status);
+})();
+```
+
+O resultado esperado é somente `refresh accepted 200`; nenhum valor deve ser
+impresso. Recarregue `/vehicles` e confirme que a sessão continua autenticada.
+
+Para o CRUD, crie um veículo fictício, abra os detalhes, altere marca, modelo,
+ano e cor, salve e confirme cada valor; depois exclua e confirme que ele saiu
+da lista. Em outro veículo fictício, repita criar, listar, editar e excluir uma
+manutenção, conferindo data, hodômetro, descrição e custo após cada gravação.
+
+Para comprovar persistência no reinício, retenha um veículo e uma manutenção e
+execute no Session Manager:
+
+```bash
+sudo docker restart vehicle-maintenance-history-app-1
+for attempt in $(seq 1 12); do
+  if curl -fsS http://localhost/actuator/health >/dev/null; then
+    printf 'Health check succeeded\n'
+    break
+  fi
+  if [ "$attempt" -eq 12 ]; then
+    printf 'Health check failed\n' >&2
+    exit 1
+  fi
+  sleep 5
+done
+```
+
+O resultado esperado é `Health check succeeded`. Reabra a interface e confirme
+que os dois registros continuam presentes.
+
+Depois de um deploy de `main`, execute:
+
+```bash
+sudo docker inspect --format '{{.Config.Image}}' vehicle-maintenance-history-app-1
+curl -fsS http://localhost/actuator/health
+```
+
+O tag da imagem deve ser `sha-` seguido dos sete primeiros caracteres do commit
+implantado, o Actuator deve responder `UP`, e os registros retidos devem
+continuar disponíveis na interface. Registre somente commit, tag, URL do
+workflow e resultado; nunca registre identidade ou credenciais.
+
 ## 13. Operação e rollback manual
 
 Use uma sessão do **Session Manager**, não SSH, para consultar o serviço:

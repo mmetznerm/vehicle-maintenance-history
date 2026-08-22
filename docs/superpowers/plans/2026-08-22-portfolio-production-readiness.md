@@ -504,7 +504,8 @@ Expected: the cadence is factual and does not promise permanent zero cost.
 Open the public `/register` route. Enter:
 
 - full name: `Portfolio Reviewer`;
-- email or phone: `portfolio.acceptance.20260822.1@example.invalid`;
+- email or phone: a unique disposable address under `example.invalid`, generated
+  only for this acceptance run and never committed literally;
 - password: a newly generated test-only value between 16 and 32 characters that is not used anywhere else.
 
 Submit and confirm navigation to `/vehicles`. Keep the password only in the active password-manager/clipboard session; never paste it into chat, terminal, Git, or screenshots.
