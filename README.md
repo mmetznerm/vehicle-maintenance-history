@@ -8,6 +8,7 @@
 ![Docker](https://img.shields.io/badge/Docker-24.0-2496ED?logo=docker&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS-Cloud-FF9900?logo=amazon-aws&logoColor=white)
 ![CodeQL](https://img.shields.io/badge/CodeQL-Security-blueviolet?logo=github&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 Portfolio project for recording a vehicle's maintenance history. It provides a web application and REST API where users can create an account, register vehicles, and manage each vehicle's maintenance records.
 
@@ -21,6 +22,35 @@ Portfolio project for recording a vehicle's maintenance history. It provides a w
 - Vehicle and maintenance CRUD operations
 - React web interface served with the Spring Boot application
 - OpenAPI/Swagger documentation, Flyway migrations, health endpoint, and automated tests
+
+## System Architecture
+
+```mermaid
+graph TD
+    subgraph Clients
+        Mobile[📱 Companion App - KMP]
+        Web[💻 Web Interface - React 19]
+    end
+
+    subgraph Backend Service
+        API[Spring Boot 3.5 REST API]
+        Sec[Spring Security & JWT]
+        Data[Spring Data JPA & Flyway]
+    end
+
+    subgraph Database & Cloud Infrastructure
+        DB[(PostgreSQL Database)]
+        EC2[AWS EC2 Container Host]
+        SSM[AWS Systems Manager]
+    end
+
+    Mobile -->|REST API / JWT| Sec
+    Web -->|HTTP / React SPA| Sec
+    Sec --> API
+    API --> Data
+    Data --> DB
+    SSM -->|Automated Deploy| EC2
+```
 
 ## Stack
 
@@ -80,6 +110,12 @@ Integration tests require Docker because they use Testcontainers:
 .\mvnw.cmd verify -Pintegration-tests
 ```
 
-## Notes
+## Documentation & Architecture
 
-The repository also contains deployment and architecture notes in [`docs`](docs). The next product step is to connect the companion Kotlin Multiplatform mobile app to this API end to end.
+Detailed deployment guides, ADRs, and API specifications are available in [`docs`](docs):
+- [Architecture Decision Records (ADRs)](docs/adr/)
+- [Postman API Collection](docs/api/vehicle-maintenance-api.postman_collection.json)
+- [AWS Deployment Guide](docs/aws-deployment.md)
+- [Security Policy](SECURITY.md)
+
+The next product step is to connect the companion Kotlin Multiplatform mobile app to this API end to end.
