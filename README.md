@@ -1,12 +1,15 @@
 # Vehicle Maintenance History
 
 [![CI/CD](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/mmetznerm/vehicle-maintenance-history/actions/workflows/ci-cd.yml)
+![Java](https://img.shields.io/badge/Java-21-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)
+![React](https://img.shields.io/badge/React-19-61DAFB)
 
 Portfolio project for recording a vehicle's maintenance history. It provides a web application and REST API where users can create an account, register vehicles, and manage each vehicle's maintenance records.
 
-[Live demo](http://3.128.87.156/) · [Mobile app](https://github.com/mmetznerm/vehicle-maintenance-history-kmp)
+[Mobile app](https://github.com/mmetznerm/vehicle-maintenance-history-kmp)
 
-> The demo is HTTP-only and intended for fictitious data. Please use a unique test password.
+> The live demo is temporarily offline to control cloud costs. Screenshots below use fictitious data.
 
 ## Highlights
 
@@ -21,10 +24,16 @@ Portfolio project for recording a vehicle's maintenance history. It provides a w
 
 **Web:** React, TypeScript, Vite, and Vitest.
 
+## Deployment
+
+The application is containerized with Docker and deployed through GitHub Actions to AWS. The production setup uses Amazon ECR, EC2, RDS, and Systems Manager, with GitHub OIDC instead of long-lived cloud credentials. See the [deployment guide](docs/aws-deployment.md) for the architecture and operational notes.
+
 ## Screenshots
 
-![Vehicle list](docs/images/portfolio/vehicles.png)
-![Maintenance history](docs/images/portfolio/maintenance-history.png)
+![Sign-in screen](docs/images/portfolio/login.png)
+![Vehicle maintenance history](docs/images/portfolio/vehicle-history.png)
+![Vehicle registration](docs/images/portfolio/vehicle-form.png)
+![Maintenance registration](docs/images/portfolio/maintenance-form.png)
 
 ## Run locally
 
