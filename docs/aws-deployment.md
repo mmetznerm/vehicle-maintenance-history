@@ -353,7 +353,7 @@ During preparation, leave `AWS_DEPLOY_ENABLED` **absent**. After initial manual 
 
 In **Secrets**, keep existing secrets `DOCKER_USERNAME` and `DOCKER_ACCESS_TOKEN`, used only for Docker Hub publishing. Do not add persistent AWS secrets: OIDC role provides temporary credentials to publish and deploy jobs. Publish assumes `AWS_PUBLISH_ROLE_ARN` and deploy assumes `AWS_DEPLOY_ROLE_ARN`.
 
-Production deploys are serialized in GitHub Actions and again on EC2 via `/var/lock/vehicle-maintenance-history-deploy.lock`. Workflow bounds delivery/start to 60 seconds via `send-command` `--timeout-seconds` and sends remote execution `executionTimeout` of 1200 seconds (20 minutes) to `AWS-RunShellScript`. Then polls SSM state for up to 130 attempts with 10-second interval: 129 intervals total ~21 minutes 30 seconds. This 1290-second window covers 60-second delivery, 1200-second remote execution, and 30-second polling margin. ECR vulnerability scanning and lifecycle policy are optional enhancements and not prerequisites for demo acceptance.
+Production deploys are serialized in GitHub Actions and again on EC2 via `/var/lock/vehicle-maintenance-history-deploy.lock`. Workflow bounds delivery/start to 60 seconds via `send-command` `--timeout-seconds` and sends remote execution `executionTimeout` of 1200 seconds (20 minutes) to `AWS-RunShellScript`. Then polls SSM state for up to 130 attempts with 10-second interval: 129 intervals total ~21 minutes and 30 seconds. This 1290-second window covers 60-second delivery/start, 1200-second remote execution, and 30-second polling margin. ECR vulnerability scanning and lifecycle policy are optional enhancements and not prerequisites for demo acceptance.
 
 ## 12. Acceptance Checks
 
