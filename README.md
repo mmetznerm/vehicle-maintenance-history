@@ -31,7 +31,7 @@ The application is containerized with Docker and deployed through GitHub Actions
 ## Screenshots
 
 ![Sign-in screen](docs/images/portfolio/login.png)
-![Vehicle maintenance history](docs/images/portfolio/vehicle-history.png)
+![Vehicle maintenance history](docs/images/portfolio/dashboard.png)
 ![Vehicle registration](docs/images/portfolio/vehicle-form.png)
 ![Maintenance registration](docs/images/portfolio/maintenance-form.png)
 
