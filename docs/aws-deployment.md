@@ -1,42 +1,40 @@
-# Implantação na AWS
+# AWS Deployment
 
-Este runbook cria a implantação pequena do portfólio na região `us-east-2`.
-Execute as etapas na ordem e substitua somente os valores marcados como saída de
-um comando. Os comandos de consulta são somente leitura; o runbook não executa
-mudanças na AWS por você.
+This runbook provisions the lightweight portfolio deployment in the `us-east-2` region.
+Follow the steps in order and substitute only the values marked as outputs of
+a command. Query commands are read-only; the runbook does not execute
+changes in AWS for you.
 
-## 1. Segurança, custos e limites da demonstração
+## 1. Security, Costs, and Demo Limits
 
-Esta é uma demonstração pública por HTTP. Ela não tem HTTPS, domínio próprio,
-balanceador ou proteção de produção. Use somente dados e credenciais de teste;
-nunca coloque dados pessoais, senhas reutilizadas ou segredos reais de clientes
-na aplicação.
+This is a public HTTP demonstration. It does not have HTTPS, a custom domain,
+load balancer, or production-grade protection. Use test data and credentials only;
+never put personal data, reused passwords, or real client secrets into the application.
 
-Antes de iniciar, abra o RDS no console da AWS, selecione
-`vehicle-maintenance-history-db` e escolha **Modify**. Em **Storage**,
-configure o limite máximo de armazenamento autoscaling como **30 GiB** e
-aplique a alteração conforme a janela escolhida. A instância atualmente usa
-20 GiB; o limite de 30 GiB evita crescimento acidental em um ambiente de
-portfólio. O `db.t4g.micro`, o `t3.micro` e o volume de 10 GiB são escolhas de
-baixo custo, mas continuam gerando cobrança enquanto estiverem ativos.
+Before starting, open RDS in the AWS Console, select
+`vehicle-maintenance-history-db` and choose **Modify**. Under **Storage**,
+configure the maximum autoscaling storage threshold to **30 GiB** and
+apply the change according to the selected maintenance window. The instance currently uses
+20 GiB; the 30 GiB cap prevents accidental growth in a portfolio environment.
+The `db.t4g.micro`, `t3.micro`, and 10 GiB volume are low-cost choices, but
+they continue to incur charges while active.
 
-Ao terminar a demonstração, pare ou remova os recursos que não forem mais
-necessários e verifique o Billing Dashboard. Não remova o RDS antes de decidir
-como preservar os dados de teste.
+When finishing the demonstration, stop or delete resources that are no longer
+needed and review the Billing Dashboard. Do not remove RDS before deciding
+how to preserve test data.
 
-## 2. Amazon ECR privado
+## 2. Private Amazon ECR
 
-1. Seletor de região: **US East (Ohio) `us-east-2`**.
-2. Abra **Amazon ECR > Repositories** e confirme o repositório privado
+1. Region selector: **US East (Ohio) `us-east-2`**.
+2. Open **Amazon ECR > Repositories** and confirm the private repository
    `mmetznerm/vehicle-maintenance-history`.
-3. Não altere o repositório para público e não crie outro nome. O workflow
-   publica o mesmo build no Docker Hub e neste ECR; o EC2 usa somente o ECR
-   privado em tempo de execução.
-4. Em **Tag immutability**, selecione **Immutable with exclusion** e configure
-   a única exclusão com tipo **Wildcard** e valor `latest`. O tag `latest` é
-   apenas um ponteiro de conveniência; os deploys e rollbacks usam somente
-   `sha-<commit>`.
-5. Como alternativa ao console, aplique e verifique a configuração com:
+3. Do not change the repository to public and do not use another name. The workflow
+   publishes the same build to Docker Hub and this ECR; EC2 uses only the
+   private ECR at runtime.
+4. Under **Tag immutability**, select **Immutable with exclusion** and configure
+   the single exclusion as **Wildcard** with value `latest`. The `latest` tag is
+   only a convenience pointer; deployments and rollbacks use only `sha-<commit>`.
+5. As an alternative to the console, apply and verify the configuration with:
 
    ```bash
    aws ecr put-image-tag-mutability \
@@ -52,57 +50,50 @@ como preservar os dados de teste.
      --output json
    ```
 
-   A saída precisa mostrar `IMMUTABLE_WITH_EXCLUSION` e somente a exclusão
-   `latest`. Uma repetição do workflow não pode republicar uma tag SHA que já
-   exista; use a imagem SHA existente para deploy ou rollback.
+   The output must show `IMMUTABLE_WITH_EXCLUSION` and only the `latest` exclusion.
+   A workflow re-run cannot republish a SHA tag that already exists; use the existing SHA image for deployment or rollback.
 
-## 3. Rede e grupos de segurança
+## 3. Network and Security Groups
 
-Use a mesma VPC do RDS. No console, abra **VPC > Security groups** e crie
-`vehicle-maintenance-history-app-sg` com uma descrição que identifique a
-aplicação. Em **Inbound rules**, adicione somente:
+Use the same VPC as RDS. In the console, open **VPC > Security groups** and create
+`vehicle-maintenance-history-app-sg` with a description identifying the application.
+Under **Inbound rules**, add only:
 
-| Tipo | Protocolo | Porta | Origem |
+| Type | Protocol | Port | Source |
 |---|---|---:|---|
 | HTTP | TCP | 80 | `0.0.0.0/0` |
 
-Mantenha a saída necessária para o ECR, SSM, Docker Hub e RDS (a saída padrão
-permite isso). Não adicione uma regra TCP 22.
+Keep the necessary outbound traffic for ECR, SSM, Docker Hub, and RDS (default egress allows this).
+Do not add a TCP 22 rule.
 
-Crie ou confirme `vehicle-maintenance-history-db-sg`. No grupo do banco,
-adicione somente esta entrada:
+Create or confirm `vehicle-maintenance-history-db-sg`. On the database group,
+add only this entry:
 
-| Tipo | Protocolo | Porta | Origem |
+| Type | Protocol | Port | Source |
 |---|---|---:|---|
-| PostgreSQL | TCP | 5432 | referência a `vehicle-maintenance-history-app-sg` |
+| PostgreSQL | TCP | 5432 | reference to `vehicle-maintenance-history-app-sg` |
 
-Na tela **RDS > Databases > vehicle-maintenance-history-db > Modify >
-Connectivity**, associe `vehicle-maintenance-history-db-sg` ao RDS e confirme
-**Public access: No**. A origem da porta 5432 deve ser a referência do grupo de
-segurança, nunca um CIDR público. Revise ambos os grupos e confirme que nenhum
-expõe a porta 22.
+In **RDS > Databases > vehicle-maintenance-history-db > Modify > Connectivity**, associate `vehicle-maintenance-history-db-sg` with RDS and confirm
+**Public access: No**. The port 5432 source must be the security group reference, never a public CIDR. Review both security groups and confirm neither exposes port 22.
 
-## 4. Provedor OIDC do GitHub
+## 4. GitHub OIDC Provider
 
-Em **IAM > Identity providers**, adicione um provedor **OpenID Connect** com:
+In **IAM > Identity providers**, add an **OpenID Connect** provider with:
 
-- URL do provedor: `https://token.actions.githubusercontent.com`
+- Provider URL: `https://token.actions.githubusercontent.com`
 - Audience: `sts.amazonaws.com`
 
-Se esse provedor já existir, reutilize-o depois de confirmar exatamente esses
-dois valores. O workflow recebe credenciais temporárias por OIDC; não crie nem
-grave credenciais AWS de longa duração no GitHub.
+If this provider already exists, reuse it after confirming exactly these two values.
+The workflow receives temporary credentials via OIDC; do not create or store long-lived AWS credentials in GitHub.
 
-## 5. Roles do GitHub Actions
+## 5. GitHub Actions Roles
 
-Em **IAM > Roles > Create role**, crie as duas roles abaixo usando o provedor
-OIDC do GitHub e a mesma política de confiança, restrita ao repositório e à
-branch `main`:
+In **IAM > Roles > Create role**, create the two roles below using the GitHub OIDC provider and the same trust policy, restricted to the repository and the `main` branch:
 
 - `github-actions-vehicle-maintenance-history-publish`;
 - `github-actions-vehicle-maintenance-history-deploy`.
 
-A política de confiança equivalente, aplicada a ambas, é:
+The equivalent trust policy applied to both is:
 
 ```json
 {
@@ -125,8 +116,7 @@ A política de confiança equivalente, aplicada a ambas, é:
 }
 ```
 
-Para `github-actions-vehicle-maintenance-history-publish`, adicione uma
-política inline com apenas as permissões de login e publicação no ECR:
+For `github-actions-vehicle-maintenance-history-publish`, add an inline policy with only ECR login and publishing permissions:
 
 ```json
 {
@@ -154,10 +144,7 @@ política inline com apenas as permissões de login e publicação no ECR:
 }
 ```
 
-Para `github-actions-vehicle-maintenance-history-deploy`, adicione uma política
-inline com apenas as permissões SSM abaixo. O ARN da instância será completado
-com o ID real obtido na etapa 8; `<EC2_INSTANCE_ID>` é um campo obrigatório a
-substituir, não um valor de exemplo:
+For `github-actions-vehicle-maintenance-history-deploy`, add an inline policy with only the SSM permissions below. The instance ARN will be completed with the actual ID obtained in step 8; `<EC2_INSTANCE_ID>` is a required field to replace, not an example value:
 
 ```json
 {
@@ -182,22 +169,16 @@ substituir, não um valor de exemplo:
 }
 ```
 
-O `id-token: write` fica restrito aos jobs que assumem cada role. A role de
-publicação não pode receber permissões SSM, e a role de deploy não pode receber
-permissões ECR; nenhuma delas pode receber permissões da outra. Não adicione
-`sts:AssumeRole` genérico, acesso a outros repositórios, outras branches ou
-outros repositórios ECR.
+`id-token: write` remains restricted to jobs assuming each role. The publishing role cannot receive SSM permissions, and the deploy role cannot receive ECR permissions; neither can receive permissions from the other. Do not add generic `sts:AssumeRole`, access to other repositories, other branches, or other ECR repositories.
 
-## 6. Role da instância EC2
+## 6. EC2 Instance Role
 
-Em **IAM > Roles > Create role**, escolha **EC2** como serviço confiável e crie
-`vehicle-maintenance-history-ec2-role`. Anexe as políticas gerenciadas:
+In **IAM > Roles > Create role**, choose **EC2** as trusted service and create `vehicle-maintenance-history-ec2-role`. Attach the managed policies:
 
 - `AmazonSSMManagedInstanceCore`;
 - `AmazonEC2ContainerRegistryPullOnly`.
 
-Adicione uma política inline para ler somente os parâmetros da aplicação e
-descriptografar SecureStrings através do Systems Manager em Ohio:
+Add an inline policy to read application parameters only and decrypt SecureStrings via Systems Manager in Ohio:
 
 ```json
 {
@@ -227,22 +208,15 @@ descriptografar SecureStrings através do Systems Manager em Ohio:
 }
 ```
 
-O script usa `ssm:GetParameter` com `--with-decryption`; não dê à instância
-permissão para apagar ou alterar parâmetros. Acesso ao parâmetro do master
-existe apenas para o bootstrap e será removido na etapa 10.
+The script uses `ssm:GetParameter` with `--with-decryption`; do not grant the instance permission to delete or modify parameters. Access to the master parameter exists only for bootstrap and will be removed in step 10.
 
-A condição KMS permite somente `kms:Decrypt` invocado pelo Systems Manager em
-`us-east-2`. Use as chaves padrão da conta para SSM e EBS; uma chave gerenciada
-pelo cliente é opcional e só deve ser escolhida deliberadamente.
+The KMS condition allows only `kms:Decrypt` invoked by Systems Manager in `us-east-2`. Use default account keys for SSM and EBS; a customer-managed key is optional and should only be chosen deliberately.
 
-## 7. Parâmetros SecureString
+## 7. SecureString Parameters
 
-Abra **Systems Manager > Parameter Store > Create parameter**. Use tipo
-**SecureString**, região `us-east-2` e não registre o conteúdo em arquivos do
-repositório ou em logs.
+Open **Systems Manager > Parameter Store > Create parameter**. Use type **SecureString**, region `us-east-2`, and do not log contents in repository files or logs.
 
-Primeiro gere os dois valores localmente ou no CloudShell. Copie cada saída
-diretamente para o formulário do console e não publique a saída:
+First generate both values locally or in CloudShell. Copy each output directly into the console form and do not publish the output:
 
 ```bash
 APP_DB_PASSWORD="$(openssl rand -hex 32)"
@@ -251,84 +225,59 @@ printf '%s\n' "$APP_DB_PASSWORD"
 printf '%s\n' "$APP_JWT_VALUE"
 ```
 
-Para obter o endpoint real, execute no CloudShell, na região correta:
+To get the actual endpoint, run in CloudShell, in the correct region:
 
 ```bash
 aws rds describe-db-instances --region us-east-2 --db-instance-identifier vehicle-maintenance-history-db --query 'DBInstances[0].Endpoint.Address' --output text
 ```
 
-Copie o texto retornado, sem espaços ou aspas, para o valor de `RDS_HOST` e
-para o host da URL JDBC. Crie `/vmh/prod/app-env` com seis entradas separadas
-por quebra de linha. Em cada linha, una o nome e o valor com o caractere `=`;
-não inclua os marcadores descritivos abaixo:
+Copy the returned text, without spaces or quotes, for the `RDS_HOST` value and the JDBC URL host. Create `/vmh/prod/app-env` with six line-break separated entries. On each line, join the name and value with `=`; do not include the descriptive headers below:
 
-| Nome | Valor |
+| Name | Value |
 |---|---|
-| `RDS_HOST` | endpoint retornado pelo comando do RDS |
-| `SPRING_DATASOURCE_URL` | URL JDBC PostgreSQL para o endpoint, porta 5432, banco `vehicle_maintenance_history` e `sslmode=require` |
+| `RDS_HOST` | endpoint returned by the RDS command |
+| `SPRING_DATASOURCE_URL` | PostgreSQL JDBC URL for the endpoint, port 5432, database `vehicle_maintenance_history`, and `sslmode=require` |
 | `SPRING_DATASOURCE_USERNAME` | `vmh_app` |
-| `SPRING_DATASOURCE_PASSWORD` | primeira saída aleatória gerada acima |
-| `JWT_SECRET` | segunda saída aleatória gerada acima |
+| `SPRING_DATASOURCE_PASSWORD` | first random output generated above |
+| `JWT_SECRET` | second random output generated above |
 | `JAVA_TOOL_OPTIONS` | `-XX:MaxRAMPercentage=70.0` |
 
-O nome das variáveis precisa permanecer exatamente como acima: `RDS_HOST` é
-usado pelo bootstrap, e as variáveis `SPRING_DATASOURCE_*` e `JWT_SECRET` são
-passadas pelo Compose para a aplicação. Não acrescente `IMAGE_URI` ou
-`IMAGE_TAG`; `deploy.sh` acrescenta esses valores ao arquivo local no EC2.
+Variable names must remain exactly as above: `RDS_HOST` is used by bootstrap, and `SPRING_DATASOURCE_*` and `JWT_SECRET` are passed by Compose to the application. Do not add `IMAGE_URI` or `IMAGE_TAG`; `deploy.sh` appends these values to the local file on EC2.
 
-Crie `/vmh/prod/rds-master-password` como **SecureString**, contendo a senha
-existente do usuário master `vmh_admin` do RDS. Esse valor não é a senha de
-`vmh_app`, não deve ser mostrado no terminal e só ficará disponível até a
-criação inicial do banco e da role da aplicação.
+Create `/vmh/prod/rds-master-password` as **SecureString**, containing the existing password for master user `vmh_admin` on RDS. This value is not `vmh_app`'s password, must not be shown in the terminal, and will only remain available until initial database and application role creation.
 
-## 8. Instância EC2
+## 8. EC2 Instance
 
-Em **EC2 > Launch instance**, configure:
+In **EC2 > Launch instance**, configure:
 
-- AMI: **Amazon Linux 2023**, arquitetura **x86_64**;
-- tipo: `t3.micro`;
-- armazenamento raiz: **10 GiB**, `gp3`, **Encrypted: Yes**, usando a chave
-  EBS padrão da conta;
-- metadados da instância: **Metadata version: V2 only** (IMDSv2);
-- rede: a mesma VPC do RDS e uma subnet pública com saída para a internet;
-- atribuição automática de IPv4 público: habilitada;
+- AMI: **Amazon Linux 2023**, architecture **x86_64**;
+- type: `t3.micro`;
+- root storage: **10 GiB**, `gp3`, **Encrypted: Yes**, using default account EBS key;
+- instance metadata: **Metadata version: V2 only** (IMDSv2);
+- network: same VPC as RDS and a public subnet with internet egress;
+- auto-assign public IPv4: enabled;
 - security group: `vehicle-maintenance-history-app-sg`;
 - IAM instance profile: `vehicle-maintenance-history-ec2-role`;
-- tags: `Name=vehicle-maintenance-history` e
-  `Application=vehicle-maintenance-history`.
+- tags: `Name=vehicle-maintenance-history` and `Application=vehicle-maintenance-history`.
 
-Não configure regra de SSH nem dependa de um endereço IP fixo. O acesso
-operacional será pelo **Systems Manager > Session Manager**; a troca do IPv4
-após uma parada não altera o alvo SSM, que é o ID da instância.
+Do not configure an SSH rule or rely on a static IP address. Operational access is via **Systems Manager > Session Manager**; IPv4 address changes after a stop do not alter the SSM target, which is the instance ID.
 
-Depois que a instância estiver criada, obtenha o ID real no CloudShell com o
-comando somente leitura abaixo:
+After instance creation, obtain the actual ID in CloudShell with the read-only command below:
 
 ```bash
 aws ec2 describe-instances --region us-east-2 --filters 'Name=tag:Name,Values=vehicle-maintenance-history' 'Name=instance-state-name,Values=pending,running,stopping,stopped' --query 'Reservations[0].Instances[0].InstanceId' --output text
 ```
 
-Copie a saída para o campo `EC2_INSTANCE_ID` nas variáveis do repositório e
-substitua `<EC2_INSTANCE_ID>` no ARN da política da role do GitHub (etapa 5).
-Esse mesmo ID deve aparecer como instância gerenciada no Systems Manager antes
-do primeiro bootstrap.
+Copy output to the `EC2_INSTANCE_ID` field in repository variables and replace `<EC2_INSTANCE_ID>` in GitHub role policy ARN (step 5). This same ID must appear as a managed instance in Systems Manager before initial bootstrap.
 
-## 9. Primeiro deploy manual
+## 9. First Manual Deployment
 
-Antes do primeiro push, crie as variáveis básicas da seção 11, deixando
-`AWS_DEPLOY_ENABLED` ausente. Assim o workflow pode publicar no ECR, mas não
-tenta enviar SSM para uma instância ainda não preparada.
+Before the first push, create basic section 11 variables, leaving `AWS_DEPLOY_ENABLED` absent. This allows workflow ECR publishing without attempting SSM send to an unprepared instance.
 
-1. Em **Systems Manager > Fleet Manager**, confirme que a instância está
-   **Online** e abra uma sessão em **Session Manager**.
-2. Em **ECR**, copie o primeiro tag `sha-<commit>` publicado para
-   `mmetznerm/vehicle-maintenance-history`.
-3. Abra o workflow de `main` que publicou esse tag e copie o commit completo de
-   40 caracteres hexadecimais. O tag curto e esse commit precisam ser da mesma
-   execução.
-4. Na sessão do EC2, baixe os três arquivos do commit completo. O diretório
-   abaixo é temporário para o bootstrap; o script copiará os arquivos de
-   produção para `/opt/vehicle-maintenance-history`:
+1. In **Systems Manager > Fleet Manager**, confirm instance is **Online** and open a session in **Session Manager**.
+2. In **ECR**, copy the first published `sha-<commit>` tag for `mmetznerm/vehicle-maintenance-history`.
+3. Open the `main` workflow run that published this tag and copy full 40-character hexadecimal commit. Short tag and commit must be from the same run.
+4. In EC2 session, download the three files from full commit. Directory below is temporary for bootstrap; script copies production files to `/opt/vehicle-maintenance-history`:
 
    ```bash
    sudo mkdir -p /opt/vehicle-maintenance-history/bootstrap
@@ -338,39 +287,28 @@ tenta enviar SSM para uma instância ainda não preparada.
    sudo curl -fsSL https://raw.githubusercontent.com/mmetznerm/vehicle-maintenance-history/<full-commit>/deploy/setup-ec2.sh -o setup-ec2.sh
    ```
 
-   Substitua `<full-commit>` pelo SHA completo copiado no passo anterior.
-5. Execute o bootstrap como root, usando a URI completa do ECR e o tag que
-   você copiou:
+   Replace `<full-commit>` with full SHA copied in previous step.
+5. Execute bootstrap as root, using full ECR URI and copied tag:
 
    ```bash
    sudo bash setup-ec2.sh 675244612319.dkr.ecr.us-east-2.amazonaws.com/mmetznerm/vehicle-maintenance-history <sha-tag>
    ```
 
-   O `<sha-tag>` deve ter o formato `sha-` seguido do valor hexadecimal
-   publicado. O script instala Docker/Compose, cria o swap de 1 GiB, usa as
-   SecureStrings, cria `vmh_app` e `vehicle_maintenance_history` se necessário
-   e chama `deploy.sh` com a imagem imutável.
-6. Na saída da sessão, confirme `Health check succeeded` e a mensagem final
-   `Bootstrap complete. After confirming the application is healthy, delete
-   /vmh/prod/rds-master-password.`. Se o health check falhar, não apague o
-   parâmetro do master; corrija a causa e repita o bootstrap.
+   `<sha-tag>` must match `sha-` followed by published hexadecimal value. Script installs Docker/Compose, creates 1 GiB swap, uses SecureStrings, creates `vmh_app` and `vehicle_maintenance_history` if needed, and calls `deploy.sh` with immutable image.
+6. In session output, confirm `Health check succeeded` and final message `Bootstrap complete. After confirming the application is healthy, delete /vmh/prod/rds-master-password.`. If health check fails, do not delete master parameter; resolve cause and retry bootstrap.
 
-## 10. Remover a credencial de bootstrap
+## 10. Remove Bootstrap Credential
 
-Remova a credencial de bootstrap somente nesta ordem:
+Remove bootstrap credential only in this exact sequence:
 
-1. Confirme `UP` no Actuator interno e público.
-2. Confirme que `SPRING_DATASOURCE_USERNAME` no ambiente efetivo é `vmh_app`.
-3. Obtenha aprovação explícita para excluir somente
-   `/vmh/prod/rds-master-password`.
-4. Em **Systems Manager > Parameter Store**, exclua esse parâmetro. Um
-   administrador também pode executar a exclusão pelo CloudShell com
-   `ssm:DeleteParameter`; não dê essa permissão à role da instância.
-5. Remova o ARN desse parâmetro da política inline da role EC2 e mantenha
-   `/vmh/prod/app-env`.
-6. Confirme novamente o Actuator interno e público.
+1. Confirm `UP` on internal and public Actuator.
+2. Confirm `SPRING_DATASOURCE_USERNAME` in effective environment is `vmh_app`.
+3. Obtain explicit approval to delete only `/vmh/prod/rds-master-password`.
+4. In **Systems Manager > Parameter Store**, delete this parameter. An administrator can also execute deletion via CloudShell with `ssm:DeleteParameter`; do not grant this permission to instance role.
+5. Remove parameter ARN from EC2 role inline policy while keeping `/vmh/prod/app-env`.
+6. Confirm internal and public Actuator again.
 
-A política inline final da EC2 deve permitir a leitura de um único parâmetro:
+Final EC2 inline policy must allow reading a single parameter:
 
 ```json
 {
@@ -397,87 +335,53 @@ A política inline final da EC2 deve permitir a leitura de um único parâmetro:
 }
 ```
 
-Se outro bootstrap for necessário, redefina temporariamente a credencial
-administrativa do RDS, crie um novo `SecureString` temporário com nome novo,
-conceda acesso somente durante a recuperação, execute o bootstrap e repita
-todo o encerramento acima. Nunca reutilize `/vmh/prod/app-env` para a
-credencial administrativa e nunca mantenha a permissão temporária depois da
-recuperação.
+If another bootstrap is needed, temporarily reset RDS administrative credential, create new temporary `SecureString` with new name, grant access only during recovery, execute bootstrap, and repeat full closeout above. Never reuse `/vmh/prod/app-env` for administrative credential and never retain temporary permission after recovery.
 
-## 11. Variáveis e secrets do GitHub
+## 11. GitHub Variables and Secrets
 
-Em **GitHub > repositório > Settings > Secrets and variables > Actions >
-Variables**, crie:
+In **GitHub > repository > Settings > Secrets and variables > Actions > Variables**, create:
 
-| Nome | Valor |
+| Name | Value |
 |---|---|
 | `AWS_REGION` | `us-east-2` |
 | `AWS_PUBLISH_ROLE_ARN` | `arn:aws:iam::675244612319:role/github-actions-vehicle-maintenance-history-publish` |
 | `AWS_DEPLOY_ROLE_ARN` | `arn:aws:iam::675244612319:role/github-actions-vehicle-maintenance-history-deploy` |
 | `ECR_REPOSITORY` | `mmetznerm/vehicle-maintenance-history` |
-| `EC2_INSTANCE_ID` | saída real do comando `describe-instances` da etapa 8 |
+| `EC2_INSTANCE_ID` | actual output of `describe-instances` command from step 8 |
 
-Durante a preparação, deixe `AWS_DEPLOY_ENABLED` **ausente**. Depois que o
-primeiro deploy manual e todas as verificações forem aprovados, crie essa
-variável com valor `true`. O job de deploy só roda em push para `main` quando
-ela está exatamente como `true`.
+During preparation, leave `AWS_DEPLOY_ENABLED` **absent**. After initial manual deploy and all verifications pass, create this variable with value `true`. Deploy job runs on `main` push only when set to `true`.
 
-Em **Secrets**, mantenha os secrets existentes `DOCKER_USERNAME` e
-`DOCKER_ACCESS_TOKEN`, usados apenas para publicar no Docker Hub. Não adicione
-segredos AWS persistentes: a role OIDC fornece credenciais temporárias aos
-jobs de publicação e deploy. A publicação assume `AWS_PUBLISH_ROLE_ARN` e o
-deploy assume `AWS_DEPLOY_ROLE_ARN`.
+In **Secrets**, keep existing secrets `DOCKER_USERNAME` and `DOCKER_ACCESS_TOKEN`, used only for Docker Hub publishing. Do not add persistent AWS secrets: OIDC role provides temporary credentials to publish and deploy jobs. Publish assumes `AWS_PUBLISH_ROLE_ARN` and deploy assumes `AWS_DEPLOY_ROLE_ARN`.
 
-Deploys de produção são serializados no GitHub Actions e novamente no EC2 por
-`/var/lock/vehicle-maintenance-history-deploy.lock`. O workflow limita a
-entrega/início de 60 segundos pelo `--timeout-seconds` do `send-command` e
-envia um `executionTimeout` de execução remota de 1200 segundos (20 minutos)
-ao `AWS-RunShellScript`. Depois, consulta o estado SSM por até 130 tentativas
-com intervalo de 10 segundos: há 129 intervalos, totalizando cerca de 21 minutos e 30 segundos. Essa janela de 1290 segundos exige e cobre os 60
-segundos de entrega, os 1200 segundos de execução remota e a margem de polling
-de 30 segundos. A varredura de vulnerabilidades do ECR e uma política de ciclo
-de vida são melhorias opcionais e não são pré-requisitos para o aceite desta
-demonstração.
+Production deploys are serialized in GitHub Actions and again on EC2 via `/var/lock/vehicle-maintenance-history-deploy.lock`. Workflow bounds delivery/start to 60 seconds via `send-command` `--timeout-seconds` and sends remote execution `executionTimeout` of 1200 seconds (20 minutes) to `AWS-RunShellScript`. Then polls SSM state for up to 130 attempts with 10-second interval: 129 intervals total ~21 minutes 30 seconds. This 1290-second window covers 60-second delivery, 1200-second remote execution, and 30-second polling margin. ECR vulnerability scanning and lifecycle policy are optional enhancements and not prerequisites for demo acceptance.
 
-## 12. Verificações de aceite
+## 12. Acceptance Checks
 
-Considere a implantação aceita somente quando todos os itens abaixo forem
-verdadeiros:
+Consider deployment accepted only when all items below are true:
 
-- o mesmo tag `sha-<commit>` existe no Docker Hub e no ECR privado;
-- o job de deploy do GitHub Actions termina com sucesso;
-- o frontend público abre por `http://<IPv4-público>/` (sem HTTPS nesta fase);
-- `http://<IPv4-público>/actuator/health` responde com status `UP`;
-- registro, logout, login e a chamada de renovação funcionam somente com dados
-  fictícios;
-- CRUD de veículos e manutenções funciona;
-- os dados permanecem depois de reiniciar o container e depois de um deploy
-  posterior;
-- o volume raiz EBS de 10 GiB `gp3` está com **Encrypted: Yes** antes da
-  instalação de segredos da aplicação;
-- o security group `vehicle-maintenance-history-app-sg` expõe somente TCP 80 e
-  não tem entrada TCP 22;
-- o RDS registra `PubliclyAccessible=false` e tem somente o security group
-  dedicado do banco anexado;
-- o security group do banco permite PostgreSQL TCP 5432 somente com origem
-  `vehicle-maintenance-history-app-sg`;
-- o GitHub não contém credenciais AWS persistentes;
-- o RDS mantém 20 GiB alocados e limite de autoscaling de 30 GiB;
-- `/vmh/prod/rds-master-password` não existe e a política inline da EC2 não
-  cita esse parâmetro, enquanto `/vmh/prod/app-env` continua disponível;
-- a evidência pública em [Portfolio Deployment Acceptance](portfolio-acceptance.md)
-  está atualizada com o commit, workflow e tag aceitos.
+- same `sha-<commit>` tag exists on Docker Hub and private ECR;
+- GitHub Actions deploy job completes successfully;
+- public frontend opens via `http://<Public-IPv4>/` (no HTTPS in this phase);
+- `http://<Public-IPv4>/actuator/health` responds with status `UP`;
+- registration, logout, login, and refresh call work with fictitious data only;
+- vehicle and maintenance CRUD operations function properly;
+- data persists after container restart and subsequent deployment;
+- root EBS 10 GiB `gp3` volume shows **Encrypted: Yes** before application secrets installation;
+- `vehicle-maintenance-history-app-sg` security group exposes TCP 80 only with no TCP 22 ingress;
+- RDS reports `PubliclyAccessible=false` with only dedicated database security group attached;
+- database security group permits PostgreSQL TCP 5432 only with `vehicle-maintenance-history-app-sg` source;
+- GitHub contains no persistent AWS credentials;
+- RDS retains 20 GiB allocated and 30 GiB autoscaling limit;
+- `/vmh/prod/rds-master-password` does not exist and EC2 inline policy omits this parameter, while `/vmh/prod/app-env` remains available;
+- public evidence in [Portfolio Deployment Acceptance](portfolio-acceptance.md) is updated with accepted commit, workflow, and tag.
 
-Execute o aceite funcional com uma identidade descartável e valores
-fictícios. Não registre a identidade, a senha ou os tokens. Para registro,
-logout e login:
+Execute functional acceptance with disposable identity and fictitious values. Do not log identity, password, or tokens. For registration, logout, and login:
 
-1. Abra `/register`, crie a conta de teste e espere `/vehicles` carregar.
-2. Escolha **Sign out** e confirme o redirecionamento para `/login`.
-3. Entre novamente e confirme que `/vehicles` abre sem erro de autenticação.
+1. Open `/register`, create test account, and wait for `/vehicles` to load.
+2. Select **Sign out** and confirm redirection to `/login`.
+3. Sign in again and confirm `/vehicles` opens without authentication error.
 
-No console de desenvolvimento do navegador, valide a renovação sem imprimir
-tokens:
+In browser developer console, validate refresh without printing tokens:
 
 ```javascript
 void (async () => {
@@ -496,16 +400,11 @@ void (async () => {
 })();
 ```
 
-O resultado esperado é somente `refresh accepted 200`; nenhum valor deve ser
-impresso. Recarregue `/vehicles` e confirme que a sessão continua autenticada.
+Expected result is only `refresh accepted 200`; no values printed. Reload `/vehicles` and confirm session remains authenticated.
 
-Para o CRUD, crie um veículo fictício, abra os detalhes, altere marca, modelo,
-ano e cor, salve e confirme cada valor; depois exclua e confirme que ele saiu
-da lista. Em outro veículo fictício, repita criar, listar, editar e excluir uma
-manutenção, conferindo data, hodômetro, descrição e custo após cada gravação.
+For CRUD, create fictitious vehicle, open details, edit make, model, year, color, save and verify each value; then delete and confirm removed from list. On another fictitious vehicle, repeat create, list, edit, delete maintenance, verifying date, odometer, description, cost after each save.
 
-Para comprovar persistência no reinício, retenha um veículo e uma manutenção e
-execute no Session Manager:
+To prove restart persistence, retain vehicle and maintenance and run in Session Manager:
 
 ```bash
 sudo docker restart vehicle-maintenance-history-app-1
@@ -522,24 +421,20 @@ for attempt in $(seq 1 12); do
 done
 ```
 
-O resultado esperado é `Health check succeeded`. Reabra a interface e confirme
-que os dois registros continuam presentes.
+Expected result is `Health check succeeded`. Reopen UI and confirm both records remain present.
 
-Depois de um deploy de `main`, execute:
+After `main` deploy, execute:
 
 ```bash
 sudo docker inspect --format '{{.Config.Image}}' vehicle-maintenance-history-app-1
 curl -fsS http://localhost/actuator/health
 ```
 
-O tag da imagem deve ser `sha-` seguido dos sete primeiros caracteres do commit
-implantado, o Actuator deve responder `UP`, e os registros retidos devem
-continuar disponíveis na interface. Registre somente commit, tag, URL do
-workflow e resultado; nunca registre identidade ou credenciais.
+Image tag must be `sha-` followed by first 7 characters of deployed commit, Actuator must respond `UP`, and retained records must remain available in UI. Record commit, tag, workflow URL, result only; never record identity or credentials.
 
-## 13. Operação e rollback manual
+## 13. Operations and Manual Rollback
 
-Use uma sessão do **Session Manager**, não SSH, para consultar o serviço:
+Use **Session Manager** session, not SSH, to inspect service:
 
 ```bash
 cd /opt/vehicle-maintenance-history
@@ -548,52 +443,38 @@ sudo docker compose --env-file .env -f compose.prod.yml logs --tail=200 app
 curl -fsS http://localhost/actuator/health
 ```
 
-Para listar tags disponíveis no ECR pelo CloudShell:
+To list available tags in ECR via CloudShell:
 
 ```bash
 aws ecr describe-images --region us-east-2 --repository-name mmetznerm/vehicle-maintenance-history --query 'sort_by(imageDetails,&imagePushedAt)[].imageTags' --output table
 ```
 
-Para auditoria, registre o digest associado ao tag SHA que está em produção.
-Este comando é somente leitura; mantenha o tag no deploy, sem trocá-lo pelo
-digest:
+For audit, record digest associated with production SHA tag. Read-only command; keep tag in deployment:
 
 ```bash
-aws ecr describe-images --region us-east-2 --repository-name mmetznerm/vehicle-maintenance-history --image-ids imageTag=<sha-tag-implantado> --query 'imageDetails[0].imageDigest' --output text
+aws ecr describe-images --region us-east-2 --repository-name mmetznerm/vehicle-maintenance-history --image-ids imageTag=<deployed-sha-tag> --query 'imageDetails[0].imageDigest' --output text
 ```
 
-Escolha um `sha-` de uma execução que foi aceita anteriormente e, na sessão do
-EC2, execute o rollback manual:
+Select `sha-` from previously accepted run and in EC2 session execute manual rollback:
 
 ```bash
-sudo /opt/vehicle-maintenance-history/deploy.sh 675244612319.dkr.ecr.us-east-2.amazonaws.com/mmetznerm/vehicle-maintenance-history <sha-tag-anterior>
+sudo /opt/vehicle-maintenance-history/deploy.sh 675244612319.dkr.ecr.us-east-2.amazonaws.com/mmetznerm/vehicle-maintenance-history <previous-sha-tag>
 ```
 
-Confirme novamente `Health check succeeded` e o Actuator. O projeto não faz
-rollback automático; se o tag anterior não estiver no ECR, publique/recupere a
-imagem correspondente antes de executar o comando.
+Confirm `Health check succeeded` and Actuator again. Project does not perform automatic rollback; if previous tag is not in ECR, publish/recover corresponding image before command execution.
 
-Referências oficiais: [GitHub OIDC com AWS](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws),
-[autenticação de registro privado do ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html),
-[política AmazonEC2ContainerRegistryPullOnly](https://docs.aws.amazon.com/AmazonECR/latest/userguide/security-iam-awsmanpol.html) e
-[conexão com RDS PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ConnectToPostgreSQLInstance.html).
+Official references: [GitHub OIDC with AWS](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws),
+[ECR Private Registry Authentication](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html),
+[AmazonEC2ContainerRegistryPullOnly Policy](https://docs.aws.amazon.com/AmazonECR/latest/userguide/security-iam-awsmanpol.html), and
+[Connecting to RDS PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ConnectToPostgreSQLInstance.html).
 
-## 14. Operação contínua e custos
+## 14. Continuous Operations and Costs
 
-Nas primeiras quatro semanas, revise semanalmente **Billing**, **Budgets**,
-**Free Tier**, créditos, EC2, RDS, EBS, snapshots, ECR, endereços IP elásticos,
-NAT Gateways e load balancers. Depois desse período, faça a mesma revisão
-mensalmente e também antes de habilitar qualquer novo serviço.
+In the first four weeks, review weekly **Billing**, **Budgets**, **Free Tier**, credits, EC2, RDS, EBS, snapshots, ECR, Elastic IPs, NAT Gateways, and load balancers. After this period, conduct the same review monthly and before enabling any new service.
 
-O orçamento gera alertas; ele não bloqueia nem limita gastos. Se houver custo
-real ou previsto não compreendido, pare EC2 e RDS, marque a demonstração como
-indisponível e investigue **Billing** antes de retomar. Um RDS parado inicia
-automaticamente depois de sete dias, e armazenamento e backups podem continuar
-gerando cobrança mesmo com a instância parada. Portanto, parar recursos é uma
-resposta temporária, não um controle permanente de custo.
+The budget generates alerts; it does not block or cap spending. If there is unexpected actual or forecasted cost, stop EC2 and RDS, mark demo as unavailable, and investigate **Billing** before resuming. Stopped RDS automatically restarts after seven days, and storage and backups may continue generating charges even with stopped instance. Thus, stopping resources is a temporary response, not permanent cost control.
 
-O IPv4 público da EC2 é dinâmico. Depois de qualquer parada, início ou mudança
-de rede, obtenha o endereço atual com este comando somente leitura:
+EC2 public IPv4 is dynamic. After any stop, start, or network change, obtain current address with read-only command:
 
 ```bash
 aws ec2 describe-instances \
@@ -603,11 +484,6 @@ aws ec2 describe-instances \
   --output text
 ```
 
-Se o endereço mudar, atualize o link de demonstração no README e repita a
-abertura da interface pública e a verificação de
-`http://<IPv4-público>/actuator/health`.
+If address changes, update demo link in README and repeat public UI opening and `http://<Public-IPv4>/actuator/health` verification.
 
-Os critérios comprovados estão em
-[Portfolio Deployment Acceptance](portfolio-acceptance.md). As próximas
-decisões de infraestrutura e seus gatilhos estão em
-[Portfolio Infrastructure Roadmap](portfolio-roadmap.md).
+Proven criteria are in [Portfolio Deployment Acceptance](portfolio-acceptance.md). Next infrastructure decisions and triggers are in [Portfolio Infrastructure Roadmap](portfolio-roadmap.md).
