@@ -113,6 +113,8 @@ Integration tests require Docker because they use Testcontainers:
 ## Documentation & Architecture
 
 Detailed deployment guides, ADRs, and API specifications are available in [`docs`](docs):
+- [Product Technical Roadmap](docs/product-roadmap.md)
+- [Story Execution Guide](docs/stories/README.md)
 - [Architecture Decision Records (ADRs)](docs/adr/)
 - [Postman API Collection](docs/api/vehicle-maintenance-api.postman_collection.json)
 - [AWS Deployment Guide](docs/aws-deployment.md)
